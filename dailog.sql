@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
   id INTEGER PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   sched_id INTEGER NOT NULL REFERENCES schedules(id),
-  category TEXT NOT NULL REFERENCES opt_type(category),
+  category TEXT NOT NULL REFERENCES opt_category(category),
   date_at TEXT NOT NULL,
   start_at INTEGER NOT NULL DEFAULT (unixepoch()),
   end_at INTEGER,

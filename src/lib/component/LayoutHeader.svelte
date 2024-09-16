@@ -68,7 +68,7 @@
 				</button>
 			</div>
 			<div class="navbar-item">
-				<form action="/logout" method="POST">
+				<form action="/api/logout" method="POST">
 					<button class="button outline">Logout</button>
 				</form>
 			</div>
