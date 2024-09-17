@@ -12,8 +12,8 @@ export const handleError: HandleServerError = async ({ error }) => {
 
 export const auth: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
-	
-	if(event.url.pathname === '/'){
+
+	if (event.url.pathname === '/') {
 		redirect(302, '/login')
 	}
 

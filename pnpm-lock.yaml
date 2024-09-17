@@ -8,9 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@date-fns/tz':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@libsql/client':
         specifier: ^0.11.0
         version: 0.11.0
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       lucia:
         specifier: ^3.2.0
         version: 3.2.0
@@ -51,11 +57,8 @@ importers:
       globals:
         specifier: ^15.0.0
         version: 15.9.0
-      prettier:
-        specifier: ^3.1.1
-        version: 3.3.3
       prettier-plugin-svelte:
-        specifier: ^3.1.2
+        specifier: ^3.2.6
         version: 3.2.6(prettier@3.3.3)(svelte@4.2.19)
       svelte:
         specifier: ^4.2.7
@@ -78,6 +81,9 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@date-fns/tz@1.0.2':
+    resolution: {integrity: sha512-iKxj0kXMy7Qe6vjK+flz33cpy2j0dnTKT5i54p3fFlB411J47aSs6HBg7LOO5X9LjDi2iNlctD9rFn738ySOGQ==}
 
   '@emnapi/core@0.45.0':
     resolution: {integrity: sha512-DPWjcUDQkCeEM4VnljEOEcXdAD7pp8zSZsgOujk/LGIwCXWbXJngin+MO4zbH429lzeC3WbYLGjE2MaUOwzpyw==}
@@ -808,6 +814,9 @@ packages:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
     engines: {node: '>= 12'}
 
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
+
   debug@4.3.7:
     resolution: {integrity: sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==}
     engines: {node: '>=6.0'}
@@ -1483,6 +1492,8 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
+  '@date-fns/tz@1.0.2': {}
+
   '@emnapi/core@0.45.0':
     dependencies:
       tslib: 2.7.0
@@ -2117,6 +2128,8 @@ snapshots:
   cssesc@3.0.0: {}
 
   data-uri-to-buffer@4.0.1: {}
+
+  date-fns@4.1.0: {}
 
   debug@4.3.7:
     dependencies:

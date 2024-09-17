@@ -53,12 +53,14 @@ END;
 
 -- SESSIONS TABLES
 CREATE TABLE IF NOT EXISTS sessions (
-    id TEXT NOT NULL PRIMARY KEY,
-    expires_at INTEGER NOT NULL,
-    user_id INTEGER NOT NULL REFERENCES users(id)
+  id TEXT NOT NULL PRIMARY KEY,
+  expires_at INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  sched_id INTEGER NOT NULL REFERENCES schedules(id),
+  date_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_sessions ON sessions(id);
+CREATE INDEX IF NOT EXISTS idx_sessions ON sessions(id, user_id, sched_id);
 
 -- SCHEDULES TABLES
 CREATE TABLE IF NOT EXISTS schedules (
@@ -134,7 +136,7 @@ SELECT
   lunch_at,
   second_break_at,
   clock_dur_min,
-  break_dur_min,
+  lunch_dur_min,
   break_dur_min
 FROM schedules
 

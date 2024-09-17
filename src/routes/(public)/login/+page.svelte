@@ -30,6 +30,7 @@
 		<div class="column is-4">
 			<div class="notification" class:is-hidden={!notifySchedule}>
 				<button class="delete" on:click={() => (notifySchedule = false)}></button>
+
 				<strong>User Schedule Not Found!</strong> Please reach out to your Team Lead to setup yuor Schedule
 			</div>
 			<header>

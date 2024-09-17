@@ -12,22 +12,35 @@ export const toEpochDatetime = (timeStr: string): Date => {
 	return new Date(Date.UTC(1970, 0, 1));
 };
 
-export const dateAtOffset = (date: Date | number, offset: number): Date => {
-	if (typeof date === 'number') {
-		date = new Date(date)
+export const getOffsetTimezoneStr = (hours: number) => {
+	hours = Number(hours);
+	if (!hours) {
+		return '+00:00';
 	}
 
-	const tz = getOffsetTimezone(offset)
+	const sign = hours >= 0 ? '+' : '-';
+	const h = Math.abs(hours);
+	const hh = String(Math.floor(h)).padStart(2, '0');
+	const mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
+
+	return `${sign}${hh}:${mm}`;
+};
+
+export const dateAtOffset = (date: Date | number, offset: number): Date => {
+	if (typeof date === 'number') {
+		date = new Date(date);
+	}
+
+	const tz = getOffsetTimezoneStr(offset);
 	const dateStr = Intl.DateTimeFormat('en-US', {
 		year: '2-digit',
 		month: '2-digit',
 		day: '2-digit',
 		timeZone: tz
-	}).format(date)
+	}).format(date);
 
-
-	return new Date(dateStr)
-}
+	return new Date(dateStr);
+};
 
 export const getTimeStr = (date: Date, isHour12: boolean = false) => {
 	if (!(date instanceof Date)) {
@@ -42,39 +55,29 @@ export const getTimeStr = (date: Date, isHour12: boolean = false) => {
 	}).format(date);
 };
 
-export const intlFormat = <T>(val: T[keyof T]): string => {
-	if (typeof val === 'string') {
-		let isTime = false;
-		let date: Date = new Date(val);
+export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
+	let isTime = false;
+	let date = val instanceof Date ? val : new Date(val);
 
-		if (!date.getTime()) {
-			date = toEpochDatetime(val);
-			isTime = true;
-		}
-
-		const options: Intl.DateTimeFormatOptions = isTime
-			? { hour: '2-digit', minute: '2-digit' }
-			: { month: '2-digit', day: '2-digit', year: 'numeric' };
-
-		return Intl.DateTimeFormat('en-US', options).format(date);
-	} else if (typeof val === 'number') {
-		// MAKE SURE!!!! to adjust any time prior to formatting
-		// Don't want to create timezone detection nor use other library
-		let dt = new Date(val);
-		const options: Intl.DateTimeFormatOptions = {
-			month: '2-digit',
-			day: '2-digit',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			timeZone: 'UTC'
-		};
-
-		return Intl.DateTimeFormat('en-US', options).format(dt);
+	if(!date.getTime() && typeof val === 'string'){
+		date = toEpochDatetime(val);
+		isTime = true;
 	}
 
-	return '';
-};
+	const timeOpt: Intl.DateTimeFormatOptions = {hour: '2-digit', minute: '2-digit'};
+	const dateOpt: Intl.DateTimeFormatOptions = {year: 'numeric', month: '2-digit', day: '2-digit'};
+	let options: Intl.DateTimeFormatOptions = {}
+
+	if(isTime){
+		options = {...timeOpt};
+	}else if(long){
+		options = {...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset)}
+	}else{
+		options = {...dateOpt}
+	}
+
+	return Intl.DateTimeFormat('en-US', options).format(date)
+}
 
 export const routeProfile = (user: Pick<UserRecord, 'id' | 'role'>): RouteProfile[] => {
 	return ROUTES.filter((el) => el.role.includes(user.role)).map((el) => {
@@ -83,17 +86,3 @@ export const routeProfile = (user: Pick<UserRecord, 'id' | 'role'>): RouteProfil
 	});
 };
 
-
-export const getOffsetTimezone = (hours: number) => {
-	hours = Number(hours);
-	if (!hours) {
-		return '+00:00'
-	}
-
-	const sign = hours >= 0 ? '+' : '-';
-	const h = Math.abs(hours);
-	const hh = String(Math.floor(h)).padStart(2, '0');
-	const mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
-
-	return `${sign}${hh}:${mm}`;
-}

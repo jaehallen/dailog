@@ -3,11 +3,18 @@ import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
+import { tz } from '@date-fns/tz';
+import { format } from 'date-fns';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals?.session) {
 		redirect(302, `/user/${locals?.user?.id}/timesheets`);
 	}
+
+	const result = format(new Date(), 'MM/dd/yyyy hh:mm a');
+	const resulttz = format(new Date(), 'MM/dd/yyyy', { in: tz('-05:00') });
+	console.log(result);
+	console.log(resulttz);
 
 	return {};
 };
@@ -23,6 +30,7 @@ export const actions = {
 		}
 
 		const { user, schedule } = (await validateUser(inputValid.data)) || {};
+		console.log(user, schedule);
 
 		if (!user?.id) {
 			return fail(400);
