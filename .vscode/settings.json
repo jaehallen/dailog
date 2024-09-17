@@ -1,2 +1,43 @@
 {
+    "http.proxySupport": "off",
+    "terminal.integrated.localEchoLatencyThreshold": -1,
+    "terminal.integrated.localEchoEnabled": "off",
+    "workbench.editorAssociations": {
+        "*.md": "vscode.markdown.preview.editor"
+    },
+    "workbench.startupEditor": "none",
+    "editor.fontFamily": "JetBrains Mono, Menlo, Monaco, Courier New, monospace",
+    "editor.fontWeight": "normal",
+    "editor.fontSize": 13,
+    "editor.lineHeight": 1.5,
+    "editor.letterSpacing": 0,
+    "debug.console.fontSize": 12,
+    "window.commandCenter": false,
+    "workbench.preferredDarkColorTheme": "Monospace Dark",
+    "workbench.preferredLightColorTheme": "Monospace Dark",
+    "workbench.iconTheme": "monospace",
+    "window.autoDetectColorScheme": true,
+    "workbench.layoutControl.enabled": false,
+    "inlineChat.mode": "preview",
+    "files.autoSave": "onFocusChange",
+    "explorer.sortOrder": "filesFirst",
+    "workbench.editor.customLabels.patterns": {
+        "**/src/routes/**/+layout.svelte": "${dirname} - Layout",
+        "**/src/routes/**/+layout.server.ts": "${dirname} - Layout Server",
+        "**/src/routes/**/+layout.server.js": "${dirname} - Layout Server",
+        "**/src/routes/**/+page.svelte": "${dirname} - Page",
+        "**/src/routes/**/+page.server.ts": "${dirname} - Page Server",
+        "**/src/routes/**/+page.server.js": "${dirname} - Page Server",
+        "**/src/routes/**/+page.ts": "${dirname} - Page Load",
+        "**/src/routes/**/+page.js": "${dirname} - Page Load",
+        "**/src/routes/**/+error.svelte": "${dirname} - Error",
+        "**/src/routes/**/+layout.ts": "${dirname} - Layout Load",
+        "**/src/routes/**/+layout.js": "${dirname} - Layout Load"
+    },
+    "svelte.enable-ts-plugin": true,
+    "workbench.tree.indent": 12,
+    "explorer.compactFolders": false,
+    "svelte.ui.svelteKitFilesContextMenu.enable": "always",
+    "IDX.aI.enableInlineCompletion": true,
+    "IDX.aI.enableCodebaseIndexing": true
 }

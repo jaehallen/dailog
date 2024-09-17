@@ -100,19 +100,55 @@ CREATE INDEX IF NOT EXISTS idx1 ON time_entries(user_id, date_at, category);
 CREATE TRIGGER IF NOT EXISTS time_entries_updated
 AFTER UPDATE ON time_entries WHEN old.updated_at <> CURRENT_TIMESTAMP
 BEGIN
- UPDATE time_entries SET updated_at = (unixepoch()) WHERE id = old.id;
+ UPDATE time_entries SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
 END;
 
 -- 
 
--- USERS INFO
-CREATE VIEW IF NOT EXISTS users_info AS
-SELECT u.id, u.name, u.region, u.lead_id, l.name as teamlead, 
-  max(s.date_at) as date_at,
-  s.local_offset, s.utc_offset, s.clock_at, s.first_break_at, s.lunch_at,s.second_break_at
-FROM users u
-LEFT JOIN users l ON l.role != 'user' and l.id = u.lead_id
-LEFT JOIN schedules s ON s.user_id = u.id GROUP by u.id
+-- VIEW USERS
+CREATE VIEW IF NOT EXISTS view_users AS
+SELECT
+  user.id,
+  user.active,
+  user.name,
+  user.region,
+  user.role,
+  user.lead_id,
+  lead.name as teamlead,
+  user.password_hash,
+  user.lock_password
+FROM
+  users user
+  LEFT JOIN users lead ON lead.id = user.lead_id
+
+-- VIEW SCHEDULES
+CREATE VIEW IF NOT EXISTS view_schedules AS
+SELECT
+  id,
+  user_id,
+  effective_date,
+  utc_offset,
+  local_offset,
+  clock_at,
+  first_break_at,
+  lunch_at,
+  second_break_at,
+  clock_dur_min,
+  break_dur_min,
+  break_dur_min
+FROM schedules
+
+-- VIEW TIME ENTRIES
+CREATE VIEW IF NOT EXISTS view_time_entries AS
+SELECT
+  id,
+  user_id,
+  sched_id,
+  category,
+  date_at,
+  start_at,
+  end_at
+  FROM time_entries
 
 -- INSERT DEFAULT USER
 INSERT INTO users ("id","name","region","role","password_hash","lead_id","lock_password")

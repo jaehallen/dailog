@@ -12,6 +12,23 @@ export const toEpochDatetime = (timeStr: string): Date => {
 	return new Date(Date.UTC(1970, 0, 1));
 };
 
+export const dateAtOffset = (date: Date | number, offset: number): Date => {
+	if (typeof date === 'number') {
+		date = new Date(date)
+	}
+
+	const tz = getOffsetTimezone(offset)
+	const dateStr = Intl.DateTimeFormat('en-US', {
+		year: '2-digit',
+		month: '2-digit',
+		day: '2-digit',
+		timeZone: tz
+	}).format(date)
+
+
+	return new Date(dateStr)
+}
+
 export const getTimeStr = (date: Date, isHour12: boolean = false) => {
 	if (!(date instanceof Date)) {
 		throw new Error('Invalid Date');
@@ -65,3 +82,18 @@ export const routeProfile = (user: Pick<UserRecord, 'id' | 'role'>): RouteProfil
 		return el;
 	});
 };
+
+
+export const getOffsetTimezone = (hours: number) => {
+	hours = Number(hours);
+	if (!hours) {
+		return '+00:00'
+	}
+
+	const sign = hours >= 0 ? '+' : '-';
+	const h = Math.abs(hours);
+	const hh = String(Math.floor(h)).padStart(2, '0');
+	const mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
+
+	return `${sign}${hh}:${mm}`;
+}

@@ -1,6 +1,6 @@
 import { lucia } from '$lib/server/lucia/auth';
 import { routeProfile } from '$lib/utility';
-import { error, type Handle, type HandleServerError } from '@sveltejs/kit';
+import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 export const handleError: HandleServerError = async ({ error }) => {
@@ -12,6 +12,10 @@ export const handleError: HandleServerError = async ({ error }) => {
 
 export const auth: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
+	
+	if(event.url.pathname === '/'){
+		redirect(302, '/login')
+	}
 
 	if (!sessionId) {
 		event.locals.user = null;
@@ -54,5 +58,6 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
 
 export const handle: Handle = sequence(auth, userRoute);

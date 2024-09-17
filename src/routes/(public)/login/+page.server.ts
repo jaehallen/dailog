@@ -23,7 +23,6 @@ export const actions = {
 		}
 
 		const { user, schedule } = (await validateUser(inputValid.data)) || {};
-		console.log(user);
 
 		if (!user?.id) {
 			return fail(400);

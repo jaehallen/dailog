@@ -47,14 +47,21 @@ export interface TimeEntryRecord {
 	date_at: string;
 	start_at: number;
 	end_at: number;
+	elapse_sec: number;
 	user_ip?: string;
 	user_agent?: string;
 }
 
 export interface UserInfo {
 	user: UserRecord | null;
-	schedule: ScheduleRecord | null;
+	schedules: ScheduleRecord[] | null;
 	timeEntries: TimeEntryRecord | null;
+}
+
+export interface UserCurrentInfo {
+	user: UserRecord | null;
+	schedule: ScheduleRecord | null;
+	timeEntry: TimeEntryRecord | null;
 }
 
 export interface RouteProfile {

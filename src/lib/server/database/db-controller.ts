@@ -3,6 +3,7 @@ import type { ScheduleRecord, TimeEntryRecord, UserInfo, UserRecord } from './sc
 import { SQL_GET } from './sql-queries';
 import { dbChild } from './turso';
 import { intlFormat } from '$lib/utility';
+import type { number } from 'zod';
 
 export class DatabaseController {
     private client: Client;
@@ -51,35 +52,34 @@ export class DatabaseController {
         return toUserRecord(rows[0]);
     }
 
-    public async getInitInfo(userId: number): Promise<UserInfo | null> {
+    public async getUserLatestInfo(userId: number): Promise<UserInfo | null> {
         const [{ rows: userData = [] }, { rows: userSched = [] }, { rows: timeData = [] }] =
             (await this.batchGet([
-                { sql: `SELECT id, password_hash, active FROM users WHERE id = $id`, args: { id: userId } },
-                { sql: `SELECT * FROM schedules WHERE user_id = $id`, args: { id: userId } },
-                { sql: `SELECT * FROM time_entries WHERE user_id = $id`, args: { id: userId } }
+                { sql: `SELECT id, active, password_hash FROM users WHERE id = $id`, args: { id: userId } },
+                { sql: `SELECT * FROM view_schedules WHERE user_id = $id ORDER BY id DESC LIMIT 3`, args: { id: userId } },
+                { sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE category = 'clock' AND user_id = $id`, args: { id: userId } }
             ])) || [];
 
         const [user] = userData;
-        const [schedule] = userSched;
         const [timeEntries] = timeData;
 
         return {
             user: user ? toUserRecord(user) : null,
-            schedule: schedule ? toUserScheddule(schedule) : null,
+            schedules: userSched ? userSched.map(toUserScheddule) : null,
             timeEntries: timeEntries ? toTimeEntryRecord(timeEntries) : null
         };
     }
 
-    public async getTimeEntry(userId: number): Promise<Omit<UserInfo, 'user'> | null> {
-        const { rows = [] } = (await this.get(SQL_GET.TIME_SCHED_ENTRY, { id: userId })) || {};
-        if (!rows.length) {
-            return null;
-        }
-        const schedule = toUserScheddule(rows[0]);
-        const timeEntries = toTimeEntryRecord(rows[0]);
+    // public async getTimeEntry(userId: number): Promise<Omit<UserInfo, 'user'> | null> {
+    //     const { rows = [] } = (await this.get(SQL_GET.TIME_SCHED_ENTRY, { id: userId })) || {};
+    //     if (!rows.length) {
+    //         return null;
+    //     }
+    //     const schedule = toUserScheddule(rows[0]);
+    //     const timeEntries = toTimeEntryRecord(rows[0]);
 
-        return { schedule, timeEntries };
-    }
+    //     return { schedules, timeEntries };
+    // }
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
     const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
@@ -132,18 +132,18 @@ function toUserScheddule(record: Record<string, any>) {
 }
 
 function toTimeEntryRecord(record: Record<string, any>) {
-    const { id, user_id, sched_id, category, utc_offset, date_at, set_at, start_at, end_at } = record;
+    const { id, user_id, sched_id, category,  date_at, start_at, end_at } = record;
 
     return {
         id,
         user_id,
         sched_id,
         category,
-        utc_offset,
         date_at: intlFormat<TimeEntryRecord>(date_at),
-        set_at: intlFormat<TimeEntryRecord>(set_at),
         start_at,
-        end_at
+        end_at,
+        elapse_sec: Math.floor(Date.now()/1000) - start_at
     };
 }
+
 export const db = new DatabaseController(dbChild());
