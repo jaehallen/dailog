@@ -46,6 +46,7 @@
 							pattern="^[0-9]{'{'}6{'}'}$"
 							placeholder="123456"
 							name="id"
+							id="id"
 							required
 							{disabled}
 							on:focus={() => (isInvalid = false)}
@@ -61,6 +62,7 @@
 							type="password"
 							placeholder="********"
 							name="password"
+							id="password"
 							minlength="6"
 							required
 							{disabled}

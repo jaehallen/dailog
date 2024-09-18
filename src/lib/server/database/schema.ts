@@ -21,6 +21,8 @@ export interface SessionRecord {
 	id: string;
 	user_id: number;
 	expires_at: number;
+	sched_id: number;
+	date_at: string;
 }
 
 export interface ScheduleRecord {

@@ -14,7 +14,7 @@ export const auth: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
 
 	if (event.url.pathname === '/') {
-		redirect(302, '/login')
+		redirect(302, '/login');
 	}
 
 	if (!sessionId) {
@@ -45,6 +45,15 @@ export const auth: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
+export const checkUser: Handle = async ({ event, resolve }) => {
+	console.log('=============authguard @ hook=============');
+	if (event.url.pathname !== '/login' && !event.locals.user) {
+		redirect(302, '/login');
+	}
+
+	return resolve(event);
+};
+
 export const userRoute: Handle = async ({ event, resolve }) => {
 	if (event.locals.user) {
 		const routeList = routeProfile(event.locals.user);
@@ -59,5 +68,4 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-
-export const handle: Handle = sequence(auth, userRoute);
+export const handle: Handle = sequence(auth, checkUser, userRoute);

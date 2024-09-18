@@ -11,14 +11,12 @@ export const validateUser = async ({ id, password }: { id: number; password: str
 		timeEntries = null
 	} = (await db.getUserLatestInfo(id)) || {};
 
-	console.log(user, schedules, timeEntries);
-
 	if (!user || !user.active) {
-		return null;
+		return {user: null, schedule: null, timeEntry: null};
 	}
 
 	if (!(await argon2id.verify(user.password_hash, password))) {
-		return null;
+		return {user: null, schedule: null, timeEntry: null};
 	}
 
 	const schedule = getCurrentSchedule(schedules || []);
@@ -39,5 +37,5 @@ function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
 		return todayOffset.getTime() >= scheduleDate.getTime();
 	});
 
-	return currentSchedule;
+	return currentSchedule ?? null;
 }

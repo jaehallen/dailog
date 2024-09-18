@@ -1,19 +1,21 @@
 import { env } from '$env/dynamic/private';
 import { createClient, type Client } from '@libsql/client';
 
-let mainInstance: Client | undefined = undefined;
-let childInstance: Client | undefined = undefined;
+// let mainInstance: Client | undefined = undefined;
+// let childInstance: Client | undefined = undefined;
 
 export const dbMain = () => {
-	if (mainInstance) return mainInstance;
-	mainInstance = getTursoClient('main');
-	return mainInstance;
+	// if (mainInstance) return mainInstance;
+	// mainInstance = getTursoClient('main');
+	// return mainInstance;
+	return getTursoClient('main');
 };
 
 export const dbChild = () => {
-	if (childInstance) return childInstance;
-	childInstance = getTursoClient('child');
-	return childInstance;
+	// if (childInstance) return childInstance;
+	// childInstance = getTursoClient('child');
+	// return childInstance;
+	return getTursoClient('child');
 };
 
 function getTursoClient(db: 'main' | 'child') {
@@ -34,6 +36,7 @@ function getTursoClient(db: 'main' | 'child') {
 	if (authToken === undefined) {
 		throw new Error('TURSO_AUTH_TOKEN env var is not defined');
 	}
+	console.log('CLIENT ' + db);
 
 	return createClient({ url, authToken });
 }

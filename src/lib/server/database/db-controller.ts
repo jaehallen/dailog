@@ -1,17 +1,18 @@
-import { LibsqlError, type Client, type InStatement, type ResultSet } from '@libsql/client';
+import type { Client, InStatement, ResultSet } from '@libsql/client';
 import type { UserInfo, UserRecord } from './schema';
+import { LibsqlError } from '@libsql/client';
 import { SQL_GET } from './sql-queries';
 import { dbChild } from './turso';
 
 export class DatabaseController {
-	private client: Client;
-	constructor(dbClient: Client) {
+	private client: () => Client;
+	constructor(dbClient: () => Client) {
 		this.client = dbClient;
 	}
-
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
+		log('CLIENT STATUS - GET', this.client().closed);
 		try {
-			const results = await this.client.execute({
+			const results = await this.client().execute({
 				sql,
 				args
 			});
@@ -19,7 +20,7 @@ export class DatabaseController {
 			return results;
 		} catch (error) {
 			if (error instanceof LibsqlError) {
-				logError("get", error as Error)
+				logError('get', error as Error);
 			}
 		}
 
@@ -27,11 +28,12 @@ export class DatabaseController {
 	}
 
 	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
+		log('CLIENT STATUS - BATCHGET', this.client().closed);
 		try {
-			const results = await this.client.batch(querries, 'read');
+			const results = await this.client().batch(querries, 'read');
 			return results;
 		} catch (error: unknown) {
-        logError("batchGet", error as Error)
+			logError('batchGet', error as Error);
 		}
 
 		return null;
@@ -152,16 +154,17 @@ function toTimeEntryRecord(record: Record<string, any>) {
 	};
 }
 
-export function log(source: string, message: string): void{
-  console.log(`\n==================${source}====================`);
-  console.log()
+export function log(source: string, message: string | boolean | number): void {
+	console.log(`\n==================${source}====================`);
+	console.log(message);
 }
 
-export function logError(source: string, error: Error){
-  console.log(`\n==================${source}====================`);
-  if(error instanceof LibsqlError){
-    console.log(`CODE: ${error.code}`)
-  }
-  console.log(error.message);
+export function logError(source: string, error: Error) {
+	console.log(`\n==================${source}====================`);
+	if (error instanceof LibsqlError) {
+		console.log(`CODE: ${error.code}`);
+	}
+	console.log(error.stack);
+	console.log(error.message);
 }
-export const db = new DatabaseController(dbChild());
+export const db = new DatabaseController(dbChild);
