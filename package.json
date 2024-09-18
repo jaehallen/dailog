@@ -29,9 +29,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@date-fns/tz": "^1.0.2",
 		"@libsql/client": "^0.11.0",
-		"date-fns": "^4.1.0",
 		"lucia": "^3.2.0",
 		"lucide-svelte": "^0.441.0",
 		"mode-watcher": "^0.4.1",

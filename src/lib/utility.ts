@@ -28,21 +28,15 @@ export const getOffsetTimezoneStr = (hours: number) => {
 
 export const dateAtOffset = (date: Date | number, offset: number): Date => {
 	if (typeof date === 'number') {
-		date = new Date(date);
+		date = new Date((date + (offset*3600))*1000);
+	}else{
+		date = new Date(date.getTime() + (offset*3600000));
 	}
 
-	const tz = getOffsetTimezoneStr(offset);
-	const dateStr = Intl.DateTimeFormat('en-US', {
-		year: '2-digit',
-		month: '2-digit',
-		day: '2-digit',
-		timeZone: tz
-	}).format(date);
-
-	return new Date(dateStr);
+	return date;
 };
 
-export const getTimeStr = (date: Date, isHour12: boolean = false) => {
+export const getTimeStr = (date: Date, isHour12 = false) => {
 	if (!(date instanceof Date)) {
 		throw new Error('Invalid Date');
 	}
@@ -55,6 +49,8 @@ export const getTimeStr = (date: Date, isHour12: boolean = false) => {
 	}).format(date);
 };
 
+
+//This should only be executed at client side. UTC-Offset timezone is not supported.
 export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
 	let isTime = false;
 	let date = val instanceof Date ? val : new Date(val);

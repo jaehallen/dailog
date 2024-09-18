@@ -2,7 +2,6 @@ import { Argon2id } from 'oslo/password';
 import { db } from '../database/db-controller';
 import type { ScheduleRecord } from '../database/schema';
 import { dateAtOffset } from '$lib/utility';
-import { startOfDay } from 'date-fns';
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
 	const argon2id = new Argon2id();
@@ -36,12 +35,9 @@ function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
 	const currentSchedule = schedules.find((schedule) => {
 		const scheduleDate = new Date(schedule.effective_date);
 		const todayOffset = dateAtOffset(today, schedule.utc_offset);
-		console.log(scheduleDate);
-		console.log(startOfDay(todayOffset));
-		return todayOffset >= scheduleDate;
+
+		return todayOffset.getTime() >= scheduleDate.getTime();
 	});
 
-	console.log('==================>currentSchedule');
-	console.log(currentSchedule);
 	return currentSchedule;
 }

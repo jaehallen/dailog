@@ -1,4 +1,4 @@
-import { Lucia } from 'lucia';
+import { Lucia, TimeSpan } from 'lucia';
 import { TursoAdapter } from './libsql';
 import { dbChild } from '../database/turso';
 import { dev } from '$app/environment';
@@ -10,14 +10,18 @@ const adapter = new TursoAdapter(dbChild(), {
 });
 
 export const lucia = new Lucia(adapter, {
-	sessionCookie: {
+	sessionExpiresIn: new TimeSpan(2, 'm'),
+  sessionCookie: {
 		attributes: {
 			secure: !dev
 		}
 	},
 	getUserAttributes: (attributes) => {
 		return attributes;
-	}
+	},
+  getSessionAttributes: (attributes) => {
+    return attributes;
+  }
 });
 
 declare module 'lucia' {
@@ -25,5 +29,10 @@ declare module 'lucia' {
 		Lucia: typeof lucia;
 		UserId: number;
 		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
+    DatabaseSessionAttributes: DatabaseSessionAttributes;
+	}
+	interface DatabaseSessionAttributes {
+		sched_id: number;
+		date_at: string;
 	}
 }

@@ -19,7 +19,7 @@ export class DatabaseController {
 			return results;
 		} catch (error) {
 			if (error instanceof LibsqlError) {
-				console.log(error.message);
+				logError("get", error as Error)
 			}
 		}
 
@@ -30,11 +30,8 @@ export class DatabaseController {
 		try {
 			const results = await this.client.batch(querries, 'read');
 			return results;
-		} catch (error) {
-			if (error instanceof LibsqlError) {
-				console.log(error.code)
-				console.log(error.message);
-			}
+		} catch (error: unknown) {
+        logError("batchGet", error as Error)
 		}
 
 		return null;
@@ -155,4 +152,16 @@ function toTimeEntryRecord(record: Record<string, any>) {
 	};
 }
 
+export function log(source: string, message: string): void{
+  console.log(`\n==================${source}====================`);
+  console.log()
+}
+
+export function logError(source: string, error: Error){
+  console.log(`\n==================${source}====================`);
+  if(error instanceof LibsqlError){
+    console.log(`CODE: ${error.code}`)
+  }
+  console.log(error.message);
+}
 export const db = new DatabaseController(dbChild());
