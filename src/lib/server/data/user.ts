@@ -1,6 +1,6 @@
 import { Argon2id } from 'oslo/password';
 import { db } from '../database/db-controller';
-import type { ScheduleRecord } from '../database/schema';
+import type { ScheduleRecord } from '$lib/schema';
 import { dateAtOffset } from '$lib/utility';
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
@@ -12,11 +12,11 @@ export const validateUser = async ({ id, password }: { id: number; password: str
 	} = (await db.getUserLatestInfo(id)) || {};
 
 	if (!user || !user.active) {
-		return {user: null, schedule: null, timeEntry: null};
+		return { user: null, schedule: null, timeEntry: null };
 	}
 
 	if (!(await argon2id.verify(user.password_hash, password))) {
-		return {user: null, schedule: null, timeEntry: null};
+		return { user: null, schedule: null, timeEntry: null };
 	}
 
 	const schedule = getCurrentSchedule(schedules || []);

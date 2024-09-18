@@ -2,9 +2,10 @@
 	import Sun from 'lucide-svelte/icons/sun';
 	import Moon from 'lucide-svelte/icons/moon';
 	import { setTheme, theme } from 'mode-watcher';
-	import type { RouteProfile } from '$lib/server/database/schema';
+	import type { RouteProfile } from '$lib/schema';
 	export let routeList: RouteProfile[] = [];
 	export let curPath = '/';
+	export let brand = 'Dailog';
 
 	let userRoute: RouteProfile[] = [];
 	let adminRoute: RouteProfile[] = [];
@@ -29,7 +30,7 @@
 <nav class="navbar" aria-label="main navigation">
 	<div class="navbar-brand">
 		<a class="navbar-item" href={curPath}>
-			<h1 class="title">Dailog</h1>
+			<h1 class="title">{brand}</h1>
 		</a>
 	</div>
 

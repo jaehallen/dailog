@@ -1,12 +1,12 @@
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { UserInfo, UserRecord } from './schema';
+import type { UserInfo, UserRecord } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { SQL_GET } from './sql-queries';
 import { dbChild } from './turso';
 
 export class DatabaseController {
 	private client: Client;
-	constructor(dbClient:  Client) {
+	constructor(dbClient: Client) {
 		this.client = dbClient;
 	}
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
@@ -28,7 +28,6 @@ export class DatabaseController {
 	}
 
 	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
-		log('CLIENT STATUS - BATCHGET', this.client.closed);
 		try {
 			const results = await this.client.batch(querries, 'read');
 			return results;
@@ -68,13 +67,33 @@ export class DatabaseController {
 			{ rows: timeData = [] } = {}
 		] = results || [];
 
-		const [user] = userData;
-		const [timeEntries] = timeData;
+		return {
+			user: userData.length ? toUserRecord(userData[0]) : null,
+			schedules: userSched ? userSched.map(toUserScheddule) : null,
+			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : null
+		};
+	}
+
+	public async getUserEntryAndSched(
+		userId: number,
+		schedId: number
+	): Promise<Omit<UserInfo, 'user'>> {
+		const results = await this.batchGet([
+			{
+				sql: `SELECT * FROM view_schedules WHERE id = $sid ORDER BY id DESC LIMIT 3`,
+				args: { sid: schedId }
+			},
+			{
+				sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE user_id = $id`,
+				args: { id: userId }
+			}
+		]);
+
+		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
 
 		return {
-			user: user ? toUserRecord(user) : null,
 			schedules: userSched ? userSched.map(toUserScheddule) : null,
-			timeEntries: timeEntries ? toTimeEntryRecord(timeEntries) : null
+			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : null
 		};
 	}
 

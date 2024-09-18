@@ -55,7 +55,7 @@ export const checkUser: Handle = async ({ event, resolve }) => {
 
 export const userRoute: Handle = async ({ event, resolve }) => {
 	if (event.locals.user) {
-		const routeList = routeProfile(event.locals.user);
+		const routeList = routeProfile(event.locals.user, event.url.pathname);
 
 		if (!routeList.length) {
 			return error(405, 'Not Allowed');

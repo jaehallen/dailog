@@ -57,7 +57,7 @@ export interface TimeEntryRecord {
 export interface UserInfo {
 	user: UserRecord | null;
 	schedules: ScheduleRecord[] | null;
-	timeEntries: TimeEntryRecord | null;
+	timeEntries: TimeEntryRecord[] | null;
 }
 
 export interface UserCurrentInfo {

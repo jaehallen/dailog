@@ -14,7 +14,7 @@
 
 <div>
 	<ModeWatcher />
-	<LayoutHeader routeList={data.routeList || []} curPath={$page.url.pathname} />
+	<LayoutHeader brand={data.userInitial} routeList={data.routeList || []} curPath={$page.url.pathname} />
 	<main>
 		<slot />
 	</main>

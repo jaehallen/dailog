@@ -3,14 +3,18 @@ import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
+import { userCurrentEntries } from '$lib/server/data/time';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if(locals.user){
-		const results = await validateUser({id: locals.user.id, password: 'admin@hopkins'});
-		console.log(results)
+	if (!locals.session) {
+		redirect(302, '/login');
 	}
 
-	return {};
+	const userLatestTimedata = await userCurrentEntries(locals.session);
+
+	return {
+		userLatestTimedata
+	};
 };
 
 export const actions = {
