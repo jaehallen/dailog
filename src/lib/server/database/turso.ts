@@ -1,21 +1,19 @@
 import { env } from '$env/dynamic/private';
 import { createClient, type Client } from '@libsql/client';
 
-// let mainInstance: Client | undefined = undefined;
-// let childInstance: Client | undefined = undefined;
+let mainInstance: Client | undefined = undefined;
+let childInstance: Client | undefined = undefined;
 
 export const dbMain = () => {
-	// if (mainInstance) return mainInstance;
-	// mainInstance = getTursoClient('main');
-	// return mainInstance;
-	return getTursoClient('main');
+	if (mainInstance) return mainInstance;
+	mainInstance = getTursoClient('main');
+	return mainInstance;
 };
 
 export const dbChild = () => {
-	// if (childInstance) return childInstance;
-	// childInstance = getTursoClient('child');
-	// return childInstance;
-	return getTursoClient('child');
+	if (childInstance) return childInstance;
+	childInstance = getTursoClient('child');
+	return childInstance;
 };
 
 function getTursoClient(db: 'main' | 'child') {

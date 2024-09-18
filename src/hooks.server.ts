@@ -46,7 +46,6 @@ export const auth: Handle = async ({ event, resolve }) => {
 };
 
 export const checkUser: Handle = async ({ event, resolve }) => {
-	console.log('=============authguard @ hook=============');
 	if (event.url.pathname !== '/login' && !event.locals.user) {
 		redirect(302, '/login');
 	}

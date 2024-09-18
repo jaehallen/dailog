@@ -5,14 +5,14 @@ import { SQL_GET } from './sql-queries';
 import { dbChild } from './turso';
 
 export class DatabaseController {
-	private client: () => Client;
-	constructor(dbClient: () => Client) {
+	private client: Client;
+	constructor(dbClient:  Client) {
 		this.client = dbClient;
 	}
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
-		log('CLIENT STATUS - GET', this.client().closed);
+		log('CLIENT STATUS - GET', this.client.closed);
 		try {
-			const results = await this.client().execute({
+			const results = await this.client.execute({
 				sql,
 				args
 			});
@@ -28,9 +28,9 @@ export class DatabaseController {
 	}
 
 	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
-		log('CLIENT STATUS - BATCHGET', this.client().closed);
+		log('CLIENT STATUS - BATCHGET', this.client.closed);
 		try {
-			const results = await this.client().batch(querries, 'read');
+			const results = await this.client.batch(querries, 'read');
 			return results;
 		} catch (error: unknown) {
 			logError('batchGet', error as Error);
@@ -167,4 +167,4 @@ export function logError(source: string, error: Error) {
 	console.log(error.stack);
 	console.log(error.message);
 }
-export const db = new DatabaseController(dbChild);
+export const db = new DatabaseController(dbChild());

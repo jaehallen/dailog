@@ -3,9 +3,13 @@ import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
-import { dbChild } from '$lib/server/database/turso';
 
 export const load: PageServerLoad = async ({ locals }) => {
+	if(locals.user){
+		const results = await validateUser({id: locals.user.id, password: 'admin@hopkins'});
+		console.log(results)
+	}
+
 	return {};
 };
 
