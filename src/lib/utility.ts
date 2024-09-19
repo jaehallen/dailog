@@ -51,6 +51,7 @@ export const getTimeStr = (date: Date, isHour12 = false) => {
 
 //This should only be executed at client side. UTC-Offset timezone is not supported.
 export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
+	console.log('check runtime location')
 	let isTime = false;
 	let date = val instanceof Date ? val : new Date(val);
 

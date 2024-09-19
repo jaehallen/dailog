@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { lucia } from '$lib/server/lucia/auth';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {
+	console.log("logout")
 	if (!locals.session) {
 		return new Response(null, { status: 401 });
 	}

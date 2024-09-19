@@ -10,10 +10,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(302, '/login');
 	}
 
-	const userLatestTimedata = await userCurrentEntries(locals.session);
+	const userTimsheet = await userCurrentEntries(locals.session);
 
 	return {
-		userLatestTimedata
+		userTimsheet
 	};
 };
 
