@@ -3,7 +3,8 @@ import { TursoAdapter } from './libsql';
 import { dbChild } from '../database/turso';
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import type { UserRecord } from '$lib/schema';
+import type { RouteProfile, UserRecord } from '$lib/schema';
+import { ROUTES } from '$lib/schema';
 
 const MAX_HOUR = parseInt(env.MIN_WORKDATE_DIFF || '') / 2 || 10;
 const adapter = new TursoAdapter(dbChild(), {
@@ -37,3 +38,23 @@ declare module 'lucia' {
 		date_at: string;
 	}
 }
+
+export const routeProfile = (
+	user: Pick<UserRecord, 'id' | 'role'>,
+	pathname: string
+): RouteProfile[] => {
+	const userRoute = ROUTES.filter((el) => el.role.includes(user.role)).map((el) => {
+		el.path = el.path.replace('[id]', String(user.id));
+		return el;
+	});
+
+	if (!userRoute.find((el: RouteProfile) => el.path === pathname)) {
+		return [];
+	}
+
+	return userRoute;
+};
+
+export const isPublicRoute = (url: URL) => {
+	return ['/login', '/'].includes(url.pathname);
+};

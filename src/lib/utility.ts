@@ -75,22 +75,6 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
 	return Intl.DateTimeFormat('en-US', options).format(date);
 };
 
-export const routeProfile = (
-	user: Pick<UserRecord, 'id' | 'role'>,
-	pathname: string
-): RouteProfile[] => {
-	const userRoute = ROUTES.filter((el) => el.role.includes(user.role)).map((el) => {
-		el.path = el.path.replace('[id]', String(user.id));
-		return el;
-	});
-
-	if (!userRoute.find((el: RouteProfile) => el.path === pathname)) {
-		return [];
-	}
-
-	return userRoute;
-};
-
 export const userInitials = (fullname: string): string => {
 	const allNames = fullname.trim().split(' ');
 

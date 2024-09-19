@@ -1,12 +1,17 @@
 <script lang="ts">
 	import RoundButton from '$lib/component/RoundButton.svelte';
 	import { formatDateOrTime } from '$lib/utility';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
+
 	export let data: PageData;
-	const formatDate = formatDateOrTime
+
 	const { timeEntries, startOfDuty, date_at } = data?.userTimsheet || {};
-	const dutydate = date_at ? formatDate(date_at) : '';
-	console.log(timeEntries)
+	let importReady = false;
+	let formatDate = onMount(async () => {
+		const { formatDateOrTime } = await import('$lib/utility');
+		importReady = true;
+	});
 </script>
 
 <main class="container">
@@ -16,15 +21,15 @@
 				<div class="columns box py-1">
 					<div class="column">
 						<div class="field is-grouped">
-							<RoundButton name="Break" />
-							<RoundButton name="Lunch" />
+							<RoundButton class="is-primary" name="Break" />
+							<RoundButton class="is-primary" name="Lunch" />
 						</div>
 					</div>
 					<div class="column">
 						<div class="field is-grouped">
-							<RoundButton name="Bio" />
-							<RoundButton name="Coffee" />
-							<RoundButton name="Clinic" />
+							<RoundButton class="is-link is-light" name="Bio" />
+							<RoundButton class="is-link is-light" name="Coffee" />
+							<RoundButton class="is-link is-light" name="Clinic" />
 						</div>
 					</div>
 				</div>
@@ -41,20 +46,20 @@
 					<th>Start At</th>
 					<th>End At</th>
 				</tr>
-			  </thead>
-			  <tbody>
-					{#if timeEntries}
-						{#each timeEntries as entry (entry.id) }
-							<tr>
-								<td>{entry.date_at}</td>
-								<td>{entry.sched_id}</td>
-								<td class="is-capitalized">{entry.category}</td>
-								<td>{formatDate(new Date(entry.start_at*1000), true, 8)}</td>
-								<td>{entry.end_at || "-"}</td>
-							</tr>
-						{/each}
-					{/if}
-				</tbody>
+			</thead>
+			<tbody>
+				{#if timeEntries && importReady}
+					{#each timeEntries as entry (entry.id)}
+						<tr>
+							<td>{entry.date_at}</td>
+							<td>{entry.sched_id}</td>
+							<td class="is-capitalized">{entry.category}</td>
+							<td>{formatDateOrTime(new Date(entry.start_at * 1000), true, 8)}</td>
+							<td>{entry.end_at || '-'}</td>
+						</tr>
+					{/each}
+				{/if}
+			</tbody>
 		</table>
 	</section>
 </main>
