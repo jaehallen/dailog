@@ -1,5 +1,5 @@
 const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
-const CATEGORY = ['clock', 'break', 'lunch', 'coffee', 'clinic'] as const;
+const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
 
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
