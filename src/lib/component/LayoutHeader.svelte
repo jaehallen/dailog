@@ -9,6 +9,7 @@
 
 	let userRoute: RouteProfile[] = [];
 	let adminRoute: RouteProfile[] = [];
+	let isActive = false;
 
 	routeList.forEach((route) => {
 		if (!route.role.includes('user')) {
@@ -32,9 +33,21 @@
 		<a class="navbar-item" href={curPath}>
 			<h1 class="title">{brand}</h1>
 		</a>
+		<button
+			class="navbar-burger"
+			class:is-active={isActive}
+			aria-label="menu"
+			aria-expanded="false"
+			on:click={() => (isActive = !isActive)}
+		>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+		</button>
 	</div>
 
-	<div class="navbar-menu">
+	<div class="navbar-menu" class:is-active={isActive}>
 		<div class="navbar-start">
 			{#each userRoute as route}
 				<a class="navbar-item is-tab" class:is-active={curPath == route.path} href={route.path}>

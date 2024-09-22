@@ -9,17 +9,22 @@ interface UserLatestTimedata extends Omit<UserInfo, 'user'> {
 	date_at: string;
 }
 
-export const userDutyInfo = (schedule: ScheduleRecord, timeEntries: TimeEntryRecord[] | TimeEntryRecord) => {
+export const userDutyInfo = (
+	schedule: ScheduleRecord,
+	timeEntries: TimeEntryRecord[] | TimeEntryRecord
+) => {
 	const [dateStr] = dateAtOffset(new Date(), schedule.utc_offset).toISOString().split('T', 1);
-	const clockedEntry = Array.isArray(timeEntries) ? timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock') : timeEntries;
-	const startOfDuty = isStartOfDuty(clockedEntry || timeEntries)
+	const clockedEntry = Array.isArray(timeEntries)
+		? timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock')
+		: timeEntries;
+	const startOfDuty = isStartOfDuty(clockedEntry || timeEntries);
 	const date_at = startOfDuty || !clockedEntry ? dateStr : clockedEntry.date_at;
 
 	return {
 		startOfDuty,
-		date_at,
+		date_at
 	};
-}
+};
 
 export const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
 	const { schedules, timeEntries } = await db.getUserEntryAndSched(
@@ -27,17 +32,17 @@ export const userCurrentEntries = async (session: Session): Promise<UserLatestTi
 		session.sched_id
 	);
 
-	if (!timeEntries || !schedules) {
+	if (!timeEntries.length || !schedules.length) {
 		return null;
 	}
 	const [schedule] = schedules;
-	const {startOfDuty, date_at} = userDutyInfo(schedule, timeEntries);
+	const { startOfDuty, date_at } = userDutyInfo(schedule, timeEntries);
 
 	return {
 		timeEntries,
 		schedules,
 		startOfDuty,
-		date_at,
+		date_at
 	};
 };
 
@@ -57,11 +62,11 @@ export function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
 }
 
 export function isStartOfDuty(timeEntries: TimeEntryRecord[] | TimeEntryRecord): boolean {
-	const clockedData = Array.isArray(timeEntries) 
-	? timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock')
-	: timeEntries
+	const clockedData = Array.isArray(timeEntries)
+		? timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock')
+		: timeEntries;
 
-	if(!clockedData){
+	if (!clockedData) {
 		return true;
 	}
 
@@ -71,5 +76,3 @@ export function isStartOfDuty(timeEntries: TimeEntryRecord[] | TimeEntryRecord):
 
 	return false;
 }
-
-

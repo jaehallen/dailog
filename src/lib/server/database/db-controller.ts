@@ -69,8 +69,8 @@ export class DatabaseController {
 
 		return {
 			user: userData.length ? toUserRecord(userData[0]) : null,
-			schedules: userSched ? userSched.map(toUserScheddule) : null,
-			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : null
+			schedules: userSched ? userSched.map(toUserScheddule) : [],
+			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : []
 		};
 	}
 
@@ -92,8 +92,8 @@ export class DatabaseController {
 		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
 
 		return {
-			schedules: userSched ? userSched.map(toUserScheddule) : null,
-			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : null
+			schedules: userSched ? userSched.map(toUserScheddule) : [],
+			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : []
 		};
 	}
 

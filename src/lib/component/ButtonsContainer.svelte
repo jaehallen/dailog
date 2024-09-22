@@ -1,9 +1,9 @@
 <script lang="ts">
 </script>
 
-<div class="columns is-centered">
+<div class="columns is-centered is-desktop">
 	<div class="column is-half">
-		<div class="columns box py-1">
+		<div class="columns box py-1 is-desktop">
 			<div class="column is-align-content-center">
 				<slot name="left" />
 			</div>

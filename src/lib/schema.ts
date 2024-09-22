@@ -1,10 +1,47 @@
 const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
+const TIMEACTION = ['start', 'end'] as const;
+
+export const CONFIRMCATEGORY: Record<OptCategory, Record<OptTimeAction, string>> = {
+	clock: {
+		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
+		end: 'Would you like to conclude your <strong>Work Today</strong>?'
+	},
+	break: {
+		start: "Are you sure you'd like to take your <strong>Short Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Short Break</strong>?'
+	},
+	lunch: {
+		start: "Are you sure you'd like to take your <strong>Lunch Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Lunch Break</strong>?'
+	},
+	bio: {
+		start: "Are you sure you'd like to take your <strong>Restroom Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Restroom Break</strong>?'
+	},
+	coffee: {
+		start: "Are you sure you'd like to take your <strong>Coffee Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Coffee Break</strong>?'
+	},
+	clinic: {
+		start: "Are you sure you'd like to take your <strong>Medical Time</strong> now?",
+		end: 'Would you like to conclude your <strong>Medical Medical</strong>?'
+	}
+};
 
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
-
+export type OptTimeAction = (typeof TIMEACTION)[number];
+export type OptWeekdays = (typeof WEEKDAYS)[number];
 export const BREAKTYPE: Record<string, OptCategory> = {};
+
+export interface TimesheetPostInfo {
+	date_at: string;
+	id: number | null;
+	category: OptCategory;
+	timeAction: OptTimeAction;
+}
 
 export interface UserRecord {
 	id: number;
@@ -48,7 +85,7 @@ export interface TimeEntryRecord {
 	category: OptCategory;
 	date_at: string;
 	start_at: number;
-	end_at: number;
+	end_at: number | null;
 	elapse_sec: number;
 	user_ip?: string;
 	user_agent?: string;
@@ -56,8 +93,8 @@ export interface TimeEntryRecord {
 
 export interface UserInfo {
 	user: UserRecord | null;
-	schedules: ScheduleRecord[] | null;
-	timeEntries: TimeEntryRecord[] | null;
+	schedules: ScheduleRecord[];
+	timeEntries: TimeEntryRecord[];
 }
 
 export interface UserCurrentInfo {
@@ -70,6 +107,15 @@ export interface RouteProfile {
 	name: string;
 	path: string;
 	role: OptRole[];
+}
+
+export interface TimeEntryResults {
+	id: number;
+	date_at: string;
+	timestamp: number;
+	category: OptCategory;
+	sched_id: number;
+	timeAction: OptTimeAction;
 }
 
 export const ROUTES: RouteProfile[] = [

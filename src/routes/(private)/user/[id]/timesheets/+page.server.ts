@@ -4,6 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
 import { userCurrentEntries } from '$lib/server/data/time';
+import type { OptCategory, OptTimeAction, TimeEntryRecord } from '$lib/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
@@ -12,41 +13,41 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const userTimsheet = await userCurrentEntries(locals.session);
 
+	console.log('timesheet loading');
 	return {
 		userTimsheet
 	};
 };
 
 export const actions = {
-	default: async ({ cookies, request }) => {
+	default: async ({
+		request,
+		locals
+	}): Promise<{ record: Partial<TimeEntryRecord>; [key: string]: any }> => {
 		const form = await request.formData();
-		const data: Record<string, any> = Object.fromEntries(form);
-		const inputValid = validateSignIn.safeParse(data);
+		const data = Object.fromEntries(form);
+		const category = data.category as OptCategory;
+		const timeAction = data.timeAction as OptTimeAction;
+		console.log(data);
 
-		if (!inputValid.success) {
-			return fail(400);
+		const id = !Number(data.id) ? Math.floor(Math.random() * 100) : Number(data.id);
+
+		if (locals.session) {
+			return {
+				record: {
+					id,
+					end_at: Number(data.id) ? Math.floor(Date.now() / 1000) : null,
+					start_at: Math.floor(Date.now() / 1000),
+					sched_id: locals.session.sched_id,
+					date_at: locals.session.date_at,
+					user_id: locals.user?.id,
+					category,
+					elapse_sec: 0
+				},
+				timeAction
+			};
 		}
 
-		const { user, schedule } = (await validateUser(inputValid.data)) || {};
-
-		if (!user?.id) {
-			return fail(400);
-		}
-
-		if (!schedule) {
-			return fail(400, { noSchedule: true });
-		}
-
-		const session = await lucia.createSession(user.id, {
-			sched_id: schedule.id,
-			date_at: schedule.effective_date
-		});
-		const sessionCookie = lucia.createSessionCookie(session.id);
-		cookies.set(sessionCookie.name, sessionCookie.value, {
-			path: '.',
-			...sessionCookie.attributes
-		});
-
-		redirect(302, `/user/${user.id}/timesheets`);
+		return { record: {} };
 	}
 } satisfies Actions;
