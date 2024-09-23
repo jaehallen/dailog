@@ -4,7 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
 import { userCurrentEntries } from '$lib/server/data/time';
-import type { OptCategory, OptTimeAction, TimeEntryRecord } from '$lib/schema';
+import type { OptCategory, OptActionState, TimeEntryRecord } from '$lib/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
@@ -27,7 +27,7 @@ export const actions = {
 		const form = await request.formData();
 		const data = Object.fromEntries(form);
 		const category = data.category as OptCategory;
-		const timeAction = data.timeAction as OptTimeAction;
+		const timeAction = data.timeAction as OptActionState;
 		console.log(data);
 
 		const id = !Number(data.id) ? Math.floor(Math.random() * 100) : Number(data.id);

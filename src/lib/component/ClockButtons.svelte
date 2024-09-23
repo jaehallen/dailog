@@ -3,9 +3,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import RoundButton from '$lib/component/RoundButton.svelte';
 	import ButtonsContainer from './ButtonsContainer.svelte';
+	import { timeAction } from '$lib/data-store';
 
 	export let disabled = false;
-	export let lunched = false;
+
 	const dispatch = createEventDispatcher();
 	const startTime = (entryType: OptCategory) => {
 		dispatch('start', { entryType });
@@ -16,7 +17,7 @@
 	<div class="field is-grouped is-justify-content-center" slot="left">
 		<RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
 		<RoundButton
-			disabled={disabled || lunched}
+			disabled={disabled || $timeAction.lunched}
 			class="is-primary"
 			name="Lunch"
 			on:click={() => startTime('lunch')}

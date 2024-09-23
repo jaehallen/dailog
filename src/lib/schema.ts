@@ -1,9 +1,9 @@
 const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
-const TIMEACTION = ['start', 'end'] as const;
+const ACTIONSTATE = ['start', 'end'] as const;
 
-export const CONFIRMCATEGORY: Record<OptCategory, Record<OptTimeAction, string>> = {
+export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
 	clock: {
 		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
 		end: 'Would you like to conclude your <strong>Work Today</strong>?'
@@ -32,7 +32,7 @@ export const CONFIRMCATEGORY: Record<OptCategory, Record<OptTimeAction, string>>
 
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
-export type OptTimeAction = (typeof TIMEACTION)[number];
+export type OptActionState = (typeof ACTIONSTATE)[number];
 export type OptWeekdays = (typeof WEEKDAYS)[number];
 export const BREAKTYPE: Record<string, OptCategory> = {};
 
@@ -40,7 +40,20 @@ export interface TimesheetPostInfo {
 	date_at: string;
 	id: number | null;
 	category: OptCategory;
-	timeAction: OptTimeAction;
+	timeAction: OptActionState;
+}
+
+export interface TimesheetStateInfo {
+	confirm: boolean;
+	state: OptActionState,
+	nextState: OptActionState,
+	category: OptCategory,
+	date_at: string,
+	isBreak: boolean,
+	id: number,
+	timestamp: number,
+	lunched: boolean,
+	message: string,
 }
 
 export interface UserRecord {
@@ -115,7 +128,7 @@ export interface TimeEntryResults {
 	timestamp: number;
 	category: OptCategory;
 	sched_id: number;
-	timeAction: OptTimeAction;
+	timeAction: OptActionState;
 }
 
 export const ROUTES: RouteProfile[] = [

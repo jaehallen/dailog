@@ -1,123 +1,84 @@
 <script lang="ts">
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import type { OptCategory, TimeEntryRecord, TimesheetPostInfo } from '$lib/schema';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import ClockButtons from '$lib/component/ClockButtons.svelte';
 	import ClockEndButtons from '$lib/component/ClockEndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
-	import { CONFIRMCATEGORY } from '$lib/schema';
-	import { applyAction, enhance } from '$app/forms';
-	import { formatDateOrTime, updateEntries } from '$lib/utility';
+	import { formatDateOrTime} from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
-	import { timesheet } from '$lib/data-store';
+	import { timesheet, timeAction, lunchRecord } from '$lib/data-store';
+	import { enhance } from '$app/forms';
 
 	onMount(async () => {
-		const { formatDateOrTime, updateEntries } = await import('$lib/utility');
 		importReady = true;
 	});
 
 	export let data: PageData;
-	let { startOfDuty = false, date_at } = data?.userTimsheet ?? {};
-	let formData: TimesheetPostInfo;
-	let timeEntries: TimeEntryRecord[];
-	$: formData = { id: 0, category: 'break', timeAction: 'start', date_at: date_at || '' };
+	const FORM_ID = 'posttime'
 	timesheet.set(data.userTimsheet?.timeEntries || []);
+	if(data.userTimsheet){
+		timeAction.set({
+			confirm: false,
+			state: 'end',
+			nextState: 'start',
+			category: 'break',
+			date_at: '',
+			isBreak: false,
+			id: 0,
+			timestamp: 0,
+			lunched: $lunchRecord !== null,
+			message: '',
+		})
+	}
 
-	let dialog: HTMLDialogElement;
 	let importReady = false;
 	let disabled = false;
-	let isBreak = false;
-	let lunched = false;
 	let timestamp = 0;
 	let timeEntryForm: HTMLFormElement;
-	let modalInfo = {
-		message: '',
-		isActive: false,
-		formId: 'posttime'
-	};
 
-	const confirmAction = () => {
-		modalInfo.message = CONFIRMCATEGORY[formData.category][formData.timeAction];
-		modalInfo.isActive = true;
-	};
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {
-		disabled = true;
-		formData = { date_at: date_at, timeAction: 'start', category: event.detail.entryType, id: 0 };
-		confirmAction();
+		timeAction.start(event.detail.entryType);
 	};
 
 	const concludeBreak = () => {
-		disabled = true;
-		formData.timeAction = 'end';
-		console.log(formData);
-		confirmAction();
-		// const lastRecord = timeEntries?.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
-		// 	if (entry.start_at > latest.start_at) {
-		// 		latest = { ...entry };
-		// 	}
-		// 	return latest;
-		// });
-		//
-		// if (lastRecord && !lastRecord.end_at) {
-		// 	formData = {
-		// 		timeAction: 'end',
-		// 		category: lastRecord.category,
-		// 		id: lastRecord.id
-		// 	};
-		// 	confirmAction();
-		// }
+		timeAction.end();
 	};
 
-	const handleEnhance: SubmitFunction = ({ formData: data }) => {
-		modalInfo.isActive = false;
-		console.log(data);
+	const handleEnhance: SubmitFunction = () => {
+		timeAction.close();
+		disabled = true;
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
-				const { record, timeAction } = result.data || {};
-
-				if (formData.timeAction === 'start') {
-					isBreak = true;
-					timestamp = record.start_at;
-					formData.id = record.id;
-				} else {
-					isBreak = false;
-					timestamp = 0;
-					lunched = formData.category === 'lunch';
-				}
+				const { record } = result.data || {};
 				timesheet.updateSheet(record);
+				timeAction.save(record.id);
+				timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
 				await update({ invalidateAll: false, reset: false });
 			}
 			disabled = false;
 		};
 	};
-
-	function hasLunchedToday() {
-		const lunchEntry = timeEntries?.find((entry) => {
-			return entry.category == 'lunch' && entry.date_at == date_at;
-		});
-
-		return Boolean(lunchEntry?.id);
-	}
 </script>
 
 <main class="container">
-	<TimesheetModal {...modalInfo} on:no={() => (disabled = false)} />
-	<form id="posttime" method="POST" bind:this={timeEntryForm} use:enhance={handleEnhance}>
-		<input type="number" id="id" name="id" value={formData.id} />
-		<input type="text" id="category" name="category" value={formData.category} />
-		<input type="text" id="time-action" name="timeAction" value={formData.timeAction} />
-		<input type="date" id="date-at" name="date_at" value={date_at} />;
+	<TimesheetModal formId={FORM_ID} isActive={$timeAction.confirm} on:no={() => (disabled = false)} />
+	<form class="is-hidden" id={FORM_ID} method="POST" bind:this={timeEntryForm} use:enhance={handleEnhance}>
+		<input type="number" id="id" name="id" value={$timeAction.id} />
+		<input type="text" id="category" name="category" value={$timeAction.category} />
+		<input type="text" id="time-action" name="timeAction" value={$timeAction.state} />
+		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} />;
 	</form>
 	<section class="mt-6">
-		{#if !isBreak}
+		{#if !$timeAction.isBreak}
 			<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-				<ClockButtons on:start={startTime} {lunched} {disabled} />
+				<ClockButtons on:start={startTime} {disabled} />
 			</div>
 		{:else}
 			<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-				<ClockEndButtons {timestamp} on:conclude={concludeBreak} category={formData.category} />
+				<ClockEndButtons {timestamp} on:conclude={concludeBreak} category={$timeAction.category} />
 			</div>
 		{/if}
 	</section>
@@ -133,7 +94,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#if $timesheet && importReady}
+				{#if $timesheet.length && importReady}
 					{#each $timesheet as entry (entry.id)}
 						<tr>
 							<td>{entry.date_at}</td>

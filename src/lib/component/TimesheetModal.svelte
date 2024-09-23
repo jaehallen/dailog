@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { timeAction } from '$lib/data-store';
 	import Modal from './Modal.svelte';
 	import { createEventDispatcher } from 'svelte';
-	export let message = '';
 	export let isActive = false;
 	export let formId = '';
 	let dispatch = createEventDispatcher();
@@ -15,7 +15,7 @@
 	};
 </script>
 
-<Modal {message} {isActive}>
+<Modal message={$timeAction.message} {isActive}>
 	<button class="button card-footer-item is-ghost" on:click={userNo}>No</button>
 	<button class="button card-footer-item is-ghost" form={formId} on:click={userYes}>Yes</button>
 </Modal>

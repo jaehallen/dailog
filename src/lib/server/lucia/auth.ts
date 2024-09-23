@@ -56,5 +56,5 @@ export const routeProfile = (
 };
 
 export const isPublicRoute = (url: URL) => {
-	return ['/login', '/'].includes(url.pathname);
+	return ['/login', '/', '/api/logout'].includes(url.pathname);
 };
