@@ -2,7 +2,8 @@
 	import type { OptCategory } from '$lib/schema';
 	import { createEventDispatcher } from 'svelte';
 	import RoundButton from '$lib/component/RoundButton.svelte';
-	import ButtonsContainer from './ButtonsContainer.svelte';
+	import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
+	import LeftButton from '$lib/component/LeftButton.svelte';
 	import { timeAction } from '$lib/data-store';
 
 	export let disabled = false;
@@ -14,7 +15,8 @@
 </script>
 
 <ButtonsContainer>
-	<div class="field is-grouped is-justify-content-center" slot="left">
+	<div class="field is-grouped" slot="left">
+		<LeftButton on:left/>
 		<RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
 		<RoundButton
 			disabled={disabled || $timeAction.lunched}

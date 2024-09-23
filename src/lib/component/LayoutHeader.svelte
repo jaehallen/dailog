@@ -71,7 +71,7 @@
 
 		<div class="navbar-end">
 			<div class="navbar-item">
-				<button class="button is-small is-ghost" on:click={userTheme}>
+				<button class="button is-small is-text" on:click={userTheme}>
 					<span class="icon">
 						{#if $theme === 'light'}
 							<Sun />
