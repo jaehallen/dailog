@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { OptActionState, OptCategory } from '$lib/schema';
+	import type { OptActionState, OptCategory, TimeEntryRecord } from '$lib/schema';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import ClockButtons from '$lib/component/ClockButtons.svelte';
-	import ClockEndButtons from '$lib/component/ClockEndButtons.svelte';
+	import StartButtons from '$lib/component/StartButtons.svelte';
+	import EndButtons from '$lib/component/EndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
-	import ClockInOut from '$lib/component/ClockInOut.svelte';
+	import ClockButtons from '$lib/component/ClockButtons.svelte';
 	import { formatDateOrTime } from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
@@ -14,8 +14,8 @@
 	import { enhance } from '$app/forms';
 
 	onMount(async () => {
-		timesheet.set(data.userTimsheet?.timeEntries || []);
 		if (data.userTimsheet) {
+			const { timeEntries, date_at } = data.userTimsheet;
 			timeAction.set({
 				confirm: false,
 				state: 'end',
@@ -28,7 +28,10 @@
 				lunched: $lunchRecord !== null,
 				message: ''
 			});
+
+			timesheet.set(timeEntries.filter((entry) => entry.date_at === date_at));
 		}
+
 		importReady = true;
 	});
 
@@ -63,9 +66,19 @@
 			if (result.type === 'success') {
 				const { record } = result.data || {};
 				timesheet.updateSheet(record);
-				timeAction.save(record.id);
-				timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
+
+				if (record.category == 'clock' && !record.end_at) {
+					leftToggle();
+				}
+
+				if (record.category !== 'clock') {
+					timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
+					timeAction.save(record.id);
+				}
+
 				await update({ invalidateAll: false, reset: false });
+			}else if(result.type === 'failure'){
+				console.log(result.data?.message)
 			}
 			disabled = false;
 		};
@@ -99,22 +112,18 @@
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
 				{#if !$timeAction.isBreak}
 					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-						<ClockButtons on:start={startTime} on:left={leftToggle} {disabled} />
+						<StartButtons on:start={startTime} on:left={leftToggle} {disabled} />
 					</div>
 				{:else}
 					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-						<ClockEndButtons
-							{timestamp}
-							on:conclude={concludeBreak}
-							category={$timeAction.category}
-						/>
+						<EndButtons {timestamp} on:conclude={concludeBreak} category={$timeAction.category} />
 					</div>
 				{/if}
 			</div>
 		{/if}
 		{#if clockInOut && !$workComplete}
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
-				<ClockInOut on:left={leftToggle} on:timeclock={timeclock} />
+				<ClockButtons on:left={leftToggle} on:timeclock={timeclock} />
 			</div>
 		{/if}
 	</section>

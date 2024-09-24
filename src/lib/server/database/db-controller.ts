@@ -1,7 +1,7 @@
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { UserInfo, UserRecord } from '$lib/schema';
+import type { TimeEntryRecord, UserInfo, UserRecord, ZPostTime } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
-import { SQL_GET } from './sql-queries';
+import { SQL_GET, SQL_SET } from './sql-queries';
 import { dbChild } from './turso';
 
 export class DatabaseController {
@@ -10,7 +10,6 @@ export class DatabaseController {
 		this.client = dbClient;
 	}
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
-		log('CLIENT STATUS - GET', this.client.closed);
 		try {
 			const results = await this.client.execute({
 				sql,
@@ -36,6 +35,23 @@ export class DatabaseController {
 		}
 
 		return null;
+	}
+
+	private async set(sql: string, args: {}): Promise<ResultSet | null> {
+		try {
+			const results = await this.client.execute({
+				sql,
+				args
+			});
+
+			return results;
+		} catch (error) {
+			if (error instanceof LibsqlError) {
+				logError('set', error as Error);
+			}
+		}
+
+		return null
 	}
 
 	public async getUser(id: number): Promise<UserRecord | null> {
@@ -97,16 +113,17 @@ export class DatabaseController {
 		};
 	}
 
-	// public async getTimeEntry(userId: number): Promise<Omit<UserInfo, 'user'> | null> {
-	//     const { rows = [] } = (await this.get(SQL_GET.TIME_SCHED_ENTRY, { id: userId })) || {};
-	//     if (!rows.length) {
-	//         return null;
-	//     }
-	//     const schedule = toUserScheddule(rows[0]);
-	//     const timeEntries = toTimeEntryRecord(rows[0]);
+	public async clockIn(args: Omit<TimeEntryRecord, "id" | "end_at" | "elapse_sec">){
+		const results = await this.set(SQL_SET.CLOCKIN, args);
+		console.log(results)
+		return results;
+	}
 
-	//     return { schedules, timeEntries };
-	// }
+	public async clockOut(args: Pick<TimeEntryRecord, "id" | "end_at">) {
+		const results = await this.set(SQL_SET.CLOCKOUT, args);
+		console.log(results)
+		return results
+	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
 	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;

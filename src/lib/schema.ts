@@ -1,7 +1,7 @@
-const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
-const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
-const ACTIONSTATE = ['start', 'end'] as const;
+export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
+export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
+export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
+export const ACTIONSTATE = ['start', 'end'] as const;
 
 export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
 	clock: {
@@ -35,6 +35,13 @@ export type OptCategory = (typeof CATEGORY)[number];
 export type OptActionState = (typeof ACTIONSTATE)[number];
 export type OptWeekdays = (typeof WEEKDAYS)[number];
 export const BREAKTYPE: Record<string, OptCategory> = {};
+
+export interface  ZPostTime {
+	id: number;
+	category: OptCategory;
+	timeAction: OptActionState;
+	date_at: string;
+};
 
 export interface TimesheetPostInfo {
 	date_at: string;
