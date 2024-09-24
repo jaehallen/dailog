@@ -1,5 +1,5 @@
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { TimeEntryRecord, UserInfo, UserRecord, ZPostTime } from '$lib/schema';
+import type { TimeEntryRecord, UserInfo, UserRecord } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { SQL_GET, SQL_SET } from './sql-queries';
 import { dbChild } from './turso';
@@ -51,7 +51,7 @@ export class DatabaseController {
 			}
 		}
 
-		return null
+		return null;
 	}
 
 	public async getUser(id: number): Promise<UserRecord | null> {
@@ -100,7 +100,7 @@ export class DatabaseController {
 				args: { sid: schedId }
 			},
 			{
-				sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE user_id = $id`,
+				sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE user_id = $id GROUP BY category`,
 				args: { id: userId }
 			}
 		]);
@@ -113,16 +113,31 @@ export class DatabaseController {
 		};
 	}
 
-	public async clockIn(args: Omit<TimeEntryRecord, "id" | "end_at" | "elapse_sec">){
+	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) {
 		const results = await this.set(SQL_SET.CLOCKIN, args);
-		console.log(results)
-		return results;
+		if (!results) return null;
+		return toTimeEntryRecord(results.rows[0]);
 	}
 
-	public async clockOut(args: Pick<TimeEntryRecord, "id" | "end_at">) {
+	public async clockOut(args: Pick<TimeEntryRecord, 'id' | 'end_at'>) {
 		const results = await this.set(SQL_SET.CLOCKOUT, args);
-		console.log(results)
-		return results
+		if (!results) return null;
+		return toTimeEntryRecord(results.rows[0]);
+	}
+
+	public async startTime(
+		args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent'>
+	) {
+		const results = await this.set(SQL_SET.BREAK_START, args);
+		if (!results) return null;
+		return toTimeEntryRecord(results.rows[0]);
+	}
+
+	public async endTime(args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) {
+		console.log(args);
+		const results = await this.set(SQL_SET.BREAK_END, args);
+		if (!results) return null;
+		return toTimeEntryRecord(results.rows[0]);
 	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
@@ -176,7 +191,7 @@ function toUserScheddule(record: Record<string, any>) {
 }
 
 function toTimeEntryRecord(record: Record<string, any>) {
-	const { id, user_id, sched_id, category, date_at, start_at, end_at } = record;
+	const { id, user_id, sched_id, category, date_at, start_at, end_at } = record || {};
 
 	return {
 		id,

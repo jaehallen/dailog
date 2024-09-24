@@ -33,9 +33,9 @@ export const actions = {
 			return fail(400, { noSchedule: true });
 		}
 
-		const { date_at} = userDutyInfo(schedule, timeEntry)
+		const { date_at } = userDutyInfo(schedule, timeEntry);
 
-		const session = await lucia.createSession(user.id, {sched_id: schedule.id, date_at});
+		const session = await lucia.createSession(user.id, { sched_id: schedule.id, date_at });
 		const sessionCookie = lucia.createSessionCookie(session.id);
 		cookies.set(sessionCookie.name, sessionCookie.value, {
 			path: '.',

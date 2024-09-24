@@ -24,7 +24,7 @@ export const validateUser = async ({ id, password }: { id: number; password: str
 	return { user, schedule, timeEntry: timeEntries };
 };
 
-function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
+export function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
 	const today = new Date();
 	schedules.sort(
 		(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()

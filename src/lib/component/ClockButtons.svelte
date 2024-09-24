@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { clockRecord } from '$lib/data-store';
+	import { timeLog } from '$lib/data-store';
 	import type { OptActionState } from '$lib/schema';
 	import RoundButton from '$lib/component/RoundButton.svelte';
 	import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
@@ -12,7 +12,7 @@
 		dispatch('timeclock', { action });
 	};
 
-	$: isClockIn = !$clockRecord || !$clockRecord.start_at;
+	$: isClockIn = !$timeLog.clocked || !$timeLog.clocked.start_at;
 </script>
 
 <ButtonsContainer>
@@ -29,7 +29,7 @@
 			/>
 		{:else}
 			<RoundButton
-				disabled={disabled || !$clockRecord || !$clockRecord?.start_at}
+				disabled={disabled || !$timeLog || !$timeLog.clocked?.start_at}
 				class="is-link is-danger"
 				name="Clock Out"
 				on:click={() => clock('end')}

@@ -20,14 +20,13 @@ export const actions = {
 	default: async ({
 		request,
 		locals,
-		getClientAddress,
+		getClientAddress
 	}): Promise<{ record: TimeEntryRecord | null } | { [key: string]: any }> => {
 		if (!locals.user || !locals.session) {
-			return fail(404, { message: 'User not found' })
+			return fail(404, { message: 'User not found' });
 		}
 		const form = await request.formData();
 		const validPost = validatePostTime.safeParse(Object.fromEntries(form));
-
 
 		if (!validPost.success) {
 			fail(400, { message: validPost.error.issues });
@@ -37,34 +36,22 @@ export const actions = {
 		const userAgent = request.headers.get('user-agent') || '';
 
 		if (data) {
-			const results = await postTime({
-				id: data?.id || 0,
-				user_id: locals.user.id,
-				category: data?.category,
-				date_at: data?.date_at,
-				sched_id: locals.session.sched_id,
-				user_ip: ipAddrss,
-				user_agent: userAgent,
-				timestamp: Math.floor(Date.now() / 1000),
-				timeAction: data?.timeAction,
-			})
-		}
-
-		if (locals.session) {
 			return {
-				record: {
-					id: data?.id,
-					end_at: Number(data?.id) ? Math.floor(Date.now() / 1000) : null,
-					start_at: Math.floor(Date.now() / 1000),
+				record: await postTime({
+					id: data?.id || 0,
+					user_id: locals.user.id,
+					category: data?.category,
+					date_at: data?.date_at,
 					sched_id: locals.session.sched_id,
-					date_at: locals.session.date_at,
-					user_id: locals.user?.id,
-					category: validPost.data?.category,
-					elapse_sec: 0
-				},
+					user_ip: ipAddrss,
+					user_agent: userAgent,
+					timestamp: Math.floor(Date.now() / 1000),
+					timeAction: data?.timeAction
+				})
 			};
 		}
 
 		return { record: null };
 	}
 } satisfies Actions;
+

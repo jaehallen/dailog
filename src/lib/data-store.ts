@@ -5,30 +5,25 @@ import { CONFIRMCATEGORY } from './schema';
 export const timeAction = userTimeAction();
 export const timesheet = timesheetStore();
 
-export const latestRecord = derived(timesheet, ($timesheet) => {
-	const lastRecord = $timesheet?.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
+export const timeLog = derived(timesheet, ($timesheet) => {
+	if (!$timesheet.length) return {};
+	const clocked = $timesheet?.find((entry) => entry.category == 'clock') || null;
+	const lunch = $timesheet?.find((entry) => entry.category == 'lunch') || null;
+	const last = $timesheet?.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
 		if (entry.start_at > latest.start_at) {
 			latest = { ...entry };
 		}
 		return latest;
 	});
-	return lastRecord;
-});
 
-export const lunchRecord = derived(timesheet, ($timesheet) => {
-	const lunchEntry = $timesheet?.find((entry) => {
-		return entry.category == 'lunch';
-	});
+	const endOfDay = clocked && Boolean(clocked.start_at) == Boolean(clocked.end_at);
 
-	return lunchEntry || null;
-});
-
-export const clockRecord = derived(timesheet, ($timesheet) => {
-	return $timesheet?.find((entry) => entry.category == 'clock') || null;
-});
-
-export const workComplete = derived(clockRecord, ($clockRecord) => {
-	return $clockRecord && Boolean($clockRecord.start_at) == Boolean($clockRecord.end_at);
+	return {
+		clocked,
+		lunch,
+		last,
+		endOfDay
+	};
 });
 
 function timesheetStore() {

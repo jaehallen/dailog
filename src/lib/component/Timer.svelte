@@ -9,7 +9,7 @@
 			set(Math.floor(Date.now() / 1000 - timestamp));
 		}, 1000);
 
-		return () => clearInterval(interval) ;
+		return () => clearInterval(interval);
 	});
 
 	$: hh = Math.floor($time / 3600);

@@ -10,30 +10,8 @@
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
-	import { timesheet, timeAction, lunchRecord, clockRecord, workComplete } from '$lib/data-store';
+	import { timesheet, timeAction, timeLog } from '$lib/data-store';
 	import { enhance } from '$app/forms';
-
-	onMount(async () => {
-		if (data.userTimsheet) {
-			const { timeEntries, date_at } = data.userTimsheet;
-			timeAction.set({
-				confirm: false,
-				state: 'end',
-				nextState: 'start',
-				category: 'break',
-				date_at: data.userTimsheet.date_at,
-				isBreak: false,
-				id: 0,
-				timestamp: 0,
-				lunched: $lunchRecord !== null,
-				message: ''
-			});
-
-			timesheet.set(timeEntries.filter((entry) => entry.date_at === date_at));
-		}
-
-		importReady = true;
-	});
 
 	export let data: PageData;
 	const FORM_ID = 'posttime';
@@ -42,7 +20,37 @@
 	let disabled = false;
 	let timestamp = 0;
 	let clockInOut = true;
-	let timeEntryForm: HTMLFormElement;
+
+	onMount(async () => {
+		if (data.userTimsheet) {
+			const { timeEntries, date_at } = data.userTimsheet;
+
+			timesheet.set(
+				timeEntries
+					.filter((entry: TimeEntryRecord) => entry.date_at === date_at)
+					.sort((a, b) => b.start_at - a.start_at)
+			);
+			clockInOut = !$timeLog.clocked;
+
+			const isBreak = $timeLog.last && !Number($timeLog.last.end_at);
+			timeAction.set({
+				state: isBreak ? 'end' : 'start',
+				nextState: isBreak ? 'start' : 'end',
+				category: isBreak ? $timeLog.last.category : 'break',
+				date_at: data.userTimsheet.date_at,
+				id: isBreak ? $timeLog.last.id : 0,
+				timestamp: isBreak ? $timeLog.last.start_at : 0,
+				lunched: $timeLog.lunch !== null && Boolean($timeLog.lunch.end_at),
+				message: '',
+				confirm: false,
+				isBreak
+			});
+		}
+
+		timestamp = $timeAction.timestamp;
+		importReady = true;
+	});
+
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {
 		timeAction.start(event.detail.entryType);
 	};
@@ -54,8 +62,8 @@
 	const timeclock = (event: CustomEvent<{ action: OptActionState }>) => {
 		if (event.detail.action == 'start') {
 			timeAction.clockIn();
-		} else if ($clockRecord) {
-			timeAction.clockOut($clockRecord.id);
+		} else if ($timeLog.clocked) {
+			timeAction.clockOut($timeLog.clocked.id);
 		}
 	};
 
@@ -77,15 +85,15 @@
 				}
 
 				await update({ invalidateAll: false, reset: false });
-			}else if(result.type === 'failure'){
-				console.log(result.data?.message)
+			} else if (result.type === 'failure') {
+				alert('Failed to post');
 			}
 			disabled = false;
 		};
 	};
 
 	const leftToggle = () => {
-		clockInOut = !$clockRecord || !clockInOut;
+		clockInOut = !$timeLog.clocked || !clockInOut;
 	};
 </script>
 
@@ -95,20 +103,14 @@
 		isActive={$timeAction.confirm}
 		on:no={() => (disabled = false)}
 	/>
-	<form
-		class="is-hidden"
-		id={FORM_ID}
-		method="POST"
-		bind:this={timeEntryForm}
-		use:enhance={handleEnhance}
-	>
+	<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
 		<input type="number" id="id" name="id" value={$timeAction.id} />
 		<input type="text" id="category" name="category" value={$timeAction.category} />
 		<input type="text" id="time-action" name="timeAction" value={$timeAction.state} />
 		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} />;
 	</form>
 	<section class="mt-6">
-		{#if $clockRecord && !clockInOut}
+		{#if $timeLog.clocked && !clockInOut}
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
 				{#if !$timeAction.isBreak}
 					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
@@ -121,7 +123,7 @@
 				{/if}
 			</div>
 		{/if}
-		{#if clockInOut && !$workComplete}
+		{#if clockInOut && !$timeLog.endOfDay}
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
 				<ClockButtons on:left={leftToggle} on:timeclock={timeclock} />
 			</div>
