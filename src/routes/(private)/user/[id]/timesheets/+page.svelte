@@ -40,14 +40,17 @@
 	});
 
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {
+		disabled = true;
 		timeAction.start(event.detail.entryType);
 	};
 
 	const concludeBreak = () => {
+		disabled = true;
 		timeAction.end();
 	};
 
 	const timeclock = (event: CustomEvent<{ action: OptActionState }>) => {
+		disabled = true;
 		if (event.detail.action == 'start') {
 			timeAction.clockIn();
 		} else if ($timeLog.clocked) {
@@ -57,7 +60,6 @@
 
 	const handleEnhance: SubmitFunction = () => {
 		timeAction.close();
-		disabled = true;
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
 				const { record } = result.data || {};
@@ -117,7 +119,7 @@
 		{/if}
 		{#if clockInOut && !$timeLog.endOfDay}
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
-				<ClockButtons on:left={leftToggle} on:timeclock={timeclock} />
+				<ClockButtons on:left={leftToggle} on:timeclock={timeclock} {disabled} />
 			</div>
 		{/if}
 	</section>
