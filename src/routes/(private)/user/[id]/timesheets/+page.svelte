@@ -29,7 +29,7 @@
 					.filter((entry: TimeEntryRecord) => entry.date_at === date_at)
 					.sort((a, b) => b.start_at - a.start_at)
 			);
-			timeAction.validate($timeLog.last, $timeLog.lunch, date_at);
+			timeAction.validate($timeLog.lastBreak, $timeLog.lunch, date_at);
 			clockInOut = !$timeLog.clocked;
 		}
 

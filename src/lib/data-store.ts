@@ -6,10 +6,11 @@ export const timeAction = userTimeAction();
 export const timesheet = timesheetStore();
 
 export const timeLog = derived(timesheet, ($timesheet) => {
-	if (!$timesheet.length) return { clocked: null, lunch: null, last: null, endOfDay: false };
-	const clocked = $timesheet?.find((entry) => entry.category == 'clock') || null;
-	const lunch = $timesheet?.find((entry) => entry.category == 'lunch') || null;
-	const last = $timesheet?.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
+	if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
+
+	const clocked = $timesheet.find((entry) => entry.category == 'clock') || null;
+	const lunch = $timesheet.find((entry) => entry.category == 'lunch') || null;
+	const lastBreak = $timesheet.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
 		if (entry.start_at > latest.start_at) {
 			latest = { ...entry };
 		}
@@ -21,7 +22,7 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 	return {
 		clocked,
 		lunch,
-		last,
+		lastBreak,
 		endOfDay
 	};
 });
@@ -63,15 +64,15 @@ function userTimeAction() {
 	return {
 		subscribe,
 		set,
-		validate: (last: TimeEntryRecord | null, lunch: TimeEntryRecord | null, date_at: string) => {
+		validate: (lastBreak: TimeEntryRecord | null, lunch: TimeEntryRecord | null, date_at: string) => {
 			update(state => {
-				if (last) {
-					state.isBreak = !Boolean(last.end_at);
+				if (lastBreak) {
+					state.isBreak = !Boolean(lastBreak.end_at);
 					state.state = state.isBreak ? 'end' : 'start';
 					state.nextState = state.isBreak ? 'start' : 'end';
-					state.category = state.isBreak ? last.category : 'break';
-					state.id = state.isBreak ? last.id : 0;
-					state.timestamp = state.isBreak ? last.start_at : 0;
+					state.category = state.isBreak ? lastBreak.category : 'break';
+					state.id = state.isBreak ? lastBreak.id : 0;
+					state.timestamp = state.isBreak ? lastBreak.start_at : 0;
 
 				}
 				if (lunch) {
