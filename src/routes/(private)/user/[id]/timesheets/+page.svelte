@@ -6,12 +6,13 @@
 	import EndButtons from '$lib/component/EndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
 	import ClockButtons from '$lib/component/ClockButtons.svelte';
-	import { formatDateOrTime } from '$lib/utility';
+	import { formatDateOrTime, timeDuration } from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { timesheet, timeAction, timeLog } from '$lib/data-store';
 	import { enhance } from '$app/forms';
+	import { timesheetColumn } from '$lib/table-schema';
 
 	export let data: PageData;
 	const FORM_ID = 'posttime';
@@ -36,6 +37,7 @@
 		timestamp = $timeAction.timestamp;
 		importReady = true;
 		clockInOut = !$timeLog.clocked;
+		disabled = false;
 	});
 
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {
@@ -60,21 +62,20 @@
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
 				const { record } = result.data || {};
-				timesheet.updateSheet(record);
-
-				if (record.category == 'clock' && !record.end_at) {
-					leftToggle();
+				if (record) {
+					timesheet.updateSheet(record);
+					if (record.category == 'clock' && !record.end_at) {
+						leftToggle();
+					}
+					if (record.category !== 'clock') {
+						timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
+						timeAction.save(record.id);
+					}
 				}
-
-				if (record.category !== 'clock') {
-					timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
-					timeAction.save(record.id);
-				}
-
-				await update({ invalidateAll: false, reset: false });
-			} else if (result.type === 'failure') {
-				alert('Failed to post');
+			} else {
+				console.log(result);
 			}
+			await update({ invalidateAll: false, reset: false });
 			disabled = false;
 		};
 	};
@@ -120,24 +121,20 @@
 		<table class="table is-fullwidth -is-striped is-hoverable">
 			<thead>
 				<tr>
-					<th>Date</th>
-					<th>Schedule ID</th>
-					<th>Break Category</th>
-					<th>Start At</th>
-					<th>End At</th>
+					{#each timesheetColumn as column, cid (cid)}
+						<th> {column.title} </th>
+					{/each}
+					<th>Duration</th>
 				</tr>
 			</thead>
 			<tbody>
 				{#if $timesheet.length && importReady}
 					{#each $timesheet as entry (entry.id)}
 						<tr>
-							<td>{entry.date_at}</td>
-							<td>{entry.sched_id}</td>
-							<td class="is-capitalized">{entry.category}</td>
-							<td>{formatDateOrTime(new Date(entry.start_at * 1000), true, 8)}</td>
-							<td
-								>{entry.end_at ? formatDateOrTime(new Date(entry.end_at * 1000), true, 8) : '-'}</td
-							>
+							{#each timesheetColumn as column, cid (cid)}
+								<td> {column.render(entry[column.key] || '-')} </td>
+							{/each}
+							<td>{timeDuration(entry.start_at, entry.end_at)}</td>
 						</tr>
 					{/each}
 				{/if}

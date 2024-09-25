@@ -36,12 +36,12 @@ export type OptActionState = (typeof ACTIONSTATE)[number];
 export type OptWeekdays = (typeof WEEKDAYS)[number];
 export const BREAKTYPE: Record<string, OptCategory> = {};
 
-export interface  ZPostTime {
+export interface ZPostTime {
 	id: number;
 	category: OptCategory;
 	timeAction: OptActionState;
 	date_at: string;
-};
+}
 
 export interface TimesheetPostInfo {
 	date_at: string;
@@ -52,15 +52,15 @@ export interface TimesheetPostInfo {
 
 export interface TimesheetStateInfo {
 	confirm: boolean;
-	state: OptActionState,
-	nextState: OptActionState,
-	category: OptCategory,
-	date_at: string,
-	isBreak: boolean,
-	id: number,
-	timestamp: number,
-	lunched: boolean,
-	message: string,
+	state: OptActionState;
+	nextState: OptActionState;
+	category: OptCategory;
+	date_at: string;
+	isBreak: boolean;
+	id: number;
+	timestamp: number;
+	lunched: boolean;
+	message: string;
 }
 
 export interface UserRecord {
@@ -157,6 +157,11 @@ export const ROUTES: RouteProfile[] = [
 	{
 		name: 'Users',
 		path: '/admin/users',
+		role: ['admin', 'lead', 'poc']
+	},
+	{
+		name: 'Schedules',
+		path: '/admin/schedules',
 		role: ['admin', 'lead', 'poc']
 	},
 	{

@@ -60,7 +60,12 @@
 					<button class="navbar-link"> Admin </button>
 					<div class="navbar-dropdown">
 						{#each adminRoute as route}
-							<a class="navbar-item" href={route.path} class:is-selected={curPath == route.path}>
+							<a
+								data-sveltekit-reload
+								class="navbar-item"
+								href={route.path}
+								class:is-selected={curPath == route.path}
+							>
 								{route.name}
 							</a>
 						{/each}

@@ -1,4 +1,4 @@
-import { isPublicRoute, lucia } from '$lib/server/lucia/auth';
+import { isProtectedRoute, isPublicRoute, lucia } from '$lib/server/lucia/auth';
 import { routeProfile } from '$lib/server/lucia/auth';
 import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -54,14 +54,16 @@ export const checkUser: Handle = async ({ event, resolve }) => {
 };
 
 export const userRoute: Handle = async ({ event, resolve }) => {
-	if (isPublicRoute(event.url)) {
-		return resolve(event);
+	const { pathname } = event.url;
+
+	if (isProtectedRoute(pathname) && !event.locals.user) {
+		return error(405, 'Not Allowed');
 	}
 
-	if (event.locals.user) {
-		const routeList = routeProfile(event.locals.user, event.url.pathname);
-		
-		if (!routeList.length) {
+	if (isProtectedRoute(pathname) && event.locals.user) {
+		const routeList = routeProfile(event.locals.user);
+
+		if (!routeList.some((route) => route.path === pathname)) {
 			return error(405, 'Not Allowed');
 		}
 

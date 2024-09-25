@@ -51,7 +51,6 @@ export const getTimeStr = (date: Date, isHour12 = false) => {
 
 //This should only be executed at client side. UTC-Offset timezone is not supported.
 export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
-	console.log('check runtime location');
 	let isTime = false;
 	let date = val instanceof Date ? val : new Date(val);
 
@@ -106,4 +105,21 @@ export const updateEntries = (timeEntries: TimeEntryRecord[], data: TimeEntryRec
 			...timeEntries
 		];
 	}
+};
+
+export const timeDuration = (start: number, end: number) => {
+	const a = Number(start);
+	const b = Number(end);
+
+	if (!a || !b || a > b) {
+		return '-';
+	}
+
+	const f = (v: number) => String(v).padStart(2, '0');
+	const dur = b - a;
+	const hh = Math.floor(dur / 3600);
+	const mm = Math.floor(dur / 60 - hh * 60);
+	const ss = dur - hh * 3600 - mm * 60;
+
+	return `${f(hh)}:${f(mm)}:${f(ss)}`;
 };

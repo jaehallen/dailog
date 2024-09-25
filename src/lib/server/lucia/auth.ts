@@ -39,22 +39,20 @@ declare module 'lucia' {
 	}
 }
 
-export const routeProfile = (
-	user: Pick<UserRecord, 'id' | 'role'>,
-	pathname: string
-): RouteProfile[] => {
-	const userRoute = ROUTES.filter((el) => el.role.includes(user.role)).map((el) => {
-		el.path = el.path.replace('[id]', String(user.id));
-		return el;
-	});
+export function routeProfile(user: Pick<UserRecord, 'id' | 'role'>): RouteProfile[] {
+	return ROUTES.reduce((arr: RouteProfile[], route: RouteProfile) => {
+		if (route.role.includes(user.role)) {
+			arr.push({ ...route, path: route.path.replace('[id]', String(user.id)) });
+		}
 
-	if (!userRoute.find((el: RouteProfile) => el.path === pathname)) {
-		return [];
-	}
+		return arr;
+	}, []);
+}
 
-	return userRoute;
-};
+export function isProtectedRoute(pathname: string): boolean {
+	return ['/user', '/admin'].some((str) => pathname.startsWith(str));
+}
 
-export const isPublicRoute = (url: URL) => {
+export function isPublicRoute(url: URL) {
 	return ['/login', '/', '/api/logout'].includes(url.pathname);
-};
+}

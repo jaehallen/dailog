@@ -58,9 +58,9 @@ export const userCurrentEntries = async (session: Session): Promise<UserLatestTi
 		session.sched_id
 	);
 
-	if (!timeEntries.length || !schedules.length) {
-		return null;
-	}
+	// if (!timeEntries.length || !schedules.length) {
+	// 	return null;
+	// }
 	const [schedule] = schedules;
 	const { startOfDuty, date_at } = userDutyInfo(schedule, timeEntries);
 
