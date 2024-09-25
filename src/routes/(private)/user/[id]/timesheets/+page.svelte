@@ -17,38 +17,25 @@
 	const FORM_ID = 'posttime';
 
 	let importReady = false;
-	let disabled = false;
+	let disabled = true;
 	let timestamp = 0;
-	let clockInOut = true;
+	let clockInOut = false;
 
 	onMount(async () => {
 		if (data.userTimsheet) {
 			const { timeEntries, date_at } = data.userTimsheet;
-
 			timesheet.set(
 				timeEntries
 					.filter((entry: TimeEntryRecord) => entry.date_at === date_at)
 					.sort((a, b) => b.start_at - a.start_at)
 			);
+			timeAction.validate($timeLog.last, $timeLog.lunch, date_at);
 			clockInOut = !$timeLog.clocked;
-
-			const isBreak = $timeLog.last && !Number($timeLog.last.end_at);
-			timeAction.set({
-				state: isBreak ? 'end' : 'start',
-				nextState: isBreak ? 'start' : 'end',
-				category: isBreak ? $timeLog.last.category : 'break',
-				date_at: data.userTimsheet.date_at,
-				id: isBreak ? $timeLog.last.id : 0,
-				timestamp: isBreak ? $timeLog.last.start_at : 0,
-				lunched: $timeLog.lunch !== null && Boolean($timeLog.lunch.end_at),
-				message: '',
-				confirm: false,
-				isBreak
-			});
 		}
 
 		timestamp = $timeAction.timestamp;
 		importReady = true;
+		clockInOut = !$timeLog.clocked;
 	});
 
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {
@@ -110,7 +97,7 @@
 		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} />;
 	</form>
 	<section class="mt-6">
-		{#if $timeLog.clocked && !clockInOut}
+		{#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
 			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
 				{#if !$timeAction.isBreak}
 					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>

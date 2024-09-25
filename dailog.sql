@@ -158,3 +158,8 @@ VALUES
 (100000, "Admin",null,"admin","$argon2id$v=19$m=19456,t=2,p=1$Fg9DjFhBJuBXhgjSX38d4w$c2ZTJ4fWagrJoLKhgEQsuziwJDIoziOfMaH7CEtVUHk",null,1), -- admin@hopkins
 (200000, "Lead of Hopkins",null,"lead","$argon2id$v=19$m=19456,t=2,p=1$e/kyaHEgKiVayAukHn4NhQ$ARwgHuRkfzL34ghl8bn5LSWa8wg77bvki+4ZMXm+MlI",null,1), -- lead@hopkins
 (200001, "POC of Hopkins","APAC","poc","$argon2id$v=19$m=19456,t=2,p=1$qfG/whO6udTe746oZFHRBA$fVSALwxWHHKKaeF+AbgH0f5sC9j4pluGs12Lr9H1wCQ",null,1); -- poc@hopkins
+
+-- HASH ISH
+-- admin@hopkins -> 7c0fb5feff375a24859a28378e5590fc:8436e309430321cfc9bc27e83a2bc5b80dd1ac409188a8142da345dfb929b5b9
+-- lead@hopkins -> d588755807192b2117467e097366cb7d:409ca18cafc5fd36711279ea48280d109d0d4434cfc1ead2799fa2100e641b7f
+-- poc@hopkins -> f2565b41e91cc09e0cef55cdedb15698:10843526f6502d381a2aa8a2fb9e54d9f88d6f3cac907752273e2646f120e169

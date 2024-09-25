@@ -6,7 +6,7 @@ export const timeAction = userTimeAction();
 export const timesheet = timesheetStore();
 
 export const timeLog = derived(timesheet, ($timesheet) => {
-	if (!$timesheet.length) return {};
+	if (!$timesheet.length) return { clocked: null, lunch: null, last: null, endOfDay: false };
 	const clocked = $timesheet?.find((entry) => entry.category == 'clock') || null;
 	const lunch = $timesheet?.find((entry) => entry.category == 'lunch') || null;
 	const last = $timesheet?.reduce((latest: TimeEntryRecord, entry: TimeEntryRecord) => {
@@ -63,6 +63,28 @@ function userTimeAction() {
 	return {
 		subscribe,
 		set,
+		validate: (last: TimeEntryRecord | null, lunch: TimeEntryRecord | null, date_at: string) => {
+			update(state => {
+				if (last) {
+					state.isBreak = !Boolean(last.end_at);
+					state.state = state.isBreak ? 'end' : 'start';
+					state.nextState = state.isBreak ? 'start' : 'end';
+					state.category = state.isBreak ? last.category : 'break';
+					state.id = state.isBreak ? last.id : 0;
+					state.timestamp = state.isBreak ? last.start_at : 0;
+
+				}
+				if (lunch) {
+					state.lunched = lunch && Boolean(lunch.end_at)
+				}
+
+				state.date_at = date_at ? date_at : state.date_at;
+				state.message = state.message;
+				state.confirm = state.confirm;
+
+				return state;
+			})
+		},
 		clockIn: () => {
 			update((state) => {
 				state.state = 'start';

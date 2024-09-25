@@ -1,10 +1,11 @@
-import { Argon2id } from 'oslo/password';
+// import { Argon2id } from 'oslo/password';
+import { AppPass} from "$lib/server/lucia/hash-ish"
 import { db } from '../database/db-controller';
 import type { ScheduleRecord } from '$lib/schema';
 import { dateAtOffset } from '$lib/utility';
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
-	const argon2id = new Argon2id();
+	const appPass = new AppPass();
 	const {
 		user = null,
 		schedules = [],
@@ -15,7 +16,7 @@ export const validateUser = async ({ id, password }: { id: number; password: str
 		return { user: null, schedule: null, timeEntry: null };
 	}
 
-	if (!(await argon2id.verify(user.password_hash, password))) {
+	if (!(await appPass.verify(user.password_hash, password))) {
 		return { user: null, schedule: null, timeEntry: null };
 	}
 
