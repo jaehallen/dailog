@@ -6,7 +6,7 @@
 	import EndButtons from '$lib/component/EndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
 	import ClockButtons from '$lib/component/ClockButtons.svelte';
-	import { formatDateOrTime, timeDuration } from '$lib/utility';
+	import { timeDuration } from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';

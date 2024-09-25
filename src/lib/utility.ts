@@ -107,7 +107,7 @@ export const updateEntries = (timeEntries: TimeEntryRecord[], data: TimeEntryRec
 	}
 };
 
-export const timeDuration = (start: number, end: number) => {
+export const timeDuration = (start: number, end: number | null) => {
 	const a = Number(start);
 	const b = Number(end);
 
