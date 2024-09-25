@@ -16,7 +16,7 @@
 
 <ButtonsContainer>
 	<div class="field is-grouped" slot="left">
-		<LeftButton on:left/>
+		<LeftButton on:left />
 		<RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
 		<RoundButton
 			disabled={disabled || $timeAction.lunched}

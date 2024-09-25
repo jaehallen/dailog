@@ -90,23 +90,6 @@ export const userInitials = (fullname: string): string => {
 	}, '');
 };
 
-export const updateEntries = (timeEntries: TimeEntryRecord[], data: TimeEntryRecord) => {
-	const idx = timeEntries.findIndex((e) => (e.id = data.id));
-
-	console.log('insert', timeEntries);
-	if (idx) {
-		timeEntries[idx] = { ...timeEntries[idx], end_at: data.end_at };
-
-		return timeEntries;
-	} else {
-		const { id, start_at, sched_id, category, date_at, elapse_sec, user_id } = data;
-		return [
-			{ id, start_at, category, date_at, sched_id, user_id, elapse_sec, end_at: null },
-			...timeEntries
-		];
-	}
-};
-
 export const timeDuration = (start: number, end: number | null) => {
 	const a = Number(start);
 	const b = Number(end);

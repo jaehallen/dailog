@@ -16,7 +16,11 @@
 
 <ButtonsContainer>
 	<div class="field is-grouped is-justify-content-center" slot="left">
-		<RoundButton {disabled} class="is-dark" name="Conclude" on:click={() => endTime(category)} />
+		<RoundButton
+			class={disabled ? 'is-dark is-loading' : 'is-dark'}
+			name="Conclude"
+			on:click={() => endTime(category)}
+		/>
 	</div>
 	<div class="field is-justify-content-center" slot="right">
 		<h1 class="subtitle is-capitalized">{category}: <Timer {timestamp} /></h1>

@@ -1,4 +1,4 @@
-import { isProtectedRoute, isPublicRoute, lucia } from '$lib/server/lucia/auth';
+import { isProtectedRoute, lucia } from '$lib/server/lucia/auth';
 import { routeProfile } from '$lib/server/lucia/auth';
 import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';

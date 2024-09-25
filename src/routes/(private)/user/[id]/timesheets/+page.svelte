@@ -31,7 +31,6 @@
 					.sort((a, b) => b.start_at - a.start_at)
 			);
 			timeAction.validate($timeLog.lastBreak, $timeLog.lunch, date_at);
-			clockInOut = !$timeLog.clocked;
 		}
 
 		timestamp = $timeAction.timestamp;
@@ -106,7 +105,12 @@
 					</div>
 				{:else}
 					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-						<EndButtons {timestamp} on:conclude={concludeBreak} category={$timeAction.category} />
+						<EndButtons
+							{timestamp}
+							on:conclude={concludeBreak}
+							category={$timeAction.category}
+							{disabled}
+						/>
 					</div>
 				{/if}
 			</div>
@@ -132,7 +136,7 @@
 					{#each $timesheet as entry (entry.id)}
 						<tr>
 							{#each timesheetColumn as column, cid (cid)}
-								<td> {column.render(entry[column.key] || '-')} </td>
+								<td> {@html column.render(entry[column.key] || '-')} </td>
 							{/each}
 							<td>{timeDuration(entry.start_at, entry.end_at)}</td>
 						</tr>

@@ -29,7 +29,7 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
 		title: 'Type',
 		key: 'category',
 		render: (val) => {
-			return String(val);
+			return `<span class="is-capitalized">${String(val)}</span>`;
 		}
 	},
 	{
@@ -43,7 +43,8 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
 		title: 'End At',
 		key: 'end_at',
 		render: (val, option) => {
-			return formatDateOrTime(new Date(Number(val) * 1000), true, option?.utc_offset);
+			const sec = Number(val);
+			return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, option?.utc_offset);
 		}
 	}
 ];

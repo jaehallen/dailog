@@ -134,7 +134,6 @@ export class DatabaseController {
 	}
 
 	public async endTime(args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) {
-		console.log(args);
 		const results = await this.set(SQL_SET.BREAK_END, args);
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
