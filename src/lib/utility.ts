@@ -64,7 +64,7 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
 	let options: Intl.DateTimeFormatOptions = {};
 
 	if (isTime) {
-		options = { ...timeOpt };
+		options = { ...timeOpt, timeZone: 'UTC' };
 	} else if (long) {
 		options = { ...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset) };
 	} else {
@@ -106,3 +106,11 @@ export const timeDuration = (start: number, end: number | null) => {
 
 	return `${f(hh)}:${f(mm)}:${f(ss)}`;
 };
+
+export const minToDuration = (min: number) => {
+	const f = (v: number) => String(v).padStart(2, '0');
+	const hh = Math.floor(min / 60);
+	const mm = Math.floor(min - hh * 60);
+
+	return `${f(hh)}:${f(mm)}`
+}

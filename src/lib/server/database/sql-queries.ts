@@ -4,7 +4,8 @@ export const SQL_GET = {
 		sched.utc_offset, sched.local_offset, sched.clock_at, sched.effective_date
 		FROM time_entries te
 		LEFT JOIN schedules sched ON te.sched_id = sched.id
-		WHERE te.user_id = $id`
+		WHERE te.user_id = $id`,
+	USER_SCHEDULES: `SELECT * FROM view_schedules WHERE user_id = $userId ORDER BY  effective_date DESC LIMIT $count`
 };
 
 export const SQL_SET = {
