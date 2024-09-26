@@ -1,5 +1,5 @@
 import type { ScheduleRecord, TimeEntryRecord } from '$lib/schema';
-import { formatDateOrTime } from '$lib/utility';
+import { formatDateOrTime, getOffsetTimezoneStr, minToDuration } from '$lib/utility';
 
 interface TableColumns<T> {
 	title: string;
@@ -49,3 +49,78 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
 	},
 
 ];
+
+export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
+	{
+		title: 'Schedule ID',
+		key: 'id',
+		render: (val) => {
+			if (!val) return "-"
+
+			return val as number
+		}
+	},
+	{
+		title: 'Effective Date',
+		key: 'effective_date',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Client UTC Offset',
+		key: 'utc_offset',
+		render: (val) => {
+			return getOffsetTimezoneStr(val as number);;
+		}
+	},
+	{
+		title: 'Clock In',
+		key: 'clock_at',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'First Break',
+		key: 'first_break_at',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Lunch Break',
+		key: 'lunch_at',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Second Break',
+		key: 'second_break_at',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Work Duration',
+		key: 'clock_dur_min',
+		render: (val) => {
+			return minToDuration(val as number);
+		}
+	},
+	{
+		title: 'Break Duration',
+		key: 'break_dur_min',
+		render: (val) => {
+			return minToDuration(val as number);
+		}
+	},
+	{
+		title: 'Lunch Duration',
+		key: 'lunch_dur_min',
+		render: (val) => {
+			return minToDuration(val as number);
+		}
+	},
+]

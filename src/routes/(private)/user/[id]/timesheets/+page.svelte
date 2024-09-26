@@ -35,9 +35,9 @@
 		}
 
 		timestamp = $timeAction.timestamp;
-		importReady = true;
 		clockInOut = !$timeLog.clocked;
 		disabled = false;
+		importReady = true;
 	});
 
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {

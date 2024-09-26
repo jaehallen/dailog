@@ -1,7 +1,7 @@
 // import { Argon2id } from 'oslo/password';
-import { AppPass} from "$lib/server/lucia/hash-ish"
+import { AppPass } from "$lib/server/lucia/hash-ish"
 import { db } from '../database/db-controller';
-import type { ScheduleRecord } from '$lib/schema';
+import type { ScheduleRecord, UserProfile } from '$lib/schema';
 import { dateAtOffset } from '$lib/utility';
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
@@ -39,4 +39,8 @@ export function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
 	});
 
 	return currentSchedule ?? null;
+}
+
+export function getUserProfile(userId: number, schedule_count: number): Promise<{ user: UserProfile | null, schedules: ScheduleRecord[] }> {
+	return db.getUserProfile(userId, schedule_count);
 }

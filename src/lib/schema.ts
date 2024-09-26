@@ -76,6 +76,10 @@ export interface UserRecord {
 	lock_password: boolean;
 }
 
+export interface UserProfile extends UserRecord {
+	teamlead: string;
+}
+
 export interface SessionRecord {
 	id: string;
 	user_id: number;
