@@ -96,7 +96,7 @@ export class DatabaseController {
 	): Promise<Omit<UserInfo, 'user'>> {
 		const results = await this.batchGet([
 			{
-				sql: `SELECT * FROM view_schedules WHERE id = $sid ORDER BY id DESC LIMIT 3`,
+				sql: `SELECT * FROM view_schedules WHERE id = $sid`,
 				args: { sid: schedId }
 			},
 			{

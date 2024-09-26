@@ -1,6 +1,6 @@
 import { derived, writable } from 'svelte/store';
-import type { OptCategory, TimeEntryRecord, TimesheetStateInfo } from './schema';
-import { CONFIRMCATEGORY } from './schema';
+import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
+import { CONFIRMCATEGORY, TIMESHEETINFO } from './schema';
 
 export const timeAction = userTimeAction();
 export const timesheet = timesheetStore();
@@ -49,25 +49,15 @@ function timesheetStore() {
 }
 
 function userTimeAction() {
-	const { subscribe, set, update } = writable<TimesheetStateInfo>({
-		confirm: false,
-		state: 'end',
-		nextState: 'start',
-		category: 'break',
-		date_at: '',
-		isBreak: false,
-		id: 0,
-		timestamp: 0,
-		lunched: false,
-		message: ''
-	});
+	const { subscribe, set, update } = writable<TimesheetStateInfo>(TIMESHEETINFO);
 	return {
 		subscribe,
 		set,
 		validate: (
 			lastBreak: TimeEntryRecord | null,
 			lunch: TimeEntryRecord | null,
-			date_at: string
+			date_at: string,
+			schedule: ScheduleRecord | null,
 		) => {
 			update((state) => {
 				if (lastBreak) {
@@ -80,6 +70,10 @@ function userTimeAction() {
 				}
 				if (lunch) {
 					state.lunched = lunch && Boolean(lunch.end_at);
+				}
+
+				if (schedule){
+					state.local_offset = schedule.local_offset
 				}
 
 				state.date_at = date_at ? date_at : state.date_at;

@@ -1,4 +1,4 @@
-import type { OptActionState, ScheduleRecord, TimeEntryRecord, UserInfo } from '$lib/schema';
+import { DEFAULT_MIN_WORKDATE, type OptActionState, type ScheduleRecord, type TimeEntryRecord, type UserInfo } from '$lib/schema';
 import type { Session } from 'lucia';
 import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
@@ -98,7 +98,7 @@ function getLatestClock(
 export function isStartOfDuty(clockEntry: TimeEntryRecord): boolean {
 	if (clockEntry.category !== 'clock') return true;
 
-	if (clockEntry.elapse_sec > parseInt(env.MIN_WORKDATE_DIFF || '20') * 3600) return true;
+	if (clockEntry.elapse_sec > (parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 3600) return true;
 
 	return false;
 }

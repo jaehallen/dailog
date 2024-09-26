@@ -2,6 +2,7 @@ export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
+export const DEFAULT_MIN_WORKDATE = 18
 
 export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
 	clock: {
@@ -61,6 +62,7 @@ export interface TimesheetStateInfo {
 	timestamp: number;
 	lunched: boolean;
 	message: string;
+	local_offset: number;
 }
 
 export interface UserRecord {
@@ -170,3 +172,17 @@ export const ROUTES: RouteProfile[] = [
 		role: ['admin', 'lead', 'poc']
 	}
 ];
+
+export const TIMESHEETINFO: TimesheetStateInfo = {
+	confirm: false,
+	state: 'end',
+	nextState: 'start',
+	category: 'break',
+	date_at: '',
+	local_offset: 8,
+	isBreak: false,
+	id: 0,
+	timestamp: 0,
+	lunched: false,
+	message: ''
+}
