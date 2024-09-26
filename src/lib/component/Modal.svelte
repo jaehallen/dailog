@@ -1,6 +1,5 @@
 <script lang="ts">
 	export let isActive = false;
-	export let message = '';
 </script>
 
 <div class="modal" class:is-active={isActive}>
@@ -9,7 +8,7 @@
 		<div class="card">
 			<div class="card-content">
 				<div class="content subtitle">
-					{@html message}
+					<slot name="message" />
 				</div>
 			</div>
 			<footer class="card-footer">

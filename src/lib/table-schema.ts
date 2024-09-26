@@ -44,10 +44,11 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
 		key: 'end_at',
 		render: (val, option) => {
 			const sec = Number(val);
-			return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, option?.local_offset);
+			return !sec
+				? '-'
+				: formatDateOrTime(new Date(Number(sec) * 1000), true, option?.local_offset);
 		}
-	},
-
+	}
 ];
 
 export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
@@ -55,9 +56,9 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 		title: 'Schedule ID',
 		key: 'id',
 		render: (val) => {
-			if (!val) return "-"
+			if (!val) return '-';
 
-			return val as number
+			return val as number;
 		}
 	},
 	{
@@ -68,10 +69,10 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 		}
 	},
 	{
-		title: 'Client UTC Offset',
+		title: 'Client Timezone',
 		key: 'utc_offset',
 		render: (val) => {
-			return getOffsetTimezoneStr(val as number);;
+			return getOffsetTimezoneStr(val as number);
 		}
 	},
 	{
@@ -122,5 +123,6 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 		render: (val) => {
 			return minToDuration(val as number);
 		}
-	},
-]
+	}
+];
+

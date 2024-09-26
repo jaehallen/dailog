@@ -15,7 +15,8 @@
 	};
 </script>
 
-<Modal message={$timeAction.message} {isActive}>
+<Modal {isActive}>
+	<p slot="message">{@html $timeAction.message}</p>
 	<button class="button card-footer-item is-ghost" on:click={userNo}>No</button>
 	<button class="button card-footer-item is-ghost" form={formId} on:click={userYes}>Yes</button>
 </Modal>

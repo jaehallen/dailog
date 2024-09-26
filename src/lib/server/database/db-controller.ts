@@ -1,5 +1,11 @@
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { ScheduleRecord, TimeEntryRecord, UserInfo, UserProfile, UserRecord } from '$lib/schema';
+import type {
+	ScheduleRecord,
+	TimeEntryRecord,
+	UserInfo,
+	UserProfile,
+	UserRecord
+} from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { SQL_GET, SQL_SET } from './sql-queries';
 import { dbChild } from './turso';
@@ -114,7 +120,10 @@ export class DatabaseController {
 		};
 	}
 
-	public async getUserProfile(userId: number, schedule_count: number = 10): Promise<{ user: UserProfile | null, schedules: ScheduleRecord[] }> {
+	public async getUserProfile(
+		userId: number,
+		schedule_count: number = 10
+	): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
 		const results = await this.batchGet([
 			{
 				sql: SQL_GET.USER,
@@ -123,7 +132,7 @@ export class DatabaseController {
 			{
 				sql: SQL_GET.USER_SCHEDULES,
 				args: { userId: userId, count: schedule_count }
-			},
+			}
 		]);
 
 		const [{ rows: userData = [] } = {}, { rows: userSchedules = [] } = {}] = results || [];
@@ -132,7 +141,6 @@ export class DatabaseController {
 			user: userData.length ? toUserProfile(userData[0]) : null,
 			schedules: userSchedules ? userSchedules.map(toUserScheddule) : []
 		};
-
 	}
 
 	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) {
@@ -177,8 +185,8 @@ function toUserRecord(record: Record<string, any>): UserRecord {
 }
 
 function toUserProfile(record: Record<string, any>): UserProfile {
-	const {teamlead, ...user} = record;
-	return {...toUserRecord(user), teamlead}
+	const { teamlead, ...user } = record;
+	return { ...toUserRecord(user), teamlead };
 }
 
 function toUserScheddule(record: Record<string, any>) {
