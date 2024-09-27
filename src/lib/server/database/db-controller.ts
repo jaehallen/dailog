@@ -168,6 +168,13 @@ export class DatabaseController {
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
 	}
+
+	public async updatePassword(userId: number, password: string) {
+		const results = await this.set(SQL_SET.UPDATE_PASSWORD, { id: userId, password_hash: password });
+		
+		if (!results) return null;
+		return results.rowsAffected > 0
+	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
 	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;

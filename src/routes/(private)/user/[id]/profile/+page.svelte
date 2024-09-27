@@ -1,33 +1,100 @@
 <script lang="ts">
 	import Modal from '$lib/component/Modal.svelte';
 	import Field from '$lib/component/Field.svelte';
+	import Notify from '$lib/component/Notify.svelte';
 	import { scheduleColumn } from '$lib/table-schema';
+	import { enhance } from '$app/forms';
 	import type { PageData } from './$types';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SvelteComponent } from 'svelte';
 
+	const RESET_FORM_ID = 'resetform';
 	export let data: PageData;
+	export let notify: SvelteComponent<{
+		notify?: ((msg: string, isDanger?: boolean) => void) | undefined;
+	}>;
 	let isActive = false;
+	let disabled = false;
+	let newPassword = '';
+	let retypePassword = '';
+	let invalidPassword = false;
+
+	const handleEnhance: SubmitFunction = ({ cancel }) => {
+		if (data.user?.lock_password) {
+			confirm(
+				'This account password is locked, please contact your team lead to reset your password.'
+			);
+			cancel();
+			isActive = false;
+			return;
+		}
+		disabled = true;
+		return async ({ update, result }) => {
+			if (result.type === 'success') {
+				update();
+				isActive = false;
+				notify.notify('Password Reset Successful')
+			} else if (result.type === 'failure') {
+				invalidPassword = result.data?.incorrect;
+				update({ reset: false });
+			}
+			disabled = false;
+		};
+	};
 </script>
 
 <main class="container is-fullhd">
+	<Notify bind:this={notify} />
 	<Modal {isActive}>
-		<form action="" slot="message">
-			<Field label="Old Password">
-				<input type="password" class="input" placeholder="Old Password" />
+		<form slot="message" method="post" id={RESET_FORM_ID} use:enhance={handleEnhance}>
+			<Field label="Old Password" name="old">
+				<input
+					type="password"
+					name="old"
+					id="old"
+					class="input"
+					placeholder="Old Password"
+					required
+					minlength="6"
+					on:focus={() => (invalidPassword = false)}
+				/>
+				<div class:is-hidden={!invalidPassword} class="help is-danger">Invalid Password</div>
 			</Field>
-			<Field label="New Password">
-				<input type="password" class="input" placeholder="New Password" />
+			<Field label="New Password" name="new">
+				<input
+					type="password"
+					name="new"
+					id="new"
+					class="input"
+					placeholder="New Password"
+					bind:value={newPassword}
+					required
+					minlength="6"
+				/>
 			</Field>
 			<Field>
-				<input type="password" class="input" placeholder="Confirm New Password" />
+				<input
+					type="password"
+					class="input"
+					placeholder="Confirm New Password"
+					bind:value={retypePassword}
+					required
+					minlength="6"
+				/>
 			</Field>
 		</form>
-		<button class="button card-footer-item is-ghost" on:click={() => (isActive = false)}
+		<button {disabled} class="button card-footer-item is-ghost" on:click={() => (isActive = false)}
 			>Cancel</button
 		>
-		<button class="button card-footer-item is-ghost">Save</button>
+		<button
+			form={RESET_FORM_ID}
+			class:is-loading={disabled}
+			disabled={retypePassword !== newPassword}
+			class="button card-footer-item is-ghost">Save</button
+		>
 	</Modal>
 	{#await data.user}
-		<h1>data ...</h1>
+		<section class="skeleton-block"></section>
 	{:then user}
 		<section class="section">
 			<div class="fixed-grid has-2-cols">

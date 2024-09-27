@@ -25,6 +25,7 @@
 	onMount(async () => {
 		if (data.userTimsheet) {
 			const { timeEntries, date_at, schedules, startOfDuty} = data.userTimsheet;
+			console.log(timeEntries)
 			console.log(startOfDuty)
 			timesheet.set(
 				timeEntries

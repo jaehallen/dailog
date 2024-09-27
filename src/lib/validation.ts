@@ -12,3 +12,10 @@ export const validatePostTime: ZodType<ZPostTime> = z.object({
 	timeAction: z.enum(ACTIONSTATE),
 	date_at: z.coerce.string().date()
 });
+
+export const validatePasswordReset: ZodType<{ oldPassword: string; newPassword: string }> = z.object({
+	oldPassword: z.coerce.string().min(6),
+	newPassword: z.coerce.string().min(6)
+});
+
+type ZPasswordReset = z.infer<typeof validatePasswordReset>

@@ -11,9 +11,11 @@
 					<slot name="message" />
 				</div>
 			</div>
-			<footer class="card-footer">
-				<slot />
-			</footer>
+			{#if $$slots.default}
+				<footer class="card-footer">
+					<slot />
+				</footer>
+			{/if}
 		</div>
 	</div>
 </div>

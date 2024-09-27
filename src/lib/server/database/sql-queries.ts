@@ -9,6 +9,7 @@ export const SQL_SET = {
 	CLOCKOUT: `UPDATE time_entries SET end_at = $end_at WHERE id = $id RETURNING *`,
 	BREAK_START: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at)
 	VALUES ($user_id, $sched_id, $category, $date_at, $start_at) RETURNING *`,
-	BREAK_END: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`
+	BREAK_END: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`,
+	UPDATE_PASSWORD: `UPDATE users SET password_hash = $password_hash WHERE id = $id`
 };
 
