@@ -54,12 +54,16 @@ function userTimeAction() {
 		subscribe,
 		set,
 		validate: (
-			lastBreak: TimeEntryRecord | null,
-			lunch: TimeEntryRecord | null,
-			date_at: string,
+			timelog: {
+				clocked: TimeEntryRecord | null;
+				lastBreak: TimeEntryRecord | null;
+				lunch: TimeEntryRecord | null;
+			},
 			schedule: ScheduleRecord | null,
+			date_at: string
 		) => {
 			update((state) => {
+				const { clocked, lastBreak, lunch } = timelog;
 				if (lastBreak) {
 					state.isBreak = !Boolean(lastBreak.end_at);
 					state.state = state.isBreak ? 'end' : 'start';
@@ -72,8 +76,14 @@ function userTimeAction() {
 					state.lunched = lunch && Boolean(lunch.end_at);
 				}
 
-				if (schedule){
-					state.local_offset = schedule.local_offset
+				if (clocked) {
+					state.sched_id = clocked.sched_id;
+				} else if (schedule) {
+					state.sched_id = schedule.id;
+				}
+
+				if (schedule) {
+					state.local_offset = schedule.local_offset;
 				}
 
 				state.date_at = date_at ? date_at : state.date_at;

@@ -28,7 +28,7 @@
 			<div class="notification" class:is-hidden={!notifySchedule}>
 				<button class="delete" on:click={() => (notifySchedule = false)}></button>
 
-				<strong>User Schedule Not Found!</strong> Please reach out to your Team Lead to setup yuor Schedule
+				<strong>User Schedule Not Found!</strong> Please reach out to your Team Lead to setup your Schedule
 			</div>
 			<header>
 				<p class="has-text-danger" class:is-hidden={!isInvalid}>Invalid Username or Password</p>

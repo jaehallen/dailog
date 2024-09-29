@@ -15,6 +15,7 @@ export interface ZPostTime {
 	category: OptCategory;
 	timeAction: OptActionState;
 	date_at: string;
+	sched_id: number;
 }
 
 export interface TimesheetPostInfo {
@@ -36,6 +37,7 @@ export interface TimesheetStateInfo {
 	lunched: boolean;
 	message: string;
 	local_offset: number;
+	sched_id: number;
 }
 
 export interface UserRecord {
@@ -153,6 +155,7 @@ export const TIMESHEETINFO: TimesheetStateInfo = {
 	state: 'end',
 	nextState: 'start',
 	category: 'break',
+	sched_id: 0,
 	date_at: '',
 	local_offset: 8,
 	isBreak: false,

@@ -45,8 +45,12 @@ export const QUERY = {
 	},
 	LAST_ENTRY: (args: { user_id: number }) => {
 		return {
+			// sql: `WITH last_entry AS
+			// 				(SELECT id, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock' ORDER BY id DESC LIMIT 1)
+			// 			SELECT te.* FROM time_entries te, last_entry l
+			// 			WHERE te.user_id = l.user_id AND te.id >= l.id`,
 			sql: `WITH last_entry AS 
-							(SELECT id, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock' ORDER BY id DESC LIMIT 1)
+							(SELECT MAX(id) as id, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
 						SELECT te.* FROM time_entries te, last_entry l
 						WHERE te.user_id = l.user_id AND te.id >= l.id`,
 			args

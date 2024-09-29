@@ -24,15 +24,13 @@
 
 	onMount(async () => {
 		if (data.userTimsheet) {
-			const { timeEntries, date_at, schedules, startOfDuty} = data.userTimsheet;
-			console.log(timeEntries)
-			console.log(startOfDuty)
+			const { timeEntries, date_at, schedule } = data.userTimsheet;
 			timesheet.set(
 				timeEntries
 					.filter((entry: TimeEntryRecord) => entry.date_at === date_at)
 					.sort((a, b) => b.start_at - a.start_at)
 			);
-			timeAction.validate($timeLog.lastBreak, $timeLog.lunch, date_at, schedules.length ? schedules[0] : null);
+			timeAction.validate($timeLog, schedule, date_at);
 		}
 
 		timestamp = $timeAction.timestamp;
@@ -95,10 +93,11 @@
 		on:no={() => (disabled = false)}
 	/>
 	<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
-		<input type="number" id="id" name="id" value={$timeAction.id} />
-		<input type="text" id="category" name="category" value={$timeAction.category} />
-		<input type="text" id="time-action" name="timeAction" value={$timeAction.state} />
-		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} />;
+		<input type="number" id="id" name="id" value={$timeAction.id} readonly />
+		<input type="text" id="category" name="category" value={$timeAction.category} readonly />
+		<input type="text" id="time-action" name="timeAction" value={$timeAction.state} readonly />
+		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
+		<input type="number" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
 	</form>
 	<section class="mt-6">
 		{#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
@@ -140,7 +139,11 @@
 					{#each $timesheet as entry (entry.id)}
 						<tr>
 							{#each timesheetColumn as column, cid (cid)}
-								<td> {@html column.render(entry[column.key] || '-', {local_offset: $timeAction.local_offset})} </td>
+								<td>
+									{@html column.render(entry[column.key] || '-', {
+										local_offset: $timeAction.local_offset
+									})}
+								</td>
 							{/each}
 							<td>{timeDuration(entry.start_at, entry.end_at)}</td>
 						</tr>

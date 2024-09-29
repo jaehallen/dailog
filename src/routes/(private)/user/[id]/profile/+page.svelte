@@ -33,7 +33,7 @@
 			if (result.type === 'success') {
 				update();
 				isActive = false;
-				notify.notify('Password Reset Successful')
+				notify.notify('Password Reset Successful');
 			} else if (result.type === 'failure') {
 				invalidPassword = result.data?.incorrect;
 				update({ reset: false });
@@ -116,13 +116,13 @@
 							<div class="level-item">
 								<p class="heading">Team Lead:&emsp;</p>
 								<p class="title is-5">
-									{user?.teamlead}
+									{user?.teamlead || '-'}
 								</p>
 							</div>
 							<div class="level-item">
 								<p class="heading">Region:&emsp;</p>
 								<p class="title is-5">
-									{user?.region}
+									{user?.region || '-'}
 								</p>
 							</div>
 						</div>

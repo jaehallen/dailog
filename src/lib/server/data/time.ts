@@ -4,7 +4,6 @@ import type { Session } from 'lucia';
 import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
 import { dateAtOffset } from '$lib/utility';
-import { getCurrentSchedule } from './user';
 
 interface UserLatestTimedata {
 	schedule: ScheduleRecord;
@@ -59,11 +58,7 @@ export const postTime = async (
 export const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
 	const { schedules, timeEntries } = await db.getUserEntryAndSched(session.userId);
 
-	const schedule = getCurrentSchedule(schedules);
-	if (!schedule) {
-		throw new Error('User Schedule Not Found');
-	}
-
+	const [schedule] = schedules;
 	const { startOfDuty, date_at } = userDutyInfo(schedule, timeEntries);
 
 	return {
