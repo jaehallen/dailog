@@ -1,7 +1,13 @@
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { ScheduleRecord, TimeEntryRecord, UserInfo, UserProfile, UserRecord } from '$lib/schema';
+import type {
+	ScheduleRecord,
+	TimeEntryRecord,
+	UserInfo,
+	UserProfile,
+	UserRecord
+} from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
-import { SQL_GET, SQL_SET } from './sql-queries';
+import { QUERY, WRITE } from './sql-queries';
 import { dbChild } from './turso';
 
 export class DatabaseController {
@@ -56,7 +62,8 @@ export class DatabaseController {
 	}
 
 	public async getUser(id: number): Promise<UserRecord | null> {
-		const { rows = [] } = (await this.get(SQL_GET.USER, { id })) || {};
+		const { sql, args } = QUERY.USER({ user_id: id });
+		const { rows = [] } = (await this.get(sql, args)) || {};
 
 		if (!rows.length) {
 			return null;
@@ -65,45 +72,24 @@ export class DatabaseController {
 		return toUserRecord(rows[0]);
 	}
 
-	public async getUserLatestInfo(userId: number): Promise<UserInfo | null> {
+	public async getUserLatestInfo(userId: number): Promise<Omit<UserInfo, 'timeEntries'> | null> {
 		const results = await this.batchGet([
 			{ sql: `SELECT id, active, password_hash FROM users WHERE id = $id`, args: { id: userId } },
-			{
-				sql: `SELECT * FROM view_schedules WHERE user_id = $id ORDER BY id DESC LIMIT 3`,
-				args: { id: userId }
-			},
-			{
-				sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE category = 'clock' AND user_id = $id`,
-				args: { id: userId }
-			}
+			QUERY.USER_SCHEDULES({ user_id: userId })
 		]);
 
-		const [
-			{ rows: userData = [] } = {},
-			{ rows: userSched = [] } = {},
-			{ rows: timeData = [] } = {}
-		] = results || [];
+		const [{ rows: userData = [] } = {}, { rows: userSched = [] } = {}] = results || [];
 
 		return {
 			user: userData.length ? toUserRecord(userData[0]) : null,
-			schedules: userSched ? userSched.map(toUserScheddule) : [],
-			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : []
+			schedules: userSched ? userSched.map(toUserScheddule) : []
 		};
 	}
 
-	public async getUserEntryAndSched(
-		userId: number,
-		schedId: number
-	): Promise<Omit<UserInfo, 'user'>> {
+	public async getUserEntryAndSched(userId: number): Promise<Omit<UserInfo, 'user'>> {
 		const results = await this.batchGet([
-			{
-				sql: `SELECT * FROM view_schedules WHERE id = $sid`,
-				args: { sid: schedId }
-			},
-			{
-				sql: `SELECT *, MAX(date_at) FROM view_time_entries WHERE user_id = $id GROUP BY category`,
-				args: { id: userId }
-			}
+			QUERY.USER_SCHEDULES({ user_id: userId, limit: 1 }),
+			QUERY.LAST_ENTRY({ user_id: userId })
 		]);
 
 		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
@@ -114,16 +100,13 @@ export class DatabaseController {
 		};
 	}
 
-	public async getUserProfile(userId: number, schedule_count: number = 10): Promise<{ user: UserProfile | null, schedules: ScheduleRecord[] }> {
+	public async getUserProfile(
+		userId: number,
+		schedule_count: number = 10
+	): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
 		const results = await this.batchGet([
-			{
-				sql: SQL_GET.USER,
-				args: { id: userId }
-			},
-			{
-				sql: SQL_GET.USER_SCHEDULES,
-				args: { userId: userId, count: schedule_count }
-			},
+			QUERY.USER({ user_id: userId }),
+			QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
 		]);
 
 		const [{ rows: userData = [] } = {}, { rows: userSchedules = [] } = {}] = results || [];
@@ -132,17 +115,18 @@ export class DatabaseController {
 			user: userData.length ? toUserProfile(userData[0]) : null,
 			schedules: userSchedules ? userSchedules.map(toUserScheddule) : []
 		};
-
 	}
 
 	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) {
-		const results = await this.set(SQL_SET.CLOCKIN, args);
+		const q = WRITE.CLOCKIN(args);
+		const results = await this.set(q.sql, q.args);
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
 	}
 
 	public async clockOut(args: Pick<TimeEntryRecord, 'id' | 'end_at'>) {
-		const results = await this.set(SQL_SET.CLOCKOUT, args);
+		const q = WRITE.CLOCKOUT(args);
+		const results = await this.set(q.sql, q.args);
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
 	}
@@ -150,15 +134,25 @@ export class DatabaseController {
 	public async startTime(
 		args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent'>
 	) {
-		const results = await this.set(SQL_SET.BREAK_START, args);
+		const q = WRITE.BREAK_START(args);
+		const results = await this.set(q.sql, q.args);
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
 	}
 
 	public async endTime(args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) {
-		const results = await this.set(SQL_SET.BREAK_END, args);
+		const q = WRITE.BREAK_END(args);
+		const results = await this.set(q.sql, q.args);
 		if (!results) return null;
 		return toTimeEntryRecord(results.rows[0]);
+	}
+
+	public async updatePassword(userId: number, password: string) {
+		const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
+		const results = await this.set(q.sql, q.args);
+
+		if (!results) return null;
+		return results.rowsAffected > 0;
 	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
@@ -177,8 +171,8 @@ function toUserRecord(record: Record<string, any>): UserRecord {
 }
 
 function toUserProfile(record: Record<string, any>): UserProfile {
-	const {teamlead, ...user} = record;
-	return {...toUserRecord(user), teamlead}
+	const { teamlead, ...user } = record;
+	return { ...toUserRecord(user), teamlead };
 }
 
 function toUserScheddule(record: Record<string, any>) {

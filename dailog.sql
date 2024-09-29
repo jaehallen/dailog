@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS opt_category (
   category TEXT PRIMARY KEY
 ) WITHOUT ROWID;
 
-INSERT INTO opt_category VALUES ('clock'), ('lunch'), ('break'), ('coffee'), ('clinic');
+INSERT INTO opt_category VALUES ('clock'), ('lunch'), ('break'), ('coffee'), ('clinic'), ('meeting'), ('other');
 
 CREATE TABLE IF NOT EXISTS opt_role (
   role TEXT PRIMARY KEY
@@ -56,11 +56,9 @@ CREATE TABLE IF NOT EXISTS sessions (
   id TEXT NOT NULL PRIMARY KEY,
   expires_at INTEGER NOT NULL,
   user_id INTEGER NOT NULL REFERENCES users(id),
-  sched_id INTEGER NOT NULL REFERENCES schedules(id),
-  date_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_sessions ON sessions(id, user_id, sched_id);
+CREATE INDEX IF NOT EXISTS idx_sessions ON sessions(user_id);
 
 -- SCHEDULES TABLES
 CREATE TABLE IF NOT EXISTS schedules (
@@ -93,6 +91,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
   end_at INTEGER,
   user_ip TEXT,
   user_agent TEXT,
+  remarks TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -149,7 +148,8 @@ SELECT
   category,
   date_at,
   start_at,
-  end_at
+  end_at,
+  remarks
   FROM time_entries
 
 -- INSERT DEFAULT USER

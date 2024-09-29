@@ -45,13 +45,11 @@ export class SQLiteAdapterMod implements Adapter {
 		if (!result) {
 			return [null, null];
 		}
-		const { user_id, id, expires_at, sched_id, date_at, ...user } = result;
+		const { user_id, id, expires_at, ...user } = result;
 		const databaseSession = transformIntoDatabaseSession({
 			id,
 			expires_at,
-			user_id,
-			sched_id,
-			date_at
+			user_id
 		});
 		const databaseUser = transformIntoDatabaseUser({ id: user_id, ...user });
 		return [databaseSession, databaseUser];

@@ -3,7 +3,6 @@ import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
-import { userDutyInfo } from '$lib/server/data/time';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals?.session) {
@@ -23,19 +22,17 @@ export const actions = {
 			return fail(400);
 		}
 
-		const { user, schedule, timeEntry } = (await validateUser(inputValid.data)) || {};
+		const { user, schedule} = (await validateUser(inputValid.data)) || {};
 
 		if (!user?.id) {
 			return fail(400);
 		}
 
-		if (!schedule || !timeEntry) {
+		if (!schedule) {
 			return fail(400, { noSchedule: true });
 		}
 
-		const { date_at } = userDutyInfo(schedule, timeEntry);
-
-		const session = await lucia.createSession(user.id, { sched_id: schedule.id, date_at });
+		const session = await lucia.createSession(user.id, {});
 		const sessionCookie = lucia.createSessionCookie(session.id);
 		cookies.set(sessionCookie.name, sessionCookie.value, {
 			path: '.',

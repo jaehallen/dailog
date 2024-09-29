@@ -1,10 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
-import { validatePostTime, validateSignIn } from '$lib/validation';
-import { validateUser } from '$lib/server/data/user';
+import { validatePostTime } from '$lib/validation';
 import { userCurrentEntries, postTime } from '$lib/server/data/time';
-import type { OptCategory, OptActionState, TimeEntryRecord, ZPostTime } from '$lib/schema';
+import type { TimeEntryRecord } from '$lib/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
@@ -42,7 +40,7 @@ export const actions = {
 					user_id: locals.user.id,
 					category: data?.category,
 					date_at: data?.date_at,
-					sched_id: locals.session.sched_id,
+					sched_id: data?.sched_id,
 					user_ip: ipAddrss,
 					user_agent: userAgent,
 					timestamp: Math.floor(Date.now() / 1000),
