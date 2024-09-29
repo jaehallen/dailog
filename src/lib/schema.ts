@@ -2,34 +2,7 @@ export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
-export const DEFAULT_MIN_WORKDATE = 18
-
-export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
-	clock: {
-		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
-		end: 'Would you like to conclude your <strong>Work Today</strong>?'
-	},
-	break: {
-		start: "Are you sure you'd like to take your <strong>Short Break</strong> now?",
-		end: 'Would you like to conclude your <strong>Short Break</strong>?'
-	},
-	lunch: {
-		start: "Are you sure you'd like to take your <strong>Lunch Break</strong> now?",
-		end: 'Would you like to conclude your <strong>Lunch Break</strong>?'
-	},
-	bio: {
-		start: "Are you sure you'd like to take your <strong>Restroom Break</strong> now?",
-		end: 'Would you like to conclude your <strong>Restroom Break</strong>?'
-	},
-	coffee: {
-		start: "Are you sure you'd like to take your <strong>Coffee Break</strong> now?",
-		end: 'Would you like to conclude your <strong>Coffee Break</strong>?'
-	},
-	clinic: {
-		start: "Are you sure you'd like to take your <strong>Medical Time</strong> now?",
-		end: 'Would you like to conclude your <strong>Medical Medical</strong>?'
-	}
-};
+export const DEFAULT_MIN_WORKDATE = 18;
 
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
@@ -84,8 +57,6 @@ export interface SessionRecord {
 	id: string;
 	user_id: number;
 	expires_at: number;
-	sched_id: number;
-	date_at: string;
 }
 
 export interface ScheduleRecord {
@@ -189,4 +160,31 @@ export const TIMESHEETINFO: TimesheetStateInfo = {
 	timestamp: 0,
 	lunched: false,
 	message: ''
-}
+};
+
+export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
+	clock: {
+		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
+		end: 'Would you like to conclude your <strong>Work Today</strong>?'
+	},
+	break: {
+		start: "Are you sure you'd like to take your <strong>Short Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Short Break</strong>?'
+	},
+	lunch: {
+		start: "Are you sure you'd like to take your <strong>Lunch Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Lunch Break</strong>?'
+	},
+	bio: {
+		start: "Are you sure you'd like to take your <strong>Restroom Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Restroom Break</strong>?'
+	},
+	coffee: {
+		start: "Are you sure you'd like to take your <strong>Coffee Break</strong> now?",
+		end: 'Would you like to conclude your <strong>Coffee Break</strong>?'
+	},
+	clinic: {
+		start: "Are you sure you'd like to take your <strong>Medical Time</strong> now?",
+		end: 'Would you like to conclude your <strong>Medical Medical</strong>?'
+	}
+};

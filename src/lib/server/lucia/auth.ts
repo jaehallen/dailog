@@ -31,11 +31,6 @@ declare module 'lucia' {
 		Lucia: typeof lucia;
 		UserId: number;
 		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
-		DatabaseSessionAttributes: DatabaseSessionAttributes;
-	}
-	interface DatabaseSessionAttributes {
-		sched_id: number;
-		date_at: string;
 	}
 }
 

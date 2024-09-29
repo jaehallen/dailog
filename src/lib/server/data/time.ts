@@ -1,10 +1,14 @@
-import { DEFAULT_MIN_WORKDATE, type OptActionState, type ScheduleRecord, type TimeEntryRecord, type UserInfo } from '$lib/schema';
+import type { OptActionState, ScheduleRecord, TimeEntryRecord } from '$lib/schema';
+import { DEFAULT_MIN_WORKDATE } from '$lib/schema';
 import type { Session } from 'lucia';
 import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
 import { dateAtOffset } from '$lib/utility';
+import { getCurrentSchedule } from './user';
 
-interface UserLatestTimedata extends Omit<UserInfo, 'user'> {
+interface UserLatestTimedata {
+	schedule: ScheduleRecord;
+	timeEntries: TimeEntryRecord[];
 	startOfDuty: boolean;
 	date_at: string;
 }
@@ -53,49 +57,51 @@ export const postTime = async (
 };
 
 export const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
-	const { schedules, timeEntries } = await db.getUserEntryAndSched(
-		session.userId,
-		session.sched_id
-	);
+	const { schedules, timeEntries } = await db.getUserEntryAndSched(session.userId);
 
-	const [schedule] = schedules;
+	const schedule = getCurrentSchedule(schedules);
+	if (!schedule) {
+		throw new Error('User Schedule Not Found');
+	}
+
 	const { startOfDuty, date_at } = userDutyInfo(schedule, timeEntries);
 
 	return {
 		timeEntries,
-		schedules,
+		schedule,
 		startOfDuty,
 		date_at
 	};
 };
 
-export function userDutyInfo(
-	schedule: ScheduleRecord,
-	timeEntries: TimeEntryRecord[] | TimeEntryRecord
-) {
-	const [dateStr] = dateAtOffset(new Date(), schedule.utc_offset).toISOString().split('T', 1);
+export function userDutyInfo(schedule: ScheduleRecord, timeEntries: TimeEntryRecord[]) {
 	const lastClockEntry = getLatestClock(timeEntries) || null;
 	const startOfDuty = !lastClockEntry ? true : isStartOfDuty(lastClockEntry);
-	const date_at = !startOfDuty && lastClockEntry ? lastClockEntry.date_at : dateStr;
+
+	if (!startOfDuty && lastClockEntry) {
+		return {
+			startOfDuty,
+			date_at: lastClockEntry.date_at
+		};
+	}
+
+	const [dateStr] = dateAtOffset(new Date(), schedule.utc_offset).toISOString().split('T', 1);
 
 	return {
 		startOfDuty,
-		date_at
+		date_at: dateStr
 	};
 }
 
-function getLatestClock(
-	timeEntries: TimeEntryRecord[] | TimeEntryRecord
-): TimeEntryRecord | undefined {
-	return Array.isArray(timeEntries)
-		? timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock')
-		: timeEntries;
+function getLatestClock(timeEntries: TimeEntryRecord[]): TimeEntryRecord | undefined {
+	return timeEntries.find((entry: TimeEntryRecord) => entry.category === 'clock');
 }
 
 export function isStartOfDuty(clockEntry: TimeEntryRecord): boolean {
 	if (clockEntry.category !== 'clock') return true;
 
-	if (clockEntry.elapse_sec > (parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 3600) return true;
+	if (clockEntry.elapse_sec > (parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 3600)
+		return true;
 
 	return false;
 }
