@@ -3,7 +3,7 @@ import { DEFAULT_MIN_WORKDATE } from '$lib/schema';
 import type { Session } from 'lucia';
 import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
-import { dateAtOffset } from '$lib/utility';
+import { dateAtOffsetStr } from '$lib/utility';
 
 interface UserLatestTimedata {
 	schedule: ScheduleRecord;
@@ -69,6 +69,12 @@ export const userCurrentEntries = async (session: Session): Promise<UserLatestTi
 	};
 };
 
+// export const getCurrentSchedule = async (userId: number) => {
+// 	const {schedules, timeEntries }= await db.getUserEntryAndSched(userId, true);
+// 	const {startOfDuty, date_at} = userDutyInfo(schedules[0], timeEntries);
+//
+// }
+
 export function userDutyInfo(schedule: ScheduleRecord, timeEntries: TimeEntryRecord[]) {
 	const lastClockEntry = getLatestClock(timeEntries) || null;
 	const startOfDuty = !lastClockEntry ? true : isStartOfDuty(lastClockEntry);
@@ -80,7 +86,7 @@ export function userDutyInfo(schedule: ScheduleRecord, timeEntries: TimeEntryRec
 		};
 	}
 
-	const [dateStr] = dateAtOffset(new Date(), schedule.utc_offset).toISOString().split('T', 1);
+	const dateStr = dateAtOffsetStr(new Date(), schedule.utc_offset);
 
 	return {
 		startOfDuty,

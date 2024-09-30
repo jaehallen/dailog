@@ -86,10 +86,10 @@ export class DatabaseController {
 		};
 	}
 
-	public async getUserEntryAndSched(userId: number): Promise<Omit<UserInfo, 'user'>> {
+	public async getUserEntryAndSched(userId: number, clockOnly: boolean = false, schedLimit: number = 10): Promise<Omit<UserInfo, 'user'>> {
 		const results = await this.batchGet([
-			QUERY.USER_SCHEDULES({ user_id: userId, limit: 1 }),
-			QUERY.LAST_ENTRY({ user_id: userId })
+			QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
+			!clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
 		]);
 
 		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];

@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS schedules (
   UNIQUE(user_id, effective_date)
 );
 
-CREATE INDEX IF NOT EXISTS idx1 ON schedules(user_id, effective_date);
+CREATE INDEX IF NOT EXISTS schedules_idx ON schedules(user_id, effective_date);
 
 -- time_entries
 CREATE TABLE IF NOT EXISTS time_entries (
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx1 ON time_entries(user_id, date_at, category);
+CREATE INDEX IF NOT EXISTS entry_idx ON time_entries(user_id, date_at, category);
 
 CREATE TRIGGER IF NOT EXISTS time_entries_updated
 AFTER UPDATE ON time_entries WHEN old.updated_at <> CURRENT_TIMESTAMP

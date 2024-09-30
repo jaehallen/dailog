@@ -1,3 +1,4 @@
+import { getSchedule } from '$lib/server/data/schedule';
 import { isProtectedRoute, lucia } from '$lib/server/lucia/auth';
 import { routeProfile } from '$lib/server/lucia/auth';
 import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
@@ -73,4 +74,11 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(auth, checkUser, userRoute);
+export const userSchedule: Handle = async ({ event, resolve }) => {
+	if (event.locals.user) {
+		event.locals.schedule = await getSchedule(event.locals.user.id);
+	}
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(auth, checkUser, userRoute, userSchedule);

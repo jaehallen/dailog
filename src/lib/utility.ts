@@ -1,6 +1,3 @@
-import type { UserRecord, RouteProfile, TimeEntryRecord, TimeEntryResults } from '$lib/schema';
-import { ROUTES } from '$lib/schema';
-
 export const toEpochDatetime = (timeStr: string): Date => {
 	const [hr, min] = timeStr.split(':');
 	const d = Date.UTC(1970, 0, 1, parseInt(hr) || 0, parseInt(min) || 0);
@@ -34,6 +31,10 @@ export const dateAtOffset = (date: Date | number, offset: number): Date => {
 	}
 
 	return date;
+};
+
+export const dateAtOffsetStr = (date: Date | number, offset: number): string => {
+	return dateAtOffset(date, offset).toISOString().split('T', 1)[0];
 };
 
 export const getTimeStr = (date: Date, isHour12 = false) => {
@@ -112,5 +113,6 @@ export const minToDuration = (min: number) => {
 	const hh = Math.floor(min / 60);
 	const mm = Math.floor(min - hh * 60);
 
-	return `${f(hh)}:${f(mm)}`
-}
+	return `${f(hh)}:${f(mm)}`;
+};
+

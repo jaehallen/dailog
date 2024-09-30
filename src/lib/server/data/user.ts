@@ -1,40 +1,21 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
 import { db } from '../database/db-controller';
 import type { ScheduleRecord, UserProfile } from '$lib/schema';
-import { dateAtOffset } from '$lib/utility';
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
 	const appPass = new AppPass();
 	const { user = null, schedules = [] } = (await db.getUserLatestInfo(id)) || {};
 
 	if (!user || !user.active) {
-		return { user: null, schedule: null, timeEntry: null };
+		return { user: null, schedule: null };
 	}
 
 	if (!(await appPass.verify(user.password_hash, password))) {
-		return { user: null, schedule: null, timeEntry: null };
+		return { user: null, schedule: null };
 	}
 
-	const schedule = getCurrentSchedule(schedules || []);
-
-	return { user, schedule };
+	return { user, schedule: schedules.length ? schedules : null };
 };
-
-export function getCurrentSchedule(schedules: ScheduleRecord[] = []) {
-	const today = new Date();
-	schedules.sort(
-		(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
-	);
-
-	const currentSchedule = schedules.find((schedule) => {
-		const scheduleDate = new Date(schedule.effective_date);
-		const todayOffset = dateAtOffset(today, schedule.utc_offset);
-
-		return todayOffset.getTime() >= scheduleDate.getTime();
-	});
-
-	return currentSchedule ?? null;
-}
 
 export function getUserProfile(
 	userId: number,
@@ -72,4 +53,3 @@ export async function userPasswordReset(
 		success: Boolean(success)
 	};
 }
-

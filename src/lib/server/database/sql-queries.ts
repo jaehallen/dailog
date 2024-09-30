@@ -1,19 +1,4 @@
-import type { TimeEntryRecord, UserRecord } from '$lib/schema';
-
-export const SQL_GET = {
-	USER: `SELECT * FROM view_users WHERE id = $id`,
-	USER_SCHEDULES: `SELECT * FROM view_schedules WHERE user_id = $user_id ORDER BY  effective_date DESC LIMIT $count`
-};
-
-export const SQL_SET = {
-	CLOCKIN: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent)
-		VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent) RETURNING *`,
-	CLOCKOUT: `UPDATE time_entries SET end_at = $end_at WHERE id = $id RETURNING *`,
-	BREAK_START: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at)
-	VALUES ($user_id, $sched_id, $category, $date_at, $start_at) RETURNING *`,
-	BREAK_END: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`,
-	UPDATE_PASSWORD: `UPDATE users SET password_hash = $password_hash WHERE id = $id`
-};
+import type { TimeEntryRecord } from '$lib/schema';
 
 export const QUERY = {
 	USER: (args: { user_id: number }) => {
@@ -45,14 +30,16 @@ export const QUERY = {
 	},
 	LAST_ENTRY: (args: { user_id: number }) => {
 		return {
-			// sql: `WITH last_entry AS
-			// 				(SELECT id, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock' ORDER BY id DESC LIMIT 1)
-			// 			SELECT te.* FROM time_entries te, last_entry l
-			// 			WHERE te.user_id = l.user_id AND te.id >= l.id`,
-			sql: `WITH last_entry AS 
-							(SELECT MAX(id) as id, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
-						SELECT te.* FROM time_entries te, last_entry l
-						WHERE te.user_id = l.user_id AND te.id >= l.id`,
+			sql: `WITH recent AS 
+							(SELECT MAX(date_at) as date_at, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
+						SELECT e.* FROM time_entries e, recent r 
+						WHERE e.date_at = r.date_at and e.user_id = r.user_id`,
+			args
+		};
+	},
+	LAST_CLOCKED: (args: { user_id: number }) => {
+		return {
+			sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
 			args
 		};
 	}
