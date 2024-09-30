@@ -59,7 +59,7 @@
 	};
 
 	const handleEnhance: SubmitFunction = () => {
-		timeAction.close();
+		timeAction.cancel();
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
 				const { record } = result.data || {};
@@ -84,13 +84,18 @@
 	const leftToggle = () => {
 		clockInOut = !$timeLog.clocked || !clockInOut;
 	};
+
+	const cancel = () => {
+		timeAction.cancel();
+		disabled = false;
+	}
 </script>
 
 <main class="container">
 	<TimesheetModal
 		formId={FORM_ID}
 		isActive={$timeAction.confirm}
-		on:no={() => (disabled = false)}
+		on:no={cancel}
 	/>
 	<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
 		<input type="number" id="id" name="id" value={$timeAction.id} readonly />
