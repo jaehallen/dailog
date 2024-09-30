@@ -136,7 +136,7 @@ function userTimeAction() {
 				return state;
 			});
 		},
-		close: () => {
+		cancel: () => {
 			update((state) => {
 				state.confirm = false;
 				return state;
