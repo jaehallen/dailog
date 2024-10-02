@@ -8,8 +8,6 @@ export const load = (async ({ locals }) => {
 		redirect(302, '/login');
 	}
 
-	console.log(locals.schedule);
-
 	return await getUserProfile(locals.user.id, 20);
 }) satisfies PageServerLoad;
 
@@ -37,4 +35,3 @@ export const actions = {
 		return response;
 	}
 } satisfies Actions;
-

@@ -12,6 +12,7 @@ export const handleError: HandleServerError = async ({ error }) => {
 };
 
 export const auth: Handle = async ({ event, resolve }) => {
+	console.time();
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
 
 	if (event.url.pathname === '/') {
@@ -40,8 +41,10 @@ export const auth: Handle = async ({ event, resolve }) => {
 			...sessionCookie.attributes
 		});
 	}
+
 	event.locals.user = user;
 	event.locals.session = session;
+	console.timeEnd();
 	return resolve(event);
 };
 
@@ -72,11 +75,4 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const userSchedule: Handle = async ({ event, resolve }) => {
-	if (event.locals.user) {
-		event.locals.schedule = await getSchedule(event.locals.user.id);
-	}
-	return resolve(event);
-};
-
-export const handle: Handle = sequence(auth, checkUser, userRoute, userSchedule);
+export const handle: Handle = sequence(auth, checkUser, userRoute);

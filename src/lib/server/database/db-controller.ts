@@ -8,7 +8,7 @@ import type {
 } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { QUERY, WRITE } from './sql-queries';
-import { dbChild } from './turso';
+import { getClient } from './turso';
 
 export class DatabaseController {
 	private client: Client;
@@ -18,12 +18,13 @@ export class DatabaseController {
 
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
 		try {
-			console.time('get')
+			log('db-get', 'time');
+			console.time();
 			const results = await this.client.execute({
 				sql,
 				args
 			});
-			console.timeEnd('get')
+			console.timeEnd();
 			return results;
 		} catch (error) {
 			if (error instanceof LibsqlError) {
@@ -36,9 +37,9 @@ export class DatabaseController {
 
 	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
 		try {
-			console.time('batch')
+			console.time('batch');
 			const results = await this.client.batch(querries, 'read');
-			console.timeEnd('batch')
+			console.timeEnd('batch');
 			return results;
 		} catch (error: unknown) {
 			logError('batchGet', error as Error);
@@ -75,21 +76,32 @@ export class DatabaseController {
 		return toUserRecord(rows[0]);
 	}
 
-	public async getUserLatestInfo(userId: number): Promise<Omit<UserInfo, 'timeEntries'> | null> {
-		const results = await this.batchGet([
-			{ sql: `SELECT id, active, password_hash FROM users WHERE id = $id`, args: { id: userId } },
-			QUERY.USER_SCHEDULES({ user_id: userId })
-		]);
+	public async getUserValidation(
+		userId: number
+	): Promise<(UserRecord & { sched_id: number }) | null> {
+		const { rows = [] } =
+			(await this.get(
+				`SELECT users.id, users.active, users.password_hash, sched.id as sched_id
+				FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
+				WHERE users.id = $userId LIMIT 1`,
+				{ userId }
+			)) || {};
 
-		const [{ rows: userData = [] } = {}, { rows: userSched = [] } = {}] = results || [];
+		if (!rows.length) {
+			return null;
+		}
 
 		return {
-			user: userData.length ? toUserRecord(userData[0]) : null,
-			schedules: userSched ? userSched.map(toUserScheddule) : []
+			sched_id: rows[0].sched_id as number,
+			...toUserRecord(rows[0])
 		};
 	}
 
-	public async getUserEntryAndSched(userId: number, clockOnly: boolean = false, schedLimit: number = 10): Promise<Omit<UserInfo, 'user'>> {
+	public async getUserEntryAndSched(
+		userId: number,
+		clockOnly: boolean = false,
+		schedLimit: number = 10
+	): Promise<Omit<UserInfo, 'user'>> {
 		const results = await this.batchGet([
 			QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
 			!clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
@@ -241,4 +253,4 @@ export function logError(source: string, error: Error) {
 	console.log(error.stack);
 	console.log(error.message);
 }
-export const db = new DatabaseController(dbChild());
+export const db = new DatabaseController(getClient());

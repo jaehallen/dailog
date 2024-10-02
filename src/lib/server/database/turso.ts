@@ -37,3 +37,14 @@ function getTursoClient(db: 'main' | 'child') {
 
 	return createClient({ url, authToken });
 }
+
+export function getClient() {
+	if (env.DB_URL === undefined) {
+		throw new Error('TURSO_URL env var is not defined');
+	}
+	if (env.DB_TOKEN === undefined) {
+		throw new Error('TURSO_AUTH_TOKEN env var is not defined');
+	}
+
+	return createClient({ url: env.DB_URL, authToken: env.DB_TOKEN });
+}

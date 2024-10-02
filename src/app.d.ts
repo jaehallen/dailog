@@ -6,7 +6,6 @@ declare global {
 			user: import('lucia').User | null;
 			session: import('lucia').Session | null;
 			routes: RouteProfile[] | null;
-			schedule: (ScheduleRecord & { date_at: string; startOfDuty: boolean }) | null;
 			// schedule: MyUserSchedule | null;
 		}
 		// interface Error {}
