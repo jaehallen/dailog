@@ -1,9 +1,10 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
 import { db } from '../database/db-controller';
 import type { ScheduleRecord, UserProfile } from '$lib/schema';
+import {env} from "$env/dynamic/private"
 
 export const validateUser = async ({ id, password }: { id: number; password: string }) => {
-	const appPass = new AppPass();
+	const appPass = new AppPass(undefined, {iterations: Number(env.ITERATIONS)});
 	const { user = null, schedules = [] } = (await db.getUserLatestInfo(id)) || {};
 
 	if (!user || !user.active) {
@@ -34,7 +35,7 @@ export async function userPasswordReset(
 		return null;
 	}
 
-	const appPass = new AppPass();
+	const appPass = new AppPass(undefined, {iterations: Number(env.ITERATIONS)});
 	if (!(await appPass.verify(user.password_hash, oldPassword))) {
 		return {
 			incorrect: true

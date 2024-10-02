@@ -4,16 +4,19 @@ export class AppPass {
     private algorithm: string;
     private usages: KeyUsage[];
     private salt: Uint8Array;
+    private iterations: number;
 
     constructor(salt?: Uint8Array, options: {
         format?: "pkcs8" | "raw" | "spki",
         algorithm?: string,
-        usages?: KeyUsage[]
+        usages?: KeyUsage[],
+        iterations?: number
     } = {}) {
         this.salt = salt || crypto.getRandomValues(new Uint8Array(16))
         this.format = options.format || "raw";
         this.algorithm = options.algorithm || "PBKDF2";
         this.usages = options.usages || ["deriveBits", "deriveKey"];
+        this.iterations = options.iterations || 100000;
     }
 
     public async hash(password: string, salt?: Uint8Array): Promise<string> {
@@ -29,7 +32,7 @@ export class AppPass {
             {
                 name: this.algorithm,
                 salt: salt || this.salt,
-                iterations: 100000,
+                iterations: this.iterations,
                 hash: "SHA-256",
             },
             keyMaterial,

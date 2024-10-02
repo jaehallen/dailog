@@ -18,11 +18,12 @@ export class DatabaseController {
 
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
 		try {
+			console.time('get')
 			const results = await this.client.execute({
 				sql,
 				args
 			});
-
+			console.timeEnd('get')
 			return results;
 		} catch (error) {
 			if (error instanceof LibsqlError) {
@@ -35,7 +36,9 @@ export class DatabaseController {
 
 	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
 		try {
+			console.time('batch')
 			const results = await this.client.batch(querries, 'read');
+			console.timeEnd('batch')
 			return results;
 		} catch (error: unknown) {
 			logError('batchGet', error as Error);

@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_leadrole ON users(region, lead_id, role);
+CREATE INDEX IF NOT EXISTS idx_leadrole ON users(lead_id, role, region);
 
 CREATE TRIGGER IF NOT EXISTS users_updated 
 AFTER UPDATE ON users WHEN old.updated_at <> CURRENT_TIMESTAMP
@@ -40,22 +40,22 @@ BEGIN
  UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
 END;
 
-CREATE TRIGGER IF NOT EXISTS users_lock_password AFTER UPDATE of password_hash ON users
-BEGIN
- UPDATE users SET lock_password = 1 WHERE id = old.id;
-END;
+-- CREATE TRIGGER IF NOT EXISTS users_lock_password AFTER UPDATE of password_hash ON users
+-- BEGIN
+--  UPDATE users SET lock_password = 1 WHERE id = old.id;
+-- END;
 
-CREATE TRIGGER IF NOT EXISTS check_password_reset BEFORE UPDATE of password_hash ON users
-WHEN old.lock_password = 1
-BEGIN
-  SELECT RAISE(ABORT, 'Updating password is prohibited');
-END;
+-- CREATE TRIGGER IF NOT EXISTS check_password_reset BEFORE UPDATE of password_hash ON users
+-- WHEN old.lock_password = 1
+-- BEGIN
+--   SELECT RAISE(ABORT, 'Updating password is prohibited');
+-- END;
 
 -- SESSIONS TABLES
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT NOT NULL PRIMARY KEY,
   expires_at INTEGER NOT NULL,
-  user_id INTEGER NOT NULL REFERENCES users(id),
+  user_id INTEGER NOT NULL REFERENCES users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions ON sessions(user_id);
@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS schedules (
   first_break_at TEXT DEFAULT '00:00' CHECK(first_break_at IS strftime('%R', first_break_at)),
   lunch_at TEXT DEFAULT '00:00' CHECK(lunch_at IS strftime('%R', lunch_at)),
   second_break_at TEXT DEFAULT '00:00' CHECK(second_break_at IS strftime('%R', second_break_at)),
+  day_off TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, effective_date)
 );
@@ -136,8 +137,16 @@ SELECT
   second_break_at,
   clock_dur_min,
   lunch_dur_min,
-  break_dur_min
+  break_dur_min,
+  day_off
 FROM schedules
+
+-- expensive make sure to query with user_id
+CREATE VIEW current_schedules AS
+SELECT date(current_date, clock_at, CONCAT(utc_offset-local_offset," hours")) as date_at, * 
+  FROM schedules 
+  WHERE effective_date <= date_at
+  ORDER BY effective_date desc
 
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS
@@ -155,11 +164,6 @@ SELECT
 -- INSERT DEFAULT USER
 INSERT INTO users ("id","name","region","role","password_hash","lead_id","lock_password")
 VALUES
-(100000, "Admin",null,"admin","$argon2id$v=19$m=19456,t=2,p=1$Fg9DjFhBJuBXhgjSX38d4w$c2ZTJ4fWagrJoLKhgEQsuziwJDIoziOfMaH7CEtVUHk",null,1), -- admin@hopkins
-(200000, "Lead of Hopkins",null,"lead","$argon2id$v=19$m=19456,t=2,p=1$e/kyaHEgKiVayAukHn4NhQ$ARwgHuRkfzL34ghl8bn5LSWa8wg77bvki+4ZMXm+MlI",null,1), -- lead@hopkins
-(200001, "POC of Hopkins","APAC","poc","$argon2id$v=19$m=19456,t=2,p=1$qfG/whO6udTe746oZFHRBA$fVSALwxWHHKKaeF+AbgH0f5sC9j4pluGs12Lr9H1wCQ",null,1); -- poc@hopkins
-
--- HASH ISH
--- admin@hopkins -> 7c0fb5feff375a24859a28378e5590fc:8436e309430321cfc9bc27e83a2bc5b80dd1ac409188a8142da345dfb929b5b9
--- lead@hopkins -> d588755807192b2117467e097366cb7d:409ca18cafc5fd36711279ea48280d109d0d4434cfc1ead2799fa2100e641b7f
--- poc@hopkins -> f2565b41e91cc09e0cef55cdedb15698:10843526f6502d381a2aa8a2fb9e54d9f88d6f3cac907752273e2646f120e169
+(100000, "Admin",null,"admin","c1af01ec84c4ea44cacf0774e51e9e01:666bc8196e924bdd60161ff14b33623b957c164c729797c272d4e306d366bac8",null,1), -- admin@hopkins
+(200000, "Lead of Hopkins","APAC","lead","a8eff657adbb271dcd36cd22e5848dae:b1fe08ccf5652b823a2fa6e48be02d6d33496435c46ec2793c62f92e3b8ede91",100000,1), -- lead@hopkins
+(200001, "POC of Hopkins","APAC","poc","91ac3f14d8f75922628a92b34309effb:1e431a6da47a1037254b7ac7ab1c001d3a1984382b38766d3bc98971325f1faf",200000,1); -- poc@hopkins

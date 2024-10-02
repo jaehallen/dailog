@@ -42,7 +42,6 @@ export const auth: Handle = async ({ event, resolve }) => {
 	}
 	event.locals.user = user;
 	event.locals.session = session;
-
 	return resolve(event);
 };
 
@@ -70,7 +69,6 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 
 		event.locals.routes = routeList;
 	}
-
 	return resolve(event);
 };
 
