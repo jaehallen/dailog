@@ -1,9 +1,11 @@
 import { derived, writable } from 'svelte/store';
 import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
 import { CONFIRMCATEGORY, TIMESHEETINFO } from './schema';
+import { browser } from '$app/environment';
+import deepEqual from "deep-equal"
 
 export const timeAction = userTimeAction();
-export const timesheet = timesheetStore();
+export const timesheet = timesheetStore('chronoz-timesheet');
 
 export const timeLog = derived(timesheet, ($timesheet) => {
 	if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
@@ -27,10 +29,30 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 	};
 });
 
-function timesheetStore() {
+function timesheetStore(key = 'user-timesheet') {
 	const { subscribe, set, update } = writable<TimeEntryRecord[]>([]);
+	if(!browser) return { subscribe, set, updateSheet: () => {}};
+	const save = (val: TimeEntryRecord[]) => {
+		let localValue = localStorage.getItem(key);
+		let storeValue = JSON.stringify(val);
+
+		if(Array.isArray(val) && val.length && localValue != storeValue){
+			localStorage.setItem(key, storeValue);
+		}
+	}
+
+	window.addEventListener('storage', (event) => {
+		if(event.key == key){
+			let str = localStorage.getItem(key)
+			if(str !== null && str !== undefined){
+				set(JSON.parse(str))
+			}
+		}
+	})
 	return {
-		subscribe,
+		subscribe: subscribe((val) => {
+			save(val);
+		}),
 		set,
 		updateSheet: (data: TimeEntryRecord) =>
 			update((entries) => {

@@ -116,3 +116,59 @@ export const minToDuration = (min: number) => {
 	return `${f(hh)}:${f(mm)}`;
 };
 
+export function isEqual(x: any, y: any) {
+	if (!x && !y) return !0
+	if (!x || !y) return !1
+	if (typeof (x) !==
+		typeof (y)) return !1
+	if (x instanceof Array) {
+		if (
+			x.length != y.length) return !1
+		const f = []
+		for (let i = 0; i < x.length; i++) {
+			if (!isEqual(x[i], y[i])) f.push(i)
+		}
+		const g = [...f]
+		for (const i of f) {
+			let r = 0
+			for (const j of g) {
+				if (
+					isEqual(x[i], y[j])) {
+					g.splice(g.indexOf(j), 1)
+					r++
+					break
+				}
+			}
+			if (!r) { return !1 }
+		}
+		return !0
+	} else if (x instanceof Object) {
+		const e1 =
+			Object.entries(x)
+		try {
+			return isEqual(e1, r(Object.entries(y),
+				e1))
+		} catch (e) {
+			return !1
+		}
+	} else {
+		return x === y
+	}
+
+	function r(u: any, v: any) {
+		const a = []
+		if (u.length != v.length) return u
+		for (
+			let i = 0; i < v.length; i++) {
+			a.push(m(u, v[i][0]))
+		}
+		return a
+	}
+
+	function m(a: any, k: any) {
+		for (let i = 0; i < a.length; i++) {
+			if (a[i][0] === k) return [a[i][0], a[i][1]]
+		}
+		throw 0
+	}
+}
