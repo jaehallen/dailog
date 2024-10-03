@@ -1,11 +1,11 @@
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
 import { CONFIRMCATEGORY, TIMESHEETINFO } from './schema';
 import { browser } from '$app/environment';
-import deepEqual from "deep-equal"
+import { isEqual } from './utility';
 
-export const timeAction = userTimeAction();
-export const timesheet = timesheetStore('chronoz-timesheet');
+export const timeAction = userTimeAction('user-action');
+export const timesheet = timesheetStore('user-timesheet');
 
 export const timeLog = derived(timesheet, ($timesheet) => {
 	if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
@@ -30,51 +30,91 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 });
 
 function timesheetStore(key = 'user-timesheet') {
-	const { subscribe, set, update } = writable<TimeEntryRecord[]>([]);
-	if(!browser) return { subscribe, set, updateSheet: () => {}};
-	const save = (val: TimeEntryRecord[]) => {
+	const store = writable<TimeEntryRecord[]>([]);
+	if (!browser) return { ...store, updateSheet: () => { } };
+
+	const updateSheet = (data: TimeEntryRecord) =>
+		store.update((entries) => {
+			const idx = entries?.findIndex((e) => e.id == data.id);
+
+			if (entries[idx]) {
+				entries[idx].end_at = data.end_at;
+			} else {
+				const record = { ...data, end_at: null };
+				entries.unshift(record);
+			}
+
+			return entries;
+		});
+
+	window.addEventListener('storage', (event) => {
+		if (event.key == key) {
+			let str = localStorage.getItem(key);
+			if (str !== null && str !== undefined && !isEqual(JSON.parse(str), get(store))) {
+				console.log('timesheet: storage event');
+				store.set(JSON.parse(str));
+			}
+		}
+	});
+
+	const sync = (val: TimeEntryRecord[]) => {
 		let localValue = localStorage.getItem(key);
 		let storeValue = JSON.stringify(val);
 
-		if(Array.isArray(val) && val.length && localValue != storeValue){
+		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
+			console.log('timesheet: sync event');
 			localStorage.setItem(key, storeValue);
 		}
-	}
+	};
 
-	window.addEventListener('storage', (event) => {
-		if(event.key == key){
-			let str = localStorage.getItem(key)
-			if(str !== null && str !== undefined){
-				set(JSON.parse(str))
-			}
-		}
-	})
+	store.subscribe((val) => sync(val));
+
 	return {
-		subscribe: subscribe((val) => {
-			save(val);
-		}),
-		set,
-		updateSheet: (data: TimeEntryRecord) =>
-			update((entries) => {
-				const idx = entries?.findIndex((e) => e.id == data.id);
-
-				if (entries[idx]) {
-					entries[idx].end_at = data.end_at;
-				} else {
-					const record = { ...data, end_at: null };
-					entries.unshift(record);
-				}
-
-				return entries;
-			})
+		subscribe: store.subscribe,
+		set: store.set,
+		updateSheet
 	};
 }
 
-function userTimeAction() {
-	const { subscribe, set, update } = writable<TimesheetStateInfo>(TIMESHEETINFO);
+function userTimeAction(key = 'user-action') {
+	const store = writable<TimesheetStateInfo>(TIMESHEETINFO);
+	if (!browser)
+		return {
+			...store,
+			validate: () => { },
+			clockIn: () => { },
+			clockOut: () => { },
+			start: () => { },
+			end: () => { },
+			cancel: () => { },
+			save: () => { }
+		};
+
+	const sync = (val: TimesheetStateInfo) => {
+		let localValue = localStorage.getItem(key);
+		let storeValue = JSON.stringify(val);
+
+		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
+			console.log('action: sync-event');
+			localStorage.setItem(key, storeValue);
+		}
+	};
+
+	store.subscribe((val) => sync(val));
+
+	window.addEventListener('storage', (event) => {
+		if (event.key == key) {
+			let str = localStorage.getItem(key);
+			if (str != null && str != undefined && !isEqual(JSON.parse(str), get(store))) {
+				console.log('action: storage event');
+				store.set(JSON.parse(str));
+			}
+		}
+	});
+
 	return {
-		subscribe,
-		set,
+		subscribe: store.subscribe,
+		set: store.set,
 		validate: (
 			timelog: {
 				clocked: TimeEntryRecord | null;
@@ -84,7 +124,7 @@ function userTimeAction() {
 			schedule: ScheduleRecord | null,
 			date_at: string
 		) => {
-			update((state) => {
+			store.update((state) => {
 				const { clocked, lastBreak, lunch } = timelog;
 				if (lastBreak) {
 					state.isBreak = !Boolean(lastBreak.end_at);
@@ -116,7 +156,7 @@ function userTimeAction() {
 			});
 		},
 		clockIn: () => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'start';
 				state.nextState = 'start';
 				state.category = 'clock';
@@ -128,7 +168,7 @@ function userTimeAction() {
 			});
 		},
 		clockOut: (clockId: number) => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'end';
 				state.nextState = 'start';
 				state.category = 'clock';
@@ -139,7 +179,7 @@ function userTimeAction() {
 			});
 		},
 		start: (category: OptCategory) => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'start';
 				state.nextState = 'end';
 				state.category = category;
@@ -150,7 +190,7 @@ function userTimeAction() {
 			});
 		},
 		end: () => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'end';
 				state.nextState = 'start';
 				state.message = CONFIRMCATEGORY[state.category][state.state];
@@ -159,17 +199,18 @@ function userTimeAction() {
 			});
 		},
 		cancel: () => {
-			update((state) => {
+			store.update((state) => {
 				state.confirm = false;
 				return state;
 			});
 		},
-		save: (id: number) => {
-			update((state) => {
-				state.id = id;
+		save: (record: TimeEntryRecord) => {
+			store.update((state) => {
+				state.id = record.id;
 				state.isBreak = state.nextState == 'end';
 				state.confirm = false;
 				state.message = '';
+				state.timestamp = state.isBreak ? record.start_at : 0;
 
 				if (!state.lunched && state.category == 'lunch') {
 					state.lunched = true;

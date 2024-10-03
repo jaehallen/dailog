@@ -13,13 +13,13 @@
 	import { timesheet, timeAction, timeLog } from '$lib/data-store';
 	import { enhance } from '$app/forms';
 	import { timesheetColumn } from '$lib/table-schema';
+	import { browser } from '$app/environment';
 
 	export let data: PageData;
 	const FORM_ID = 'posttime';
 
 	let importReady = false;
 	let disabled = true;
-	let timestamp = 0;
 	let clockInOut = false;
 
 	onMount(async () => {
@@ -33,7 +33,6 @@
 			timeAction.validate($timeLog, schedule, date_at);
 		}
 
-		timestamp = $timeAction.timestamp;
 		clockInOut = !$timeLog.clocked;
 		disabled = false;
 		importReady = true;
@@ -69,8 +68,7 @@
 						leftToggle();
 					}
 					if (record.category !== 'clock') {
-						timestamp = $timeAction.nextState === 'end' ? record.start_at : 0;
-						timeAction.save(record.id);
+						timeAction.save(record);
 					}
 				}
 			} else {
@@ -88,73 +86,75 @@
 	const cancel = () => {
 		timeAction.cancel();
 		disabled = false;
-	}
+	};
 </script>
 
-<main class="container">
-	<TimesheetModal
-		formId={FORM_ID}
-		isActive={$timeAction.confirm}
-		on:no={cancel}
-	/>
-	<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
-		<input type="number" id="id" name="id" value={$timeAction.id} readonly />
-		<input type="text" id="category" name="category" value={$timeAction.category} readonly />
-		<input type="text" id="time-action" name="timeAction" value={$timeAction.state} readonly />
-		<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
-		<input type="number" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
-	</form>
-	<section class="mt-6">
-		{#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
-			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
-				{#if !$timeAction.isBreak}
-					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-						<StartButtons on:start={startTime} on:left={leftToggle} {disabled} />
-					</div>
-				{:else}
-					<div in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}>
-						<EndButtons
-							{timestamp}
-							on:conclude={concludeBreak}
-							category={$timeAction.category}
-							{disabled}
-						/>
-					</div>
-				{/if}
-			</div>
-		{/if}
-		{#if clockInOut && !$timeLog.endOfDay}
-			<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
-				<ClockButtons on:left={leftToggle} on:timeclock={timeclock} {disabled} />
-			</div>
-		{/if}
-	</section>
-	<section class="section">
-		<table class="table is-fullwidth -is-striped is-hoverable">
-			<thead>
-				<tr>
-					{#each timesheetColumn as column, cid (cid)}
-						<th> {column.title} </th>
-					{/each}
-					<th>Duration</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#if $timesheet.length && importReady}
-					{#each $timesheet as entry (entry.id)}
-						<tr>
-							{#each timesheetColumn as column, cid (cid)}
-								<td>
-									{@html column.render(entry[column.key] || '-', {
-										local_offset: $timeAction.local_offset
-									})}
-								</td>
-							{/each}
-							<td>{timeDuration(entry.start_at, entry.end_at)}</td>
-						</tr>
-					{/each}
-				{/if}
-			</tbody>
-		</table>
-	</section>
-</main>
+{#if browser}
+	<main class="container">
+		<TimesheetModal formId={FORM_ID} isActive={$timeAction.confirm} on:no={cancel} />
+		<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
+			<input type="number" id="id" name="id" value={$timeAction.id} readonly />
+			<input type="text" id="category" name="category" value={$timeAction.category} readonly />
+			<input type="text" id="time-action" name="timeAction" value={$timeAction.state} readonly />
+			<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
+			<input type="number" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
+		</form>
+		<section class="mt-6">
+			{#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
+				<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
+					{#if !$timeAction.isBreak}
+						<div
+							in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}
+						>
+							<StartButtons on:start={startTime} on:left={leftToggle} {disabled} />
+						</div>
+					{:else}
+						<div
+							in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}
+						>
+							<EndButtons
+								timestamp={$timeAction.timestamp}
+								on:conclude={concludeBreak}
+								category={$timeAction.category}
+								{disabled}
+							/>
+						</div>
+					{/if}
+				</div>
+			{/if}
+			{#if clockInOut && !$timeLog.endOfDay}
+				<div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
+					<ClockButtons on:left={leftToggle} on:timeclock={timeclock} {disabled} />
+				</div>
+			{/if}
+		</section>
+		<section class="section">
+			<table class="table is-fullwidth -is-striped is-hoverable">
+				<thead>
+					<tr>
+						{#each timesheetColumn as column, cid (cid)}
+							<th> {column.title} </th>
+						{/each}
+						<th>Duration</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#if $timesheet.length && importReady}
+						{#each $timesheet as entry (entry.id)}
+							<tr>
+								{#each timesheetColumn as column, cid (cid)}
+									<td>
+										{@html column.render(entry[column.key] || '-', {
+											local_offset: $timeAction.local_offset
+										})}
+									</td>
+								{/each}
+								<td>{timeDuration(entry.start_at, entry.end_at)}</td>
+							</tr>
+						{/each}
+					{/if}
+				</tbody>
+			</table>
+		</section>
+	</main>
+{/if}

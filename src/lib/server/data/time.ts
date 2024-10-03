@@ -69,12 +69,6 @@ export const userCurrentEntries = async (session: Session): Promise<UserLatestTi
 	};
 };
 
-// export const getCurrentSchedule = async (userId: number) => {
-// 	const {schedules, timeEntries }= await db.getUserEntryAndSched(userId, true);
-// 	const {startOfDuty, date_at} = userDutyInfo(schedules[0], timeEntries);
-//
-// }
-
 export function userDutyInfo(schedule: ScheduleRecord, timeEntries: TimeEntryRecord[]) {
 	const lastClockEntry = getLatestClock(timeEntries) || null;
 	const startOfDuty = !lastClockEntry ? true : isStartOfDuty(lastClockEntry);

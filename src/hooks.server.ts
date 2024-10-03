@@ -12,7 +12,6 @@ export const handleError: HandleServerError = async ({ error }) => {
 };
 
 export const auth: Handle = async ({ event, resolve }) => {
-	console.time();
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
 
 	if (event.url.pathname === '/') {
@@ -44,7 +43,6 @@ export const auth: Handle = async ({ event, resolve }) => {
 
 	event.locals.user = user;
 	event.locals.session = session;
-	console.timeEnd();
 	return resolve(event);
 };
 
