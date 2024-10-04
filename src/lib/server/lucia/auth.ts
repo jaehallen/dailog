@@ -25,6 +25,9 @@ declare module 'lucia' {
 			sched_id: number;
 			date_at: string;
 			effective_date: string;
+			utc_offset: number;
+			local_offset: number;
+			clock_at: string;
 		};
 	}
 }

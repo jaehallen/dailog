@@ -22,9 +22,8 @@ export const actions = {
 			return fail(400);
 		}
 
-		console.time('validate');
 		const user = await validateUser(inputValid.data);
-		console.timeEnd('validate');
+
 		if (!user) {
 			return fail(400);
 		}

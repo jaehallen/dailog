@@ -143,10 +143,15 @@ FROM schedules
 
 -- expensive make sure to query with user_id
 CREATE VIEW current_schedules AS
-SELECT date(current_date, clock_at, CONCAT(utc_offset-local_offset," hours")) as date_at, * 
-  FROM schedules 
-  WHERE effective_date <= date_at
-  ORDER BY effective_date desc
+SELECT
+  date(current_timestamp, CONCAT (utc_offset, ' hours')) as date_at,
+  *
+FROM
+  schedules
+WHERE
+  effective_date <= date_at
+ORDER BY
+  effective_date desc
 
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS

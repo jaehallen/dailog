@@ -70,6 +70,29 @@ function userTimeAction(key = 'user-action') {
 	const store = writable<TimesheetStateInfo>(TIMESHEETINFO);
 	store.subscribe((val) => syncToLocalStorage(key, val));
 
+	const sync = (val: TimesheetStateInfo) => {
+		let localValue = localStorage.getItem(key);
+		let storeValue = JSON.stringify(val);
+
+		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
+			console.log('action: sync-event');
+			localStorage.setItem(key, storeValue);
+		}
+	};
+
+	store.subscribe((val) => sync(val));
+
+	window.addEventListener('storage', (event) => {
+		if (event.key == key) {
+			let str = localStorage.getItem(key);
+			if (str != null && str != undefined && !isEqual(JSON.parse(str), get(store))) {
+				console.log('action: storage event');
+				store.set(JSON.parse(str));
+			}
+		}
+	});
+>>>>>>> 4f3a193 (updates)
+
 	return {
 		subscribe: store.subscribe,
 		set: store.set,

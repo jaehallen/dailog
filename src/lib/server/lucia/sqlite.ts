@@ -33,14 +33,7 @@ export class TursoClient {
 		sessionId: string
 	): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
 		const { rows = [] } = await this.controller.execute({
-			sql: `WITH session as (SELECT * FROM sessions WHERE id = ?)
-							SELECT session.*, 
-							user.active, user.name, user.role, user.region, user.lead_id, user.lock_password,
-						  sched.id as sched_id, sched.date_at, sched.effective_date
-					  FROM session
-						LEFT JOIN users user ON user.id = session.user_id
-						LEFT JOIN current_schedules sched ON user.id = sched.user_id
-						ORDER BY sched.effective_date DESC LIMIT 1`,
+			sql: `select * from view_sessions where id = ? ORDER BY effective_date desc limit 1`,
 			args: [sessionId]
 		});
 

@@ -1,4 +1,3 @@
-import { getSchedule } from '$lib/server/data/schedule';
 import { isProtectedRoute, lucia } from '$lib/server/lucia/auth';
 import { routeProfile } from '$lib/server/lucia/auth';
 import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
