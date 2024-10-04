@@ -6,7 +6,7 @@
 	import EndButtons from '$lib/component/EndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
 	import ClockButtons from '$lib/component/ClockButtons.svelte';
-	import { timeDuration } from '$lib/utility';
+	import { isEqual, timeDuration } from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -14,6 +14,7 @@
 	import { enhance } from '$app/forms';
 	import { timesheetColumn } from '$lib/table-schema';
 	import { browser } from '$app/environment';
+	import { STORAGENAME } from '$lib/schema';
 
 	export let data: PageData;
 	const FORM_ID = 'posttime';
@@ -22,7 +23,7 @@
 	let disabled = true;
 	let clockInOut = false;
 
-	onMount(async () => {
+	onMount(() => {
 		if (data.userTimsheet) {
 			const { timeEntries, date_at, schedule } = data.userTimsheet;
 			timesheet.set(
@@ -36,6 +37,24 @@
 		clockInOut = !$timeLog.clocked;
 		disabled = false;
 		importReady = true;
+
+		window.addEventListener('storage', (e) => {
+			if (e.newValue == null || e.newValue == undefined) return;
+			const val = JSON.parse(e.newValue);
+			if (e.key == STORAGENAME.timesheet) {
+				if (!isEqual(val, $timesheet)) {
+					timesheet.set(val);
+				}
+			} else if (e.key == STORAGENAME.action) {
+				if (!isEqual(val, $timeAction)) {
+					timeAction.set(val);
+				}
+			}
+		});
+
+		return () => {
+			window.removeEventListener('storage', () => {});
+		};
 	});
 
 	const startTime = (event: CustomEvent<{ entryType: OptCategory }>) => {

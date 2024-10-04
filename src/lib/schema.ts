@@ -1,5 +1,5 @@
 export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
-export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
+export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic', 'meeting', 'coaching'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
 export const DEFAULT_MIN_WORKDATE = 18;
@@ -74,6 +74,7 @@ export interface ScheduleRecord {
 	first_break_at: string;
 	lunch_at: string;
 	second_break_at: string;
+	day_off: string;
 	created_at?: string;
 }
 
@@ -165,6 +166,12 @@ export const TIMESHEETINFO: TimesheetStateInfo = {
 	message: ''
 };
 
+export const STORAGENAME = {
+	timesheet: 'user-timesheet',
+	action: 'user-action',
+}
+
+
 export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
 	clock: {
 		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
@@ -189,5 +196,13 @@ export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>
 	clinic: {
 		start: "Are you sure you'd like to take your <strong>Medical Time</strong> now?",
 		end: 'Would you like to conclude your <strong>Medical Medical</strong>?'
+	},
+	meeting: {
+		start: "Are you sure you'd like to take your <strong>Meeting</strong> now?",
+		end: 'Would you like to conclude your <strong>Meeting</strong>?'
+	},
+	coaching: {
+		start: "Are you sure you'd like to take your <strong>Coaching</strong> now?",
+		end: 'Would you like to conclude your <strong>Coaching</strong>?'
 	}
 };

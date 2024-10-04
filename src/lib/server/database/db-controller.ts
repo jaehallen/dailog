@@ -201,6 +201,7 @@ function toUserScheddule(record: Record<string, any>) {
 		first_break_at,
 		lunch_at,
 		second_break_at,
+		day_off,
 		created_at
 	} = record;
 
@@ -217,6 +218,7 @@ function toUserScheddule(record: Record<string, any>) {
 		first_break_at,
 		lunch_at,
 		second_break_at,
+		day_off,
 		created_at
 	};
 }

@@ -123,6 +123,20 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 		render: (val) => {
 			return minToDuration(val as number);
 		}
+	},
+	{
+		title: 'Day Off',
+		key: 'day_off',
+		render: (val) => {
+			let days = String(val).split(",")
+			if(days.length){
+				return days.map((day) => {
+					return `<strong class="is-capitalized">${String(day)}</strong>`
+				}).join("<strong>, </strong>")
+			}
+
+			return "-"
+		}
 	}
 ];
 

@@ -8,6 +8,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { SvelteComponent } from 'svelte';
 	import { browser } from '$app/environment';
+	import type { ScheduleRecord } from '$lib/schema';
 
 	const RESET_FORM_ID = 'resetform';
 	export let data: PageData;
@@ -42,6 +43,10 @@
 			disabled = false;
 		};
 	};
+
+	const sortSchedule = (a: ScheduleRecord,b: ScheduleRecord) => {
+		return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
+	}
 </script>
 
 {#if browser}
@@ -146,7 +151,7 @@
 					</thead>
 					<tbody>
 						{#if data.schedules.length}
-							{#each data.schedules as sched (sched.id)}
+							{#each data.schedules.toSorted(sortSchedule) as sched (sched.id)}
 								<tr>
 									{#each scheduleColumn as column, cid (cid)}
 										<td class="has-text-right">

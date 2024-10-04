@@ -1,11 +1,10 @@
-import { derived, get, writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
-import { CONFIRMCATEGORY, TIMESHEETINFO } from './schema';
-import { browser } from '$app/environment';
+import { CONFIRMCATEGORY, TIMESHEETINFO, STORAGENAME } from './schema';
 import { isEqual } from './utility';
 
-export const timeAction = userTimeAction('user-action');
-export const timesheet = timesheetStore('user-timesheet');
+export const timeAction = userTimeAction(STORAGENAME.action);
+export const timesheet = timesheetStore(STORAGENAME.timesheet);
 
 export const timeLog = derived(timesheet, ($timesheet) => {
 	if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
@@ -29,9 +28,20 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 	};
 });
 
+function syncToLocalStorage<T>(key: string, val: T) {
+	if (localStorage) {
+		let localValue = localStorage.getItem(key);
+		let storeValue = JSON.stringify(val);
+
+		if (!localValue || !isEqual(JSON.parse(localValue), val)) {
+			console.log('sync: '+key)
+			localStorage.setItem(key, storeValue);
+		}
+	}
+}
+
 function timesheetStore(key = 'user-timesheet') {
 	const store = writable<TimeEntryRecord[]>([]);
-	if (!browser) return { ...store, updateSheet: () => { } };
 
 	const updateSheet = (data: TimeEntryRecord) =>
 		store.update((entries) => {
@@ -47,27 +57,7 @@ function timesheetStore(key = 'user-timesheet') {
 			return entries;
 		});
 
-	window.addEventListener('storage', (event) => {
-		if (event.key == key) {
-			let str = localStorage.getItem(key);
-			if (str !== null && str !== undefined && !isEqual(JSON.parse(str), get(store))) {
-				console.log('timesheet: storage event');
-				store.set(JSON.parse(str));
-			}
-		}
-	});
-
-	const sync = (val: TimeEntryRecord[]) => {
-		let localValue = localStorage.getItem(key);
-		let storeValue = JSON.stringify(val);
-
-		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
-			console.log('timesheet: sync event');
-			localStorage.setItem(key, storeValue);
-		}
-	};
-
-	store.subscribe((val) => sync(val));
+	store.subscribe((val) => syncToLocalStorage<TimeEntryRecord[]>(key, val));
 
 	return {
 		subscribe: store.subscribe,
@@ -78,39 +68,7 @@ function timesheetStore(key = 'user-timesheet') {
 
 function userTimeAction(key = 'user-action') {
 	const store = writable<TimesheetStateInfo>(TIMESHEETINFO);
-	if (!browser)
-		return {
-			...store,
-			validate: () => { },
-			clockIn: () => { },
-			clockOut: () => { },
-			start: () => { },
-			end: () => { },
-			cancel: () => { },
-			save: () => { }
-		};
-
-	const sync = (val: TimesheetStateInfo) => {
-		let localValue = localStorage.getItem(key);
-		let storeValue = JSON.stringify(val);
-
-		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
-			console.log('action: sync-event');
-			localStorage.setItem(key, storeValue);
-		}
-	};
-
-	store.subscribe((val) => sync(val));
-
-	window.addEventListener('storage', (event) => {
-		if (event.key == key) {
-			let str = localStorage.getItem(key);
-			if (str != null && str != undefined && !isEqual(JSON.parse(str), get(store))) {
-				console.log('action: storage event');
-				store.set(JSON.parse(str));
-			}
-		}
-	});
+	store.subscribe((val) => syncToLocalStorage(key, val));
 
 	return {
 		subscribe: store.subscribe,
