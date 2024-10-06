@@ -4,10 +4,14 @@ import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
 import { dateAtOffsetStr } from '$lib/utility';
 
-export const getSchedule = async (
+export const getUserSchedule = async (
 	userId: number
 ): Promise<{ startOfDuty: boolean; date_at: string } & ScheduleRecord> => {
 	const { schedules, timeEntries } = await db.getUserEntryAndSched(userId, true, 10);
+	return getSchedule(schedules, timeEntries);
+};
+
+export function getSchedule(schedules: ScheduleRecord[], timeEntries: TimeEntryRecord[]) {
 	const clockEntry = timeEntries.find((entry) => entry.category === 'clock');
 	const startOfDuty = isStartOfDuty(clockEntry);
 
@@ -29,7 +33,7 @@ export const getSchedule = async (
 		date_at: dateAtOffsetStr(new Date(), latestSchedule.utc_offset),
 		...latestSchedule
 	};
-};
+}
 
 export function isStartOfDuty(clockEntry: TimeEntryRecord | undefined): boolean {
 	if (!clockEntry) return true;

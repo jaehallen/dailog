@@ -1,5 +1,12 @@
 import { derived, writable } from 'svelte/store';
-import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
+import type {
+	OptCategory,
+	ScheduleRecord,
+	TimeEntryRecord,
+	TimeEntryReport,
+	TimesheetStateInfo,
+	UserSchedule
+} from './schema';
 import { CONFIRMCATEGORY, TIMESHEETINFO, STORAGENAME } from './schema';
 import { isEqual } from './utility';
 
@@ -34,10 +41,36 @@ function syncToLocalStorage<T>(key: string, val: T) {
 		let storeValue = JSON.stringify(val);
 
 		if (!localValue || !isEqual(JSON.parse(localValue), val)) {
-			console.log('sync: '+key)
 			localStorage.setItem(key, storeValue);
 		}
 	}
+}
+
+function recordsStore() {
+	const store = writable<TimeEntryReport[]>([]);
+	const updateReports = (entries: TimeEntryRecord[], schedules: ScheduleRecord[]) =>
+		store.update(() => {
+			const sortedSchedule = schedules.toSorted(
+				(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
+			);
+
+			return entries.map((entry) => {
+				const sched = sortedSchedule.find((s) => s.id == entry.sched_id) || sortedSchedule[0];
+				return {
+					...entry,
+					utc_offset: sched.utc_offset,
+					local_offset: sched.local_offset,
+					clock_at: sched.clock_at,
+					effective_date: sched.effective_date
+				};
+			});
+		});
+
+	return {
+		subscribe: store.subscribe,
+		set: store.set,
+		updateReports
+	};
 }
 
 function timesheetStore(key = 'user-timesheet') {
@@ -69,30 +102,6 @@ function timesheetStore(key = 'user-timesheet') {
 function userTimeAction(key = 'user-action') {
 	const store = writable<TimesheetStateInfo>(TIMESHEETINFO);
 	store.subscribe((val) => syncToLocalStorage(key, val));
-
-	const sync = (val: TimesheetStateInfo) => {
-		let localValue = localStorage.getItem(key);
-		let storeValue = JSON.stringify(val);
-
-		if (localValue != null && localValue != undefined && !isEqual(JSON.parse(localValue), val)) {
-			console.log('action: sync-event');
-			localStorage.setItem(key, storeValue);
-		}
-	};
-
-	store.subscribe((val) => sync(val));
-
-	window.addEventListener('storage', (event) => {
-		if (event.key == key) {
-			let str = localStorage.getItem(key);
-			if (str != null && str != undefined && !isEqual(JSON.parse(str), get(store))) {
-				console.log('action: storage event');
-				store.set(JSON.parse(str));
-			}
-		}
-	});
->>>>>>> 4f3a193 (updates)
-
 	return {
 		subscribe: store.subscribe,
 		set: store.set,
@@ -102,8 +111,7 @@ function userTimeAction(key = 'user-action') {
 				lastBreak: TimeEntryRecord | null;
 				lunch: TimeEntryRecord | null;
 			},
-			schedule: ScheduleRecord | null,
-			date_at: string
+			schedule: UserSchedule | null
 		) => {
 			store.update((state) => {
 				const { clocked, lastBreak, lunch } = timelog;
@@ -121,15 +129,16 @@ function userTimeAction(key = 'user-action') {
 
 				if (clocked) {
 					state.sched_id = clocked.sched_id;
+					state.date_at = clocked.date_at;
 				} else if (schedule) {
 					state.sched_id = schedule.id;
+					state.date_at = schedule.date_at;
 				}
 
 				if (schedule) {
 					state.local_offset = schedule.local_offset;
 				}
 
-				state.date_at = date_at ? date_at : state.date_at;
 				state.message = state.message;
 				state.confirm = state.confirm;
 

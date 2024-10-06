@@ -10,7 +10,7 @@ export const QUERY = {
 	USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
 		return {
 			sql: `SELECT 
-				date(current_timestamp, CONCAT(utc_offset, ' hours')) as date_at, * 
+				date(current_timestamp, CONCAT(local_offset, ' hours')) as date_at, * 
 				FROM schedules WHERE effective_date <= date_at AND user_id = $user_id
 				ORDER BY effective_date DESC LIMIT $limit`,
 			args: {
@@ -37,6 +37,12 @@ export const QUERY = {
 			args
 		};
 	},
+	USER_ENTRIES: (args: { user_id: number; dateStart: string; dateEnd: string }) => {
+		return {
+			sql: `SELECT * FROM view_time_entries WHERE user_id = $user_id AND date_at BETWEEN $dateStart and $dateEnd`,
+			args
+		};
+	},
 	LAST_CLOCKED: (args: { user_id: number }) => {
 		return {
 			sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
@@ -48,8 +54,8 @@ export const QUERY = {
 export const WRITE = {
 	CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) => {
 		return {
-			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent)
-				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent) RETURNING *`,
+			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
+				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
 			args
 		};
 	},
@@ -63,8 +69,8 @@ export const WRITE = {
 		args: Pick<TimeEntryRecord, 'user_id' | 'sched_id' | 'category' | 'date_at' | 'start_at'>
 	) => {
 		return {
-			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at)
-				VALUES ($user_id, $sched_id, $category, $date_at, $start_at) RETURNING *`,
+			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, remarks)
+				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $remarks) RETURNING *`,
 			args
 		};
 	},

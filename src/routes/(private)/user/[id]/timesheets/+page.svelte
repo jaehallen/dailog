@@ -22,16 +22,17 @@
 	let importReady = false;
 	let disabled = true;
 	let clockInOut = false;
+	let remarks = '';
 
 	onMount(() => {
 		if (data.userTimsheet) {
-			const { timeEntries, date_at, schedule } = data.userTimsheet;
+			const { timeEntries, schedule } = data.userTimsheet;
 			timesheet.set(
 				timeEntries
-					.filter((entry: TimeEntryRecord) => entry.date_at === date_at)
+					.filter((entry: TimeEntryRecord) => entry.date_at === schedule.date_at)
 					.sort((a, b) => b.start_at - a.start_at)
 			);
-			timeAction.validate($timeLog, schedule, date_at);
+			timeAction.validate($timeLog, schedule);
 		}
 
 		clockInOut = !$timeLog.clocked;
@@ -110,13 +111,14 @@
 
 {#if browser}
 	<main class="container">
-		<TimesheetModal formId={FORM_ID} isActive={$timeAction.confirm} on:no={cancel} />
+		<TimesheetModal formId={FORM_ID} isActive={$timeAction.confirm} on:no={cancel} bind:remarks />
 		<form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
 			<input type="number" id="id" name="id" value={$timeAction.id} readonly />
 			<input type="text" id="category" name="category" value={$timeAction.category} readonly />
 			<input type="text" id="time-action" name="timeAction" value={$timeAction.state} readonly />
 			<input type="date" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
 			<input type="number" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
+			<input type="textarea" id="remarks" name="remarks" value={remarks} />
 		</form>
 		<section class="mt-6">
 			{#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
@@ -155,6 +157,7 @@
 							<th> {column.title} </th>
 						{/each}
 						<th>Duration</th>
+						<th>Notes</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -169,6 +172,7 @@
 									</td>
 								{/each}
 								<td>{timeDuration(entry.start_at, entry.end_at)}</td>
+								<td><span class="is-size-7 is-italic">{entry.remarks || '-'}</span></td>
 							</tr>
 						{/each}
 					{/if}

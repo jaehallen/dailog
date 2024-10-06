@@ -165,6 +165,22 @@ export class DatabaseController {
 		if (!results) return null;
 		return results.rowsAffected > 0;
 	}
+
+	public async getTimEntries(
+		userId: number,
+		dateRange: { dateStart: string; dateEnd: string }
+	): Promise<Omit<UserInfo, 'user'>> {
+		const [schedules, timeEntries] =
+			(await this.batchGet([
+				QUERY.SCHEDULES({ user_id: userId, limit: 10 }),
+				QUERY.USER_ENTRIES({ user_id: userId, ...dateRange })
+			])) || [];
+
+		return {
+			schedules: schedules.rows.map(toUserScheddule),
+			timeEntries: timeEntries.rows.map(toTimeEntryRecord)
+		};
+	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
 	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
@@ -224,7 +240,7 @@ function toUserScheddule(record: Record<string, any>) {
 }
 
 function toTimeEntryRecord(record: Record<string, any>) {
-	const { id, user_id, sched_id, category, date_at, start_at, end_at } = record || {};
+	const { id, user_id, sched_id, category, date_at, start_at, end_at, remarks } = record || {};
 
 	return {
 		id,
@@ -234,6 +250,7 @@ function toTimeEntryRecord(record: Record<string, any>) {
 		date_at,
 		start_at,
 		end_at,
+		remarks,
 		elapse_sec: Math.floor(Date.now() / 1000) - start_at
 	};
 }
