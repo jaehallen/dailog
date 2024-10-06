@@ -44,7 +44,8 @@ export const actions = {
 					user_ip: ipAddrss,
 					user_agent: userAgent,
 					timestamp: Math.floor(Date.now() / 1000),
-					timeAction: data?.timeAction
+					timeAction: data?.timeAction,
+					remarks: data.remarks
 				})
 			};
 		}

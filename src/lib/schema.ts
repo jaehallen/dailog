@@ -1,5 +1,14 @@
 export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
-export const CATEGORY = ['clock', 'break', 'lunch', 'bio', 'coffee', 'clinic'] as const;
+export const CATEGORY = [
+	'clock',
+	'break',
+	'lunch',
+	'bio',
+	'coffee',
+	'clinic',
+	'meeting',
+	'coaching'
+] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
 export const DEFAULT_MIN_WORKDATE = 18;
@@ -16,6 +25,7 @@ export interface ZPostTime {
 	timeAction: OptActionState;
 	date_at: string;
 	sched_id: number;
+	remarks: string | null;
 }
 
 export interface TimesheetPostInfo {
@@ -74,7 +84,16 @@ export interface ScheduleRecord {
 	first_break_at: string;
 	lunch_at: string;
 	second_break_at: string;
+	day_off: string;
 	created_at?: string;
+}
+
+export type TimeEntryReport = TimeEntryRecord &
+	Pick<ScheduleRecord, 'utc_offset' | 'local_offset' | 'clock_at' | 'effective_date'>;
+
+export interface UserSchedule extends ScheduleRecord {
+	date_at: string;
+	startOfDuty: boolean;
 }
 
 export interface TimeEntryRecord {
@@ -86,6 +105,7 @@ export interface TimeEntryRecord {
 	start_at: number;
 	end_at: number | null;
 	elapse_sec: number;
+	remarks: string | null;
 	user_ip?: string;
 	user_agent?: string;
 }
@@ -120,12 +140,17 @@ export interface TimeEntryResults {
 export const ROUTES: RouteProfile[] = [
 	{
 		name: 'Profile',
-		path: `/user/[id]/profile`,
+		path: '/user/[id]/profile',
 		role: ['admin', 'lead', 'poc', 'user']
 	},
 	{
 		name: 'Timesheets',
-		path: `/user/[id]/timesheets`,
+		path: '/user/[id]/timesheets',
+		role: ['admin', 'lead', 'poc', 'user']
+	},
+	{
+		name: 'Repots',
+		path: '/user/[id]/reports',
 		role: ['admin', 'lead', 'poc', 'user']
 	},
 	{
@@ -165,6 +190,11 @@ export const TIMESHEETINFO: TimesheetStateInfo = {
 	message: ''
 };
 
+export const STORAGENAME = {
+	timesheet: 'user-timesheet',
+	action: 'user-action'
+};
+
 export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>> = {
 	clock: {
 		start: "Are you sure you'd like to <strong>Clock In</strong> now?",
@@ -189,5 +219,13 @@ export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>
 	clinic: {
 		start: "Are you sure you'd like to take your <strong>Medical Time</strong> now?",
 		end: 'Would you like to conclude your <strong>Medical Medical</strong>?'
+	},
+	meeting: {
+		start: "Are you sure you'd like to take your <strong>Meeting</strong> now?",
+		end: 'Would you like to conclude your <strong>Meeting</strong>?'
+	},
+	coaching: {
+		start: "Are you sure you'd like to take your <strong>Coaching</strong> now?",
+		end: 'Would you like to conclude your <strong>Coaching</strong>?'
 	}
 };

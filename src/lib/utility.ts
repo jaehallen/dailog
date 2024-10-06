@@ -1,6 +1,3 @@
-import type { UserRecord, RouteProfile, TimeEntryRecord, TimeEntryResults } from '$lib/schema';
-import { ROUTES } from '$lib/schema';
-
 export const toEpochDatetime = (timeStr: string): Date => {
 	const [hr, min] = timeStr.split(':');
 	const d = Date.UTC(1970, 0, 1, parseInt(hr) || 0, parseInt(min) || 0);
@@ -34,6 +31,10 @@ export const dateAtOffset = (date: Date | number, offset: number): Date => {
 	}
 
 	return date;
+};
+
+export const dateAtOffsetStr = (date: Date | number, offset: number): string => {
+	return dateAtOffset(date, offset).toISOString().split('T', 1)[0];
 };
 
 export const getTimeStr = (date: Date, isHour12 = false) => {
@@ -98,19 +99,93 @@ export const timeDuration = (start: number, end: number | null) => {
 		return '-';
 	}
 
-	const f = (v: number) => String(v).padStart(2, '0');
-	const dur = b - a;
-	const hh = Math.floor(dur / 3600);
-	const mm = Math.floor(dur / 60 - hh * 60);
-	const ss = dur - hh * 3600 - mm * 60;
-
-	return `${f(hh)}:${f(mm)}:${f(ss)}`;
+	return secToDuration(b-a)
 };
+
+export const secToDuration = (dur: number) => {
+	const f = (v: number) => String(v).padStart(2, '0');
+	const hh = Math.floor(dur / 3600);
+	const mm = Math.round(dur / 60 - hh * 60);
+	// const ss = dur - hh * 3600 - mm * 60;
+
+	return `${f(hh)}:${f(mm)}`;
+
+}
 
 export const minToDuration = (min: number) => {
 	const f = (v: number) => String(v).padStart(2, '0');
 	const hh = Math.floor(min / 60);
 	const mm = Math.floor(min - hh * 60);
 
-	return `${f(hh)}:${f(mm)}`
+	return `${f(hh)}:${f(mm)}`;
+};
+
+export function isEqual(x: any, y: any) {
+	if (!x && !y) return !0;
+	if (!x || !y) return !1;
+	if (typeof x !== typeof y) return !1;
+	if (x instanceof Array) {
+		if (x.length != y.length) return !1;
+		const f = [];
+		for (let i = 0; i < x.length; i++) {
+			if (!isEqual(x[i], y[i])) f.push(i);
+		}
+		const g = [...f];
+		for (const i of f) {
+			let r = 0;
+			for (const j of g) {
+				if (isEqual(x[i], y[j])) {
+					g.splice(g.indexOf(j), 1);
+					r++;
+					break;
+				}
+			}
+			if (!r) {
+				return !1;
+			}
+		}
+		return !0;
+	} else if (x instanceof Object) {
+		const e1 = Object.entries(x);
+		try {
+			return isEqual(e1, r(Object.entries(y), e1));
+		} catch (e) {
+			return !1;
+		}
+	} else {
+		return x === y;
+	}
+
+	function r(u: any, v: any) {
+		const a = [];
+		if (u.length != v.length) return u;
+		for (let i = 0; i < v.length; i++) {
+			a.push(m(u, v[i][0]));
+		}
+		return a;
+	}
+
+	function m(a: any, k: any) {
+		for (let i = 0; i < a.length; i++) {
+			if (a[i][0] === k) return [a[i][0], a[i][1]];
+		}
+		throw 0;
+	}
+}
+
+export function getWeekRange(dateStr: string): { dateStart: string; dateEnd: string } {
+	const d = new Date(dateStr);
+	if (isNaN(d.getTime())) {
+		throw new Error('Invalid Date');
+	}
+	let week = d.getDay();
+	let date = d.getDate();
+
+	let dateStart = new Date(d.setDate(date - week));
+	let dateEnd = new Date(d.setDate(d.getDate() + 6));
+
+	return {
+		dateStart: dateStart.toISOString().split('T')[0],
+		dateEnd: dateEnd.toISOString().split('T')[0]
+	};
 }

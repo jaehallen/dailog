@@ -1,27 +1,18 @@
-import { Lucia, TimeSpan } from 'lucia';
-import { TursoAdapter } from './libsql';
-import { dbChild } from '../database/turso';
+import { Lucia } from 'lucia';
+import { TursoClient } from './sqlite';
+import { getClient } from '../database/turso';
 import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
 import type { RouteProfile, UserRecord } from '$lib/schema';
 import { ROUTES } from '$lib/schema';
 
-const MAX_HOUR = parseInt(env.MIN_WORKDATE_DIFF || '') / 2 || 10;
-const adapter = new TursoAdapter(dbChild(), {
-	user: 'users',
-	session: 'sessions'
-});
+const adapter = new TursoClient(getClient());
 export const lucia = new Lucia(adapter, {
-	sessionExpiresIn: new TimeSpan(MAX_HOUR, 'h'),
 	sessionCookie: {
 		attributes: {
 			secure: !dev
 		}
 	},
 	getUserAttributes: (attributes) => {
-		return attributes;
-	},
-	getSessionAttributes: (attributes) => {
 		return attributes;
 	}
 });
@@ -30,7 +21,14 @@ declare module 'lucia' {
 	interface Register {
 		Lucia: typeof lucia;
 		UserId: number;
-		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
+		DatabaseUserAttributes: Omit<UserRecord, 'id'> & {
+			sched_id: number;
+			date_at: string;
+			effective_date: string;
+			utc_offset: number;
+			local_offset: number;
+			clock_at: string;
+		};
 	}
 }
 

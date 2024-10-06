@@ -1,5 +1,4 @@
 import type {
-	Adapter,
 	DatabaseSession,
 	RegisteredDatabaseSessionAttributes,
 	DatabaseUser,
@@ -7,61 +6,59 @@ import type {
 	UserId
 } from 'lucia';
 
-export class SQLiteAdapterMod implements Adapter {
-	private controller: Controller;
+import type { Client } from '@libsql/client';
 
-	private escapedUserTableName: string;
-	private escapedSessionTableName: string;
+export class TursoClient {
+	private controller: Client;
 
-	constructor(controller: Controller, tableNames: TableNames) {
+	constructor(controller: Client) {
 		this.controller = controller;
-		this.escapedSessionTableName = escapeName(tableNames.session);
-		this.escapedUserTableName = escapeName(tableNames.user);
 	}
 
 	public async deleteSession(sessionId: string): Promise<void> {
-		await this.controller.execute(`DELETE FROM ${this.escapedSessionTableName} WHERE id = ?`, [
-			sessionId
-		]);
+		await this.controller.execute({
+			sql: `DELETE FROM sessions WHERE id = ?`,
+			args: [sessionId]
+		});
 	}
 
 	public async deleteUserSessions(userId: UserId): Promise<void> {
-		await this.controller.execute(`DELETE FROM ${this.escapedSessionTableName} WHERE user_id = ?`, [
-			userId
-		]);
+		await this.controller.execute({
+			sql: `DELETE FROM sessions WHERE user_id = ?`,
+			args: [userId]
+		});
 	}
 
 	public async getSessionAndUser(
 		sessionId: string
 	): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
-		const result = await this.controller.get<UserSchema & SessionSchema>(
-			`SELECT session.*, user.active, user.name, user.role, user.region, user.lead_id, user.lock_password
-					FROM ${this.escapedSessionTableName} session 
-					INNER JOIN ${this.escapedUserTableName} user ON user.id = session.user_id
-					WHERE session.id = ?`,
-			[sessionId]
-		);
+		const { rows = [] } = await this.controller.execute({
+			sql: `select * from view_sessions where id = ? ORDER BY effective_date desc limit 1`,
+			args: [sessionId]
+		});
 
-		if (!result) {
+		if (!rows.length) {
 			return [null, null];
 		}
-		const { user_id, id, expires_at, ...user } = result;
+		const { user_id, id, expires_at, ...user } = rows.at(0) as unknown as SessionSchema &
+			UserSchema;
 		const databaseSession = transformIntoDatabaseSession({
 			id,
 			expires_at,
 			user_id
-		});
+		} satisfies SessionSchema);
 		const databaseUser = transformIntoDatabaseUser({ id: user_id, ...user });
 		return [databaseSession, databaseUser];
 	}
 
 	public async getUserSessions(userId: UserId): Promise<DatabaseSession[]> {
-		const result = await this.controller.getAll<SessionSchema>(
-			`SELECT * FROM ${this.escapedSessionTableName} WHERE user_id = ?`,
-			[userId]
-		);
-		return result.map((val) => {
-			return transformIntoDatabaseSession(val);
+		const result = await this.controller.execute({
+			sql: `SELECT * FROM sessions WHERE user_id = ?`,
+			args: [userId]
+		});
+
+		return result.rows.map((val) => {
+			return transformIntoDatabaseSession(val as unknown as SessionSchema);
 		});
 	}
 
@@ -76,38 +73,25 @@ export class SQLiteAdapterMod implements Adapter {
 		const columns = entries.map(([k]) => escapeName(k));
 		const placeholders = Array(columns.length).fill('?');
 		const values = entries.map(([_, v]) => v);
-		await this.controller.execute(
-			`INSERT INTO ${this.escapedSessionTableName} (${columns.join(
-				', '
-			)}) VALUES (${placeholders.join(', ')})`,
-			values
-		);
+		await this.controller.execute({
+			sql: `INSERT INTO sessions (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`,
+			args: [...values]
+		});
 	}
 
 	public async updateSessionExpiration(sessionId: string, expiresAt: Date): Promise<void> {
-		await this.controller.execute(
-			`UPDATE ${this.escapedSessionTableName} SET expires_at = ? WHERE id = ?`,
-			[Math.floor(expiresAt.getTime() / 1000), sessionId]
-		);
+		await this.controller.execute({
+			sql: `UPDATE sessions SET expires_at = ? WHERE id = ?`,
+			args: [Math.floor(expiresAt.getTime() / 1000), sessionId]
+		});
 	}
 
 	public async deleteExpiredSessions(): Promise<void> {
-		await this.controller.execute(
-			`DELETE FROM ${this.escapedSessionTableName} WHERE expires_at <= ?`,
-			[Math.floor(Date.now() / 1000)]
-		);
+		await this.controller.execute({
+			sql: `DELETE FROM sessions WHERE expires_at <= ?`,
+			args: [Math.floor(Date.now() / 1000)]
+		});
 	}
-}
-
-export interface TableNames {
-	user: string;
-	session: string;
-}
-
-export interface Controller {
-	execute(sql: string, args: any[]): Promise<void>;
-	get<T>(sql: string, args: any[]): Promise<T | null>;
-	getAll<T>(sql: string, args: any[]): Promise<T[]>;
 }
 
 interface SessionSchema extends RegisteredDatabaseSessionAttributes {

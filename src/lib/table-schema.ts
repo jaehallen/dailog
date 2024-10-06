@@ -1,4 +1,4 @@
-import type { ScheduleRecord, TimeEntryRecord } from '$lib/schema';
+import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from '$lib/schema';
 import { formatDateOrTime, getOffsetTimezoneStr, minToDuration } from '$lib/utility';
 
 interface TableColumns<T> {
@@ -123,6 +123,69 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 		render: (val) => {
 			return minToDuration(val as number);
 		}
+	},
+	{
+		title: 'Day Off',
+		key: 'day_off',
+		render: (val) => {
+			let days = String(val).split(',');
+			if (days.length) {
+				return days
+					.map((day) => {
+						return `<strong class="is-capitalized">${String(day)}</strong>`;
+					})
+					.join('<strong>, </strong>');
+			}
+
+			return '-';
+		}
 	}
 ];
 
+export const reportColumn: TableColumns<TimeEntryReport>[] = [
+	{
+		title: 'Schedule Date',
+		key: 'effective_date',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Date',
+		key: 'date_at',
+		render: (val) => {
+			return formatDateOrTime(val as string);
+		}
+	},
+	{
+		title: 'Schedule ID',
+		key: 'sched_id',
+		render: (val) => {
+			return val as number;
+		}
+	},
+	{
+		title: 'Type',
+		key: 'category',
+		render: (val) => {
+			return `<span class="is-capitalized">${String(val)}</span>`;
+		}
+	},
+	{
+		title: 'Start At',
+		key: 'start_at',
+		render: (val, option) => {
+			return formatDateOrTime(new Date(Number(val) * 1000), true, option?.local_offset || 8);
+		}
+	},
+	{
+		title: 'End At',
+		key: 'end_at',
+		render: (val, option) => {
+			const sec = Number(val);
+			return !sec
+				? '-'
+				: formatDateOrTime(new Date(Number(sec) * 1000), true, option?.local_offset);
+		}
+	}
+];

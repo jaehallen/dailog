@@ -1,9 +1,17 @@
 import { derived, writable } from 'svelte/store';
-import type { OptCategory, ScheduleRecord, TimeEntryRecord, TimesheetStateInfo } from './schema';
-import { CONFIRMCATEGORY, TIMESHEETINFO } from './schema';
+import type {
+	OptCategory,
+	ScheduleRecord,
+	TimeEntryRecord,
+	TimeEntryReport,
+	TimesheetStateInfo,
+	UserSchedule
+} from './schema';
+import { CONFIRMCATEGORY, TIMESHEETINFO, STORAGENAME } from './schema';
+import { isEqual } from './utility';
 
-export const timeAction = userTimeAction();
-export const timesheet = timesheetStore();
+export const timeAction = userTimeAction(STORAGENAME.action);
+export const timesheet = timesheetStore(STORAGENAME.timesheet);
 
 export const timeLog = derived(timesheet, ($timesheet) => {
 	if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
@@ -27,42 +35,85 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 	};
 });
 
-function timesheetStore() {
-	const { subscribe, set, update } = writable<TimeEntryRecord[]>([]);
+function syncToLocalStorage<T>(key: string, val: T) {
+	if (localStorage) {
+		let localValue = localStorage.getItem(key);
+		let storeValue = JSON.stringify(val);
+
+		if (!localValue || !isEqual(JSON.parse(localValue), val)) {
+			localStorage.setItem(key, storeValue);
+		}
+	}
+}
+
+function recordsStore() {
+	const store = writable<TimeEntryReport[]>([]);
+	const updateReports = (entries: TimeEntryRecord[], schedules: ScheduleRecord[]) =>
+		store.update(() => {
+			const sortedSchedule = schedules.toSorted(
+				(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
+			);
+
+			return entries.map((entry) => {
+				const sched = sortedSchedule.find((s) => s.id == entry.sched_id) || sortedSchedule[0];
+				return {
+					...entry,
+					utc_offset: sched.utc_offset,
+					local_offset: sched.local_offset,
+					clock_at: sched.clock_at,
+					effective_date: sched.effective_date
+				};
+			});
+		});
+
 	return {
-		subscribe,
-		set,
-		updateSheet: (data: TimeEntryRecord) =>
-			update((entries) => {
-				const idx = entries?.findIndex((e) => e.id == data.id);
-
-				if (entries[idx]) {
-					entries[idx].end_at = data.end_at;
-				} else {
-					const record = { ...data, end_at: null };
-					entries.unshift(record);
-				}
-
-				return entries;
-			})
+		subscribe: store.subscribe,
+		set: store.set,
+		updateReports
 	};
 }
 
-function userTimeAction() {
-	const { subscribe, set, update } = writable<TimesheetStateInfo>(TIMESHEETINFO);
+function timesheetStore(key = 'user-timesheet') {
+	const store = writable<TimeEntryRecord[]>([]);
+
+	const updateSheet = (data: TimeEntryRecord) =>
+		store.update((entries) => {
+			const idx = entries?.findIndex((e) => e.id == data.id);
+
+			if (entries[idx]) {
+				entries[idx].end_at = data.end_at;
+			} else {
+				const record = { ...data, end_at: null };
+				entries.unshift(record);
+			}
+
+			return entries;
+		});
+
+	store.subscribe((val) => syncToLocalStorage<TimeEntryRecord[]>(key, val));
+
 	return {
-		subscribe,
-		set,
+		subscribe: store.subscribe,
+		set: store.set,
+		updateSheet
+	};
+}
+
+function userTimeAction(key = 'user-action') {
+	const store = writable<TimesheetStateInfo>(TIMESHEETINFO);
+	store.subscribe((val) => syncToLocalStorage(key, val));
+	return {
+		subscribe: store.subscribe,
+		set: store.set,
 		validate: (
 			timelog: {
 				clocked: TimeEntryRecord | null;
 				lastBreak: TimeEntryRecord | null;
 				lunch: TimeEntryRecord | null;
 			},
-			schedule: ScheduleRecord | null,
-			date_at: string
+			schedule: UserSchedule | null
 		) => {
-			update((state) => {
+			store.update((state) => {
 				const { clocked, lastBreak, lunch } = timelog;
 				if (lastBreak) {
 					state.isBreak = !Boolean(lastBreak.end_at);
@@ -78,15 +129,16 @@ function userTimeAction() {
 
 				if (clocked) {
 					state.sched_id = clocked.sched_id;
+					state.date_at = clocked.date_at;
 				} else if (schedule) {
 					state.sched_id = schedule.id;
+					state.date_at = schedule.date_at;
 				}
 
 				if (schedule) {
 					state.local_offset = schedule.local_offset;
 				}
 
-				state.date_at = date_at ? date_at : state.date_at;
 				state.message = state.message;
 				state.confirm = state.confirm;
 
@@ -94,7 +146,7 @@ function userTimeAction() {
 			});
 		},
 		clockIn: () => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'start';
 				state.nextState = 'start';
 				state.category = 'clock';
@@ -106,7 +158,7 @@ function userTimeAction() {
 			});
 		},
 		clockOut: (clockId: number) => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'end';
 				state.nextState = 'start';
 				state.category = 'clock';
@@ -117,7 +169,7 @@ function userTimeAction() {
 			});
 		},
 		start: (category: OptCategory) => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'start';
 				state.nextState = 'end';
 				state.category = category;
@@ -128,7 +180,7 @@ function userTimeAction() {
 			});
 		},
 		end: () => {
-			update((state) => {
+			store.update((state) => {
 				state.state = 'end';
 				state.nextState = 'start';
 				state.message = CONFIRMCATEGORY[state.category][state.state];
@@ -137,17 +189,18 @@ function userTimeAction() {
 			});
 		},
 		cancel: () => {
-			update((state) => {
+			store.update((state) => {
 				state.confirm = false;
 				return state;
 			});
 		},
-		save: (id: number) => {
-			update((state) => {
-				state.id = id;
+		save: (record: TimeEntryRecord) => {
+			store.update((state) => {
+				state.id = record.id;
 				state.isBreak = state.nextState == 'end';
 				state.confirm = false;
 				state.message = '';
+				state.timestamp = state.isBreak ? record.start_at : 0;
 
 				if (!state.lunched && state.category == 'lunch') {
 					state.lunched = true;

@@ -11,12 +11,15 @@ export const validatePostTime: ZodType<ZPostTime> = z.object({
 	sched_id: z.coerce.number(),
 	category: z.enum(CATEGORY),
 	timeAction: z.enum(ACTIONSTATE),
-	date_at: z.coerce.string().date()
+	date_at: z.coerce.string().date(),
+	remarks: z.coerce
+		.string()
+		.transform((v) => (v == '' ? null : v))
+		.nullable()
 });
 
-export const validatePasswordReset: ZodType<{ oldPassword: string; newPassword: string }> = z.object({
-	oldPassword: z.coerce.string().min(6),
-	newPassword: z.coerce.string().min(6)
-});
-
-type ZPasswordReset = z.infer<typeof validatePasswordReset>
+export const validatePasswordReset: ZodType<{ oldPassword: string; newPassword: string }> =
+	z.object({
+		oldPassword: z.coerce.string().min(6),
+		newPassword: z.coerce.string().min(6)
+	});

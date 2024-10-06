@@ -8,7 +8,7 @@ import type {
 } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { QUERY, WRITE } from './sql-queries';
-import { dbChild } from './turso';
+import { getClient } from './turso';
 
 export class DatabaseController {
 	private client: Client;
@@ -18,11 +18,11 @@ export class DatabaseController {
 
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
 		try {
+			log('db-get', 'time');
 			const results = await this.client.execute({
 				sql,
 				args
 			});
-
 			return results;
 		} catch (error) {
 			if (error instanceof LibsqlError) {
@@ -72,24 +72,35 @@ export class DatabaseController {
 		return toUserRecord(rows[0]);
 	}
 
-	public async getUserLatestInfo(userId: number): Promise<Omit<UserInfo, 'timeEntries'> | null> {
-		const results = await this.batchGet([
-			{ sql: `SELECT id, active, password_hash FROM users WHERE id = $id`, args: { id: userId } },
-			QUERY.USER_SCHEDULES({ user_id: userId })
-		]);
+	public async getUserValidation(
+		userId: number
+	): Promise<(UserRecord & { sched_id: number }) | null> {
+		const { rows = [] } =
+			(await this.get(
+				`SELECT users.id, users.active, users.password_hash, sched.id as sched_id
+				FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
+				WHERE users.id = $userId LIMIT 1`,
+				{ userId }
+			)) || {};
 
-		const [{ rows: userData = [] } = {}, { rows: userSched = [] } = {}] = results || [];
+		if (!rows.length) {
+			return null;
+		}
 
 		return {
-			user: userData.length ? toUserRecord(userData[0]) : null,
-			schedules: userSched ? userSched.map(toUserScheddule) : []
+			sched_id: rows[0].sched_id as number,
+			...toUserRecord(rows[0])
 		};
 	}
 
-	public async getUserEntryAndSched(userId: number): Promise<Omit<UserInfo, 'user'>> {
+	public async getUserEntryAndSched(
+		userId: number,
+		clockOnly: boolean = false,
+		schedLimit: number = 10
+	): Promise<Omit<UserInfo, 'user'>> {
 		const results = await this.batchGet([
-			QUERY.USER_SCHEDULES({ user_id: userId, limit: 1 }),
-			QUERY.LAST_ENTRY({ user_id: userId })
+			QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
+			!clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
 		]);
 
 		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
@@ -154,6 +165,22 @@ export class DatabaseController {
 		if (!results) return null;
 		return results.rowsAffected > 0;
 	}
+
+	public async getTimEntries(
+		userId: number,
+		dateRange: { dateStart: string; dateEnd: string }
+	): Promise<Omit<UserInfo, 'user'>> {
+		const [schedules, timeEntries] =
+			(await this.batchGet([
+				QUERY.SCHEDULES({ user_id: userId, limit: 10 }),
+				QUERY.USER_ENTRIES({ user_id: userId, ...dateRange })
+			])) || [];
+
+		return {
+			schedules: schedules.rows.map(toUserScheddule),
+			timeEntries: timeEntries.rows.map(toTimeEntryRecord)
+		};
+	}
 }
 function toUserRecord(record: Record<string, any>): UserRecord {
 	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
@@ -190,6 +217,7 @@ function toUserScheddule(record: Record<string, any>) {
 		first_break_at,
 		lunch_at,
 		second_break_at,
+		day_off,
 		created_at
 	} = record;
 
@@ -206,12 +234,13 @@ function toUserScheddule(record: Record<string, any>) {
 		first_break_at,
 		lunch_at,
 		second_break_at,
+		day_off,
 		created_at
 	};
 }
 
 function toTimeEntryRecord(record: Record<string, any>) {
-	const { id, user_id, sched_id, category, date_at, start_at, end_at } = record || {};
+	const { id, user_id, sched_id, category, date_at, start_at, end_at, remarks } = record || {};
 
 	return {
 		id,
@@ -221,6 +250,7 @@ function toTimeEntryRecord(record: Record<string, any>) {
 		date_at,
 		start_at,
 		end_at,
+		remarks,
 		elapse_sec: Math.floor(Date.now() / 1000) - start_at
 	};
 }
@@ -238,4 +268,4 @@ export function logError(source: string, error: Error) {
 	console.log(error.stack);
 	console.log(error.message);
 }
-export const db = new DatabaseController(dbChild());
+export const db = new DatabaseController(getClient());
