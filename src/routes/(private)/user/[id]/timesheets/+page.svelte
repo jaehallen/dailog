@@ -6,7 +6,7 @@
 	import EndButtons from '$lib/component/EndButtons.svelte';
 	import TimesheetModal from '$lib/component/TimesheetModal.svelte';
 	import ClockButtons from '$lib/component/ClockButtons.svelte';
-	import { isEqual, timeDuration } from '$lib/utility';
+	import { isEqual } from '$lib/utility';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -150,20 +150,18 @@
 			{/if}
 		</section>
 		<section class="section">
-			<table class="table is-fullwidth -is-striped is-hoverable">
+			<table class="table is-fullwidth is-striped is-hoverable">
 				<thead>
 					<tr>
 						{#each timesheetColumn as column, cid (cid)}
 							<th> {column.title} </th>
 						{/each}
-						<th>Duration</th>
-						<th>Notes</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#if $timesheet.length && importReady}
 						{#each $timesheet as entry (entry.id)}
-							<tr>
+							<tr class:is-dark={entry.category === 'clock'}>
 								{#each timesheetColumn as column, cid (cid)}
 									<td>
 										{@html column.render(entry[column.key] || '-', {
@@ -171,8 +169,6 @@
 										})}
 									</td>
 								{/each}
-								<td>{timeDuration(entry.start_at, entry.end_at)}</td>
-								<td><span class="is-size-7 is-italic">{entry.remarks || '-'}</span></td>
 							</tr>
 						{/each}
 					{/if}

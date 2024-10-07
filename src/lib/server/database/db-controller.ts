@@ -18,7 +18,6 @@ export class DatabaseController {
 
 	private async get(sql: string, args: {}): Promise<ResultSet | null> {
 		try {
-			log('db-get', 'time');
 			const results = await this.client.execute({
 				sql,
 				args
@@ -128,7 +127,7 @@ export class DatabaseController {
 		};
 	}
 
-	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) {
+	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) {
 		const q = WRITE.CLOCKIN(args);
 		const results = await this.set(q.sql, q.args);
 		if (!results) return null;
@@ -143,7 +142,10 @@ export class DatabaseController {
 	}
 
 	public async startTime(
-		args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent'>
+		args: Omit<
+			TimeEntryRecord,
+			'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent' | 'total_sec'
+		>
 	) {
 		const q = WRITE.BREAK_START(args);
 		const results = await this.set(q.sql, q.args);
@@ -251,7 +253,8 @@ function toTimeEntryRecord(record: Record<string, any>) {
 		start_at,
 		end_at,
 		remarks,
-		elapse_sec: Math.floor(Date.now() / 1000) - start_at
+		elapse_sec: Math.floor(Date.now() / 1000) - start_at,
+		total_sec: end_at > 0 ? Number(end_at) - Number(start_at) : null
 	};
 }
 

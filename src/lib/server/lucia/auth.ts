@@ -21,14 +21,7 @@ declare module 'lucia' {
 	interface Register {
 		Lucia: typeof lucia;
 		UserId: number;
-		DatabaseUserAttributes: Omit<UserRecord, 'id'> & {
-			sched_id: number;
-			date_at: string;
-			effective_date: string;
-			utc_offset: number;
-			local_offset: number;
-			clock_at: string;
-		};
+		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
 	}
 }
 
@@ -49,3 +42,12 @@ export function isProtectedRoute(pathname: string): boolean {
 export function isPublicRoute(url: URL) {
 	return ['/login', '/', '/api/logout'].includes(url.pathname);
 }
+// Use when schedule is included
+// type UserAttributes = Omit<UserRecord, 'id'> & {
+// 	sched_id: number;
+// 	date_at: string;
+// 	effective_date: string;
+// 	utc_offset: number;
+// 	local_offset: number;
+// 	clock_at: string;
+// };

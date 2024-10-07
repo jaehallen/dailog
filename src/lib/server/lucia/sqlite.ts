@@ -29,11 +29,35 @@ export class TursoClient {
 		});
 	}
 
+	// public async getSessionAndUser(
+	// 	sessionId: string
+	// ): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
+	// 	const { rows = [] } = await this.controller.execute({
+	// 		sql: `select * from view_sessions where id = ? ORDER BY effective_date desc limit 1`,
+	// 		args: [sessionId]
+	// 	});
+	//
+	// 	if (!rows.length) {
+	// 		return [null, null];
+	// 	}
+	// 	const { user_id, id, expires_at, ...user } = rows.at(0) as unknown as SessionSchema &
+	// 		UserSchema;
+	// 	const databaseSession = transformIntoDatabaseSession({
+	// 		id,
+	// 		expires_at,
+	// 		user_id
+	// 	} satisfies SessionSchema);
+	// 	const databaseUser = transformIntoDatabaseUser({ id: user_id, ...user });
+	// 	return [databaseSession, databaseUser];
+	// }
+	//
 	public async getSessionAndUser(
 		sessionId: string
 	): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
 		const { rows = [] } = await this.controller.execute({
-			sql: `select * from view_sessions where id = ? ORDER BY effective_date desc limit 1`,
+			sql: `SELECT sessions.*, users.active, users.lead_id, users.lock_password, users.name, users.region, users.role FROM sessions
+							LEFT JOIN users on users.id = sessions.user_id
+							WHERE sessions.id = ?`,
 			args: [sessionId]
 		});
 

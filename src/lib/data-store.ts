@@ -46,32 +46,6 @@ function syncToLocalStorage<T>(key: string, val: T) {
 	}
 }
 
-function recordsStore() {
-	const store = writable<TimeEntryReport[]>([]);
-	const updateReports = (entries: TimeEntryRecord[], schedules: ScheduleRecord[]) =>
-		store.update(() => {
-			const sortedSchedule = schedules.toSorted(
-				(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
-			);
-
-			return entries.map((entry) => {
-				const sched = sortedSchedule.find((s) => s.id == entry.sched_id) || sortedSchedule[0];
-				return {
-					...entry,
-					utc_offset: sched.utc_offset,
-					local_offset: sched.local_offset,
-					clock_at: sched.clock_at,
-					effective_date: sched.effective_date
-				};
-			});
-		});
-
-	return {
-		subscribe: store.subscribe,
-		set: store.set,
-		updateReports
-	};
-}
 
 function timesheetStore(key = 'user-timesheet') {
 	const store = writable<TimeEntryRecord[]>([]);

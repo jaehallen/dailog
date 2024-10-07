@@ -4,6 +4,7 @@ import { validatePostTime } from '$lib/validation';
 import { userCurrentEntries, postTime } from '$lib/server/data/time';
 import type { TimeEntryRecord } from '$lib/schema';
 
+
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) {
 		redirect(302, '/login');

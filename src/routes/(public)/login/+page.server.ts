@@ -32,14 +32,12 @@ export const actions = {
 			return fail(400, { noSchedule: true });
 		}
 
-		console.time('session');
 		const session = await lucia.createSession(user.id, {});
 		const sessionCookie = lucia.createSessionCookie(session.id);
 		cookies.set(sessionCookie.name, sessionCookie.value, {
 			path: '.',
 			...sessionCookie.attributes
 		});
-		console.timeEnd('session');
 		redirect(302, `/user/${user.id}/timesheets`);
 	}
 } satisfies Actions;

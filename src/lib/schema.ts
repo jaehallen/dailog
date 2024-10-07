@@ -108,6 +108,7 @@ export interface TimeEntryRecord {
 	remarks: string | null;
 	user_ip?: string;
 	user_agent?: string;
+	total_sec: number | null;
 }
 
 export interface UserInfo {
