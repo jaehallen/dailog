@@ -10,7 +10,7 @@ interface UserLatestTimedata {
 }
 
 export const postTime = async (
-	data: Omit<TimeEntryRecord, 'start_at' | 'end_at' | 'elapse_sec'> & {
+	data: Omit<TimeEntryRecord, 'start_at' | 'end_at' | 'elapse_sec' | 'total_sec'> & {
 		timestamp: number;
 		timeAction: OptActionState;
 	}

@@ -52,7 +52,7 @@ export const QUERY = {
 };
 
 export const WRITE = {
-	CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec'>) => {
+	CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
 		return {
 			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
 				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,

@@ -44,9 +44,9 @@
 		};
 	};
 
-	const sortSchedule = (a: ScheduleRecord,b: ScheduleRecord) => {
+	const sortSchedule = (a: ScheduleRecord, b: ScheduleRecord) => {
 		return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
-	}
+	};
 </script>
 
 {#if browser}
@@ -141,7 +141,7 @@
 				</div>
 			</section>
 			<section>
-				<table class="table is-fullwidth -is-striped is-hoverable">
+				<table class="table is-fullwidth is-striped is-hoverable">
 					<thead>
 						<tr>
 							{#each scheduleColumn as column, cid (cid)}

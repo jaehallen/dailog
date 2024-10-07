@@ -1,12 +1,12 @@
 import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from '$lib/schema';
-import { formatDateOrTime, getOffsetTimezoneStr, minToDuration } from '$lib/utility';
+import { formatDateOrTime, getOffsetTimezoneStr, minToDuration, secToDuration } from '$lib/utility';
 
 interface TableColumns<T> {
 	title: string;
 	key: keyof T;
 	render: (
 		val: string | number | boolean | undefined | null,
-		option?: { local_offset: number }
+		entry?: { local_offset: number } & Partial<T>
 	) => string | number;
 }
 
@@ -35,18 +35,31 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
 	{
 		title: 'Start At',
 		key: 'start_at',
-		render: (val, option) => {
-			return formatDateOrTime(new Date(Number(val) * 1000), true, option?.local_offset || 8);
+		render: (val, entry) => {
+			return formatDateOrTime(new Date(Number(val) * 1000), true, entry?.local_offset || 8);
 		}
 	},
 	{
 		title: 'End At',
 		key: 'end_at',
-		render: (val, option) => {
+		render: (val, entry) => {
 			const sec = Number(val);
-			return !sec
-				? '-'
-				: formatDateOrTime(new Date(Number(sec) * 1000), true, option?.local_offset);
+			return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, entry?.local_offset);
+		}
+	},
+	{
+		title: 'Duration',
+		key: 'total_sec',
+		render(val) {
+			const total_sec = Number(val);
+			return !total_sec ? '-' : secToDuration(total_sec);
+		}
+	},
+	{
+		title: 'Remarks',
+		key: 'remarks',
+		render(val) {
+			return `<span class="is-size-7 is-italic">${val || '-'}</span>`;
 		}
 	}
 ];
@@ -144,24 +157,10 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
 
 export const reportColumn: TableColumns<TimeEntryReport>[] = [
 	{
-		title: 'Schedule Date',
-		key: 'effective_date',
-		render: (val) => {
-			return formatDateOrTime(val as string);
-		}
-	},
-	{
 		title: 'Date',
 		key: 'date_at',
 		render: (val) => {
 			return formatDateOrTime(val as string);
-		}
-	},
-	{
-		title: 'Schedule ID',
-		key: 'sched_id',
-		render: (val) => {
-			return val as number;
 		}
 	},
 	{
@@ -172,20 +171,58 @@ export const reportColumn: TableColumns<TimeEntryReport>[] = [
 		}
 	},
 	{
+		title: 'Clock In',
+		key: 'clock_at',
+		render(val, entry) {
+			if (entry?.category === 'clock') {
+				return formatDateOrTime(val as string);
+			}
+
+			return '-';
+		}
+	},
+	{
 		title: 'Start At',
 		key: 'start_at',
-		render: (val, option) => {
-			return formatDateOrTime(new Date(Number(val) * 1000), true, option?.local_offset || 8);
+		render: (val, entry) => {
+			return formatDateOrTime(new Date(Number(val) * 1000), true, entry?.local_offset || 8);
 		}
 	},
 	{
 		title: 'End At',
 		key: 'end_at',
-		render: (val, option) => {
+		render: (val, entry) => {
 			const sec = Number(val);
-			return !sec
-				? '-'
-				: formatDateOrTime(new Date(Number(sec) * 1000), true, option?.local_offset);
+			return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, entry?.local_offset);
+		}
+	},
+	{
+		title: 'Duration',
+		key: 'total_sec',
+		render(val) {
+			const total_sec = Number(val);
+			return !total_sec ? '-' : secToDuration(total_sec);
+		}
+	},
+	{
+		title: 'Remarks',
+		key: 'remarks',
+		render(val) {
+			return `<span class="is-size-7 is-italic">${val || '-'}</span>`;
+		}
+	},
+	{
+		title: 'Schedule ID',
+		key: 'sched_id',
+		render: (val) => {
+			return val as number;
+		}
+	},
+	{
+		title: 'Effective Date',
+		key: 'effective_date',
+		render: (val) => {
+			return formatDateOrTime(val as string);
 		}
 	}
 ];
