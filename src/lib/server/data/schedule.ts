@@ -64,7 +64,7 @@ export function isStartOfDuty(
 		latestSchedule.clock_dur_min ??
 		((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2;
 
-	if (today.getDate() !== clockStart.getDate() && minDiff >= workDur && graceHour >= timeDiffHour)
+	if (today.getDate() !== clockStart.getDate() && minDiff >= workDur && (graceHour >= timeDiffHour || timeDiffHour > workDur/60))
 		return true;
 
 	return false;
