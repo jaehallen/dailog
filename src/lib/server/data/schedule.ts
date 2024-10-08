@@ -57,7 +57,7 @@ export function isStartOfDuty(
 	const localTime = getLocalTime(latestSchedule.local_offset);
 	const timeDiffHour = timeDiffSec(localTime, latestSchedule.clock_at) / 3600;
 	const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
-	today.setHours(today.getHours() + latestSchedule.utc_offset);
+	today.setHours(today.getHours() + entrySchedule.utc_offset);
 
 	const minDiff = (today.getTime() - clockStart.getTime()) / 60000;
 	const workDur =

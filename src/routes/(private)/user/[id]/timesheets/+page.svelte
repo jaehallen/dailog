@@ -30,7 +30,7 @@
 			timesheet.set(
 				timeEntries
 					.filter((entry: TimeEntryRecord) => entry.date_at === schedule.date_at)
-					.sort((a, b) => b.start_at - a.start_at)
+					.sort((a, b) => a.start_at - b.start_at)
 			);
 			timeAction.validate($timeLog, schedule);
 		}
