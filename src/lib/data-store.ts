@@ -46,7 +46,6 @@ function syncToLocalStorage<T>(key: string, val: T) {
 	}
 }
 
-
 function timesheetStore(key = 'user-timesheet') {
 	const store = writable<TimeEntryRecord[]>([]);
 
@@ -55,7 +54,7 @@ function timesheetStore(key = 'user-timesheet') {
 			const idx = entries?.findIndex((e) => e.id == data.id);
 
 			if (entries[idx]) {
-				entries[idx].end_at = data.end_at;
+				entries[idx] = { ...data };
 			} else {
 				const record = { ...data, end_at: null };
 				entries.unshift(record);
