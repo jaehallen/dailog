@@ -150,7 +150,7 @@ export const ROUTES: RouteProfile[] = [
 		role: ['admin', 'lead', 'poc', 'user']
 	},
 	{
-		name: 'Repots',
+		name: 'Reports',
 		path: '/user/[id]/reports',
 		role: ['admin', 'lead', 'poc', 'user']
 	},
