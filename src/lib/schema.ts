@@ -12,6 +12,7 @@ export const CATEGORY = [
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
 export const DEFAULT_MIN_WORKDATE = 18;
+export const DEFAULT_GRACE_HOUR = 4;
 
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];

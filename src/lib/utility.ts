@@ -99,7 +99,7 @@ export const timeDuration = (start: number, end: number | null) => {
 		return '-';
 	}
 
-	return secToDuration(b-a)
+	return secToDuration(b - a);
 };
 
 export const secToDuration = (dur: number) => {
@@ -109,8 +109,7 @@ export const secToDuration = (dur: number) => {
 	// const ss = dur - hh * 3600 - mm * 60;
 
 	return `${f(hh)}:${f(mm)}`;
-
-}
+};
 
 export const minToDuration = (min: number) => {
 	const f = (v: number) => String(v).padStart(2, '0');
@@ -188,4 +187,24 @@ export function getWeekRange(dateStr: string): { dateStart: string; dateEnd: str
 		dateStart: dateStart.toISOString().split('T')[0],
 		dateEnd: dateEnd.toISOString().split('T')[0]
 	};
+}
+
+export function startOfday(date: Date) {
+	if (date instanceof Date) {
+		return new Date(date.toDateString());
+	}
+
+	return new Date(new Date().toDateString());
+}
+
+export function timeDiffSec(time1: string, time2: string): number {
+	const date1 = new Date(`2000-01-01T${time1}Z`);
+	const date2 = new Date(`2000-01-01T${time2}Z`);
+	let diff = (date2.getTime() - date1.getTime()) / 1000;
+
+	if (diff < 0) {
+		diff += 86400;
+	}
+
+	return diff;
 }

@@ -1,44 +1,70 @@
 import type { ScheduleRecord, TimeEntryRecord } from '$lib/schema';
-import { DEFAULT_MIN_WORKDATE } from '$lib/schema';
+import { DEFAULT_GRACE_HOUR, DEFAULT_MIN_WORKDATE } from '$lib/schema';
 import { db } from '../database/db-controller';
 import { env } from '$env/dynamic/private';
-import { dateAtOffsetStr } from '$lib/utility';
+import { dateAtOffsetStr, timeDiffSec } from '$lib/utility';
 
 export const getUserSchedule = async (
 	userId: number
-): Promise<{ startOfDuty: boolean; date_at: string } & ScheduleRecord> => {
+): Promise<({ startOfDuty: boolean; date_at: string } & ScheduleRecord) | null> => {
 	const { schedules, timeEntries } = await db.getUserEntryAndSched(userId, true, 10);
+
+	if (!schedules.length) {
+		return null;
+	}
+
 	return getSchedule(schedules, timeEntries);
 };
 
 export function getSchedule(schedules: ScheduleRecord[], timeEntries: TimeEntryRecord[]) {
 	const clockEntry = timeEntries.find((entry) => entry.category === 'clock');
-	const startOfDuty = isStartOfDuty(clockEntry);
+	const latestSchedule = getCurrentSchedule(schedules);
+	const date_at = dateAtOffsetStr(new Date(), latestSchedule.utc_offset);
 
-	if (!schedules.length) {
-		throw noSchedule();
+	if (!clockEntry) {
+		return {
+			startOfDuty: true,
+			date_at,
+			...latestSchedule
+		};
 	}
+
+	const entrySchedule = scheduleByEntry(schedules, clockEntry) ?? latestSchedule;
+	const startOfDuty = isStartOfDuty(clockEntry, entrySchedule, latestSchedule);
 
 	if (!startOfDuty && clockEntry) {
 		return {
 			startOfDuty,
 			date_at: clockEntry?.date_at,
-			...scheduleByEntry(schedules, clockEntry)
+			...entrySchedule
 		};
 	}
 
-	const latestSchedule = getCurrentSchedule(schedules);
 	return {
 		startOfDuty,
-		date_at: dateAtOffsetStr(new Date(), latestSchedule.utc_offset),
+		date_at,
 		...latestSchedule
 	};
 }
 
-export function isStartOfDuty(clockEntry: TimeEntryRecord | undefined): boolean {
-	if (!clockEntry) return true;
+export function isStartOfDuty(
+	clockEntry: TimeEntryRecord,
+	entrySchedule: ScheduleRecord,
+	latestSchedule: ScheduleRecord
+): boolean {
+	const today = new Date();
+	const clockStart = new Date((clockEntry.start_at + entrySchedule.utc_offset * 3600) * 1000);
+	const localTime = getLocalTime(latestSchedule.local_offset);
+	const timeDiffHour = timeDiffSec(localTime, latestSchedule.clock_at) / 3600;
+	const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
+	today.setHours(today.getHours() + latestSchedule.utc_offset);
 
-	if (clockEntry.elapse_sec > (parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 3600)
+	const minDiff = (today.getTime() - clockStart.getTime()) / 60000;
+	const workDur =
+		latestSchedule.clock_dur_min ??
+		((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2;
+
+	if (today.getDate() !== clockStart.getDate() && minDiff >= workDur && graceHour >= timeDiffHour)
 		return true;
 
 	return false;
@@ -49,23 +75,18 @@ export function getCurrentSchedule(schedules: ScheduleRecord[] = []): ScheduleRe
 		(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
 	);
 
-	const sched = schedules[0];
-	if (!sched) {
-		throw noSchedule();
-	}
-
-	return sched;
+	return schedules[0] ?? null;
 }
 
 export function scheduleByEntry(schedules: ScheduleRecord[], clockEntry: TimeEntryRecord) {
 	const sched = schedules.find((sched) => sched.id === clockEntry.sched_id);
-	if (!sched) {
-		throw noSchedule();
-	}
-
-	return sched;
+	return sched ?? null;
 }
 
-function noSchedule(): Error {
-	return new Error('User schedules is not properly configured.');
+export function getLocalTime(local_offset: number) {
+	const d = new Date();
+	d.setHours(d.getHours() + local_offset);
+	const [hh, mm] = d.toISOString().split('T')[1].split(':');
+
+	return `${hh}:${mm}`;
 }
