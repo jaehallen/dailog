@@ -56,18 +56,18 @@ export const checkUser: Handle = async ({ event, resolve }) => {
 export const userRoute: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
-	if (isProtectedRoute(pathname) && !event.locals.user) {
-		return error(405, 'Not Allowed');
-	}
-
-	if (isProtectedRoute(pathname) && event.locals.user) {
-		const routeList = routeProfile(event.locals.user);
-
-		if (!routeList.some((route) => route.path === pathname)) {
+	if (isProtectedRoute(pathname)) {
+		if(!event.locals.user){
 			return error(405, 'Not Allowed');
-		}
+		}else{
+			const routeList = routeProfile(event.locals.user);
 
-		event.locals.routes = routeList;
+			if (!routeList.some((route) => route.path === pathname)) {
+				return error(405, 'Not Allowed');
+			}
+		
+			event.locals.routes = routeList;
+		}
 	}
 	return resolve(event);
 };

@@ -42,6 +42,9 @@ importers:
       '@types/eslint':
         specifier: ^9.6.0
         version: 9.6.1
+      '@vincjo/datatables':
+        specifier: ^1.14.10
+        version: 1.14.10(svelte@4.2.19)
       eslint:
         specifier: ^9.0.0
         version: 9.10.0
@@ -911,6 +914,11 @@ packages:
   '@typescript-eslint/visitor-keys@8.5.0':
     resolution: {integrity: sha512-yTPqMnbAZJNy2Xq2XU8AdtOW9tJIr+UQb64aXB9f3B1498Zx9JorVgFJcZpEc9UBuCCrdzKID2RGAMkYcDtZOw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@vincjo/datatables@1.14.10':
+    resolution: {integrity: sha512-gtojSC/LKDHbh2ZGZeaAQ+lLltcmcSDDLkecgb9WpG7lHmd4b/1HUTtFWAJt43TnaK8SrciGugh9VRRZN53bpw==}
+    peerDependencies:
+      svelte: ^3.56.0 || ^4.0.0 || ^5.0.0-next.120
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -2519,6 +2527,10 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.5.0
       eslint-visitor-keys: 3.4.3
+
+  '@vincjo/datatables@1.14.10(svelte@4.2.19)':
+    dependencies:
+      svelte: 4.2.19
 
   acorn-jsx@5.3.2(acorn@8.12.1):
     dependencies:

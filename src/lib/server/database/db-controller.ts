@@ -183,7 +183,17 @@ export class DatabaseController {
 			timeEntries: timeEntries.rows.map(toTimeEntryRecord)
 		};
 	}
+
+	public async getUsersList(params: { lead_id?: number, limit?: number, region?: string, active?: number, offset?: number }): Promise<UserRecord[]> {
+		const { sql, args } = QUERY.USERS_LIST(params);
+		console.log(sql, args)
+		const { rows = [] } = (await this.get(sql, args)) || {};
+
+		return rows.map(toUserRecord);
+	}
+
 }
+
 function toUserRecord(record: Record<string, any>): UserRecord {
 	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
 

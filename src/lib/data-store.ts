@@ -9,6 +9,7 @@ import type {
 } from './schema';
 import { CONFIRMCATEGORY, TIMESHEETINFO, STORAGENAME } from './schema';
 import { isEqual } from './utility';
+import { browser } from '$app/environment';
 
 export const timeAction = userTimeAction(STORAGENAME.action);
 export const timesheet = timesheetStore(STORAGENAME.timesheet);
@@ -36,7 +37,7 @@ export const timeLog = derived(timesheet, ($timesheet) => {
 });
 
 function syncToLocalStorage<T>(key: string, val: T) {
-	if (localStorage) {
+	if (browser) {
 		let localValue = localStorage.getItem(key);
 		let storeValue = JSON.stringify(val);
 

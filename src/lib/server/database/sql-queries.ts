@@ -1,4 +1,5 @@
 import type { TimeEntryRecord } from '$lib/schema';
+import type { string } from 'zod';
 
 export const QUERY = {
 	USER: (args: { user_id: number }) => {
@@ -6,6 +7,31 @@ export const QUERY = {
 			sql: `SELECT * FROM view_users WHERE id = $user_id`,
 			args
 		};
+	},
+	USERS_LIST: (args: { region?: string, limit?: number, lead_id?: number, active?: number }) => {
+		const clause: string[] = [];
+		const values = [];
+
+		if (args.region) {
+			clause.push('region = ?');
+			values.push(args.region)
+		}
+
+		if (args.lead_id) {
+			clause.push('lead_id = ?')
+			values.push(args.lead_id)
+		}
+		if (args.active != undefined || args.active != null) {
+			clause.push('active = ?')
+			values.push(args.active)
+		}
+
+		values.push(!args.limit ? 500 : args.limit)
+		return {
+			sql: `SELECT * FROM view_users ${(clause.length ? 'WHERE ' : '') + clause.join(' AND ')} LIMIT ?`,
+			args: values
+
+		}
 	},
 	USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
 		return {

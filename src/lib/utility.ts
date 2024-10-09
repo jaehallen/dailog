@@ -67,7 +67,9 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
 	if (isTime) {
 		options = { ...timeOpt, timeZone: 'UTC' };
 	} else if (long) {
-		options = { ...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset) };
+		date = dateAtOffset(date, offset)
+		options = {...dateOpt, ...timeOpt, timeZone: 'UTC'}
+		// options = { ...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset) };
 	} else {
 		options = { ...dateOpt };
 	}

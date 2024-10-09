@@ -170,5 +170,5 @@ SELECT
 INSERT INTO users ("id","name","region","role","password_hash","lead_id","lock_password")
 VALUES
 (100000, "Admin",null,"admin","c1af01ec84c4ea44cacf0774e51e9e01:666bc8196e924bdd60161ff14b33623b957c164c729797c272d4e306d366bac8",null,1), -- admin@hopkins
-(200000, "Lead of Hopkins","APAC","lead","a8eff657adbb271dcd36cd22e5848dae:b1fe08ccf5652b823a2fa6e48be02d6d33496435c46ec2793c62f92e3b8ede91",100000,1), -- lead@hopkins
-(200001, "POC of Hopkins","APAC","poc","91ac3f14d8f75922628a92b34309effb:1e431a6da47a1037254b7ac7ab1c001d3a1984382b38766d3bc98971325f1faf",200000,1); -- poc@hopkins
+(100001, "Lead of Hopkins","APAC","lead","a8eff657adbb271dcd36cd22e5848dae:b1fe08ccf5652b823a2fa6e48be02d6d33496435c46ec2793c62f92e3b8ede91",100000,1), -- lead@hopkins
+(100002, "POC of Hopkins","APAC","poc","91ac3f14d8f75922628a92b34309effb:1e431a6da47a1037254b7ac7ab1c001d3a1984382b38766d3bc98971325f1faf",200000,1); -- poc@hopkins
