@@ -6,7 +6,8 @@
   export let routeList: RouteProfile[] = [];
   export let curPath = '/';
   export let brand = 'Dailog';
-
+  // export let src = 'https://api.dicebear.com/9.x/open-peeps/svg?seed=Nolan&flip=true&backgroundRotation=360,10,20,40,50,30&randomizeIds=true&accessories=eyepatch,glasses,glasses2,glasses3,glasses4,glasses5,sunglasses&backgroundColor=c0aede,d1d4f9,ffd5dc'
+  export let src = '';
   let userRoute: RouteProfile[] = [];
   let adminRoute: RouteProfile[] = [];
   let isActive = false;
@@ -30,9 +31,17 @@
 
 <nav class="navbar" aria-label="main navigation">
   <div class="navbar-brand">
-    <a class="navbar-item" href={curPath}>
-      <h1 class="title">{brand}</h1>
-    </a>
+    {#if !src}
+      <div class="navbar-item">
+        <h1 class="title">{brand}</h1>
+      </div>
+    {:else}
+      <button class="button is-ghost py-0">
+        <figure class="image is-48x48">
+          <img class="is-rounded" {src} alt="avatar" />
+        </figure>
+      </button>
+    {/if}
     <button
       class="navbar-burger"
       class:is-active={isActive}
