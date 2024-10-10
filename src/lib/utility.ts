@@ -1,10 +1,3 @@
-let startTimer = process.hrtime()
-export const elapseTime = (note: string) => {
-  let elapsed = process.hrtime(startTimer)[1] / 1000000;
-  console.log(process.hrtime(startTimer)[0] + " s " + elapsed.toFixed(3) + " ms " + note);
-  startTimer = process.hrtime();
-}
-
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
   const d = Date.UTC(1970, 0, 1, parseInt(hr) || 0, parseInt(min) || 0);
