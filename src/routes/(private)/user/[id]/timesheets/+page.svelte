@@ -96,6 +96,7 @@
 			}
 			await update({ invalidateAll: false, reset: false });
 			disabled = false;
+			remarks = '';
 		};
 	};
 

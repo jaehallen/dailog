@@ -5,39 +5,39 @@ import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals?.session) {
-		redirect(302, `/user/${locals?.user?.id}/timesheets`);
-	}
+  if (locals?.session) {
+    redirect(302, `/user/${locals?.user?.id}/timesheets`);
+  }
 
-	return {};
+  return {};
 };
 
 export const actions = {
-	default: async ({ cookies, request }) => {
-		const form = await request.formData();
-		const data: Record<string, any> = Object.fromEntries(form);
-		const inputValid = validateSignIn.safeParse(data);
+  default: async ({ cookies, request }) => {
+    const form = await request.formData();
+    const data: Record<string, any> = Object.fromEntries(form);
+    const inputValid = validateSignIn.safeParse(data);
 
-		if (!inputValid.success) {
-			return fail(400);
-		}
+    if (!inputValid.success) {
+      return fail(400);
+    }
 
-		const user = await validateUser(inputValid.data);
+    const user = await validateUser(inputValid.data);
 
-		if (!user) {
-			return fail(400);
-		}
+    if (!user) {
+      return fail(400);
+    }
 
-		if (!user.sched_id) {
-			return fail(400, { noSchedule: true });
-		}
+    if (!user.sched_id) {
+      return fail(400, { noSchedule: true });
+    }
 
-		const session = await lucia.createSession(user.id, {});
-		const sessionCookie = lucia.createSessionCookie(session.id);
-		cookies.set(sessionCookie.name, sessionCookie.value, {
-			path: '.',
-			...sessionCookie.attributes
-		});
-		redirect(302, `/user/${user.id}/timesheets`);
-	}
+    const session = await lucia.createSession(user.id, {});
+    const sessionCookie = lucia.createSessionCookie(session.id);
+    cookies.set(sessionCookie.name, sessionCookie.value, {
+      path: '.',
+      ...sessionCookie.attributes
+    });
+    redirect(302, `/user/${user.id}/timesheets`);
+  }
 } satisfies Actions;

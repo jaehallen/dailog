@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     redirect(302, '/login');
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const [today] = new Date().toISOString().split('T');
 
   return {
     userTimeData: await userReports(locals.user.id, today)

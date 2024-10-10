@@ -59,12 +59,15 @@ export function isStartOfDuty(
 	const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
 	today.setHours(today.getHours() + entrySchedule.utc_offset);
 
-	const minDiff = (today.getTime() - clockStart.getTime()) / 60000;
+	const minDiff = (today.getTime() - clockStart.getTime()) / 60000; //minute diff
 	const workDur =
 		latestSchedule.clock_dur_min ??
-		((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2;
+		((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2; //work duration in minute
 
-	if (today.getDate() !== clockStart.getDate() && minDiff >= workDur && (graceHour >= timeDiffHour || timeDiffHour > workDur/60))
+	if (today.getDate() !== clockStart.getDate()
+		&& minDiff >= workDur
+		&& timeDiffHour >= (workDur / -120)
+		&& timeDiffHour <= graceHour)
 		return true;
 
 	return false;

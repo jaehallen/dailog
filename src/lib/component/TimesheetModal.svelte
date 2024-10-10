@@ -6,6 +6,7 @@
 	export let formId = '';
 	export let remarks = '';
 	let dispatch = createEventDispatcher();
+	let submitButton: HTMLButtonElement;
 	const userYes = () => {
 		dispatch('yes');
 	};
@@ -22,12 +23,18 @@
 		{#if $timeAction.state != 'end'}
 			<div class="field">
 				<div class="control">
-					<textarea class="textarea" placeholder="Remarks (Optional)" rows="1" bind:value={remarks}></textarea>
+					<textarea class="textarea" placeholder="Remarks (Optional)" rows="1" bind:value={remarks}
+					></textarea>
 				</div>
 			</div>
 		{/if}
 	</div>
 
 	<button class="button card-footer-item is-ghost" on:click={userNo}>No</button>
-	<button class="button card-footer-item is-ghost" form={formId} on:click={userYes}>Yes</button>
+	<button
+		class="button card-footer-item is-ghost"
+		form={formId}
+		on:click={userYes}
+		bind:this={submitButton}>Yes</button
+	>
 </Modal>

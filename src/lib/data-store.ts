@@ -58,7 +58,7 @@ function timesheetStore(key = 'user-timesheet') {
 				entries[idx] = { ...data };
 			} else {
 				const record = { ...data, end_at: null };
-				entries.unshift(record);
+				entries.push(record);
 			}
 
 			return entries;

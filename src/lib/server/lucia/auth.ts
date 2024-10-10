@@ -7,40 +7,40 @@ import { ROUTES } from '$lib/schema';
 
 const adapter = new TursoClient(getClient());
 export const lucia = new Lucia(adapter, {
-	sessionCookie: {
-		attributes: {
-			secure: !dev
-		}
-	},
-	getUserAttributes: (attributes) => {
-		return attributes;
-	}
+  sessionCookie: {
+    attributes: {
+      secure: !dev
+    }
+  },
+  getUserAttributes: (attributes) => {
+    return attributes;
+  }
 });
 
 declare module 'lucia' {
-	interface Register {
-		Lucia: typeof lucia;
-		UserId: number;
-		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
-	}
+  interface Register {
+    Lucia: typeof lucia;
+    UserId: number;
+    DatabaseUserAttributes: Omit<UserRecord, 'id'>;
+  }
 }
 
 export function routeProfile(user: Pick<UserRecord, 'id' | 'role'>): RouteProfile[] {
-	return ROUTES.reduce((arr: RouteProfile[], route: RouteProfile) => {
-		if (route.role.includes(user.role)) {
-			arr.push({ ...route, path: route.path.replace('[id]', String(user.id)) });
-		}
+  return ROUTES.reduce((arr: RouteProfile[], route: RouteProfile) => {
+    if (route.role.includes(user.role)) {
+      arr.push({ ...route, path: route.path.replace('[id]', String(user.id)) });
+    }
 
-		return arr;
-	}, []);
+    return arr;
+  }, []);
 }
 
 export function isProtectedRoute(pathname: string): boolean {
-	return ['/user', '/admin'].some((str) => pathname.startsWith(str));
+  return ['/user', '/admin'].some((str) => pathname.startsWith(str));
 }
 
 export function isPublicRoute(url: URL) {
-	return ['/login', '/', '/api/logout'].includes(url.pathname);
+  return ['/login', '/', '/api/logout'].includes(url.pathname);
 }
 // Use when schedule is included
 // type UserAttributes = Omit<UserRecord, 'id'> & {

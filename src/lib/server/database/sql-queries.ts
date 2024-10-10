@@ -2,114 +2,114 @@ import type { TimeEntryRecord } from '$lib/schema';
 import type { string } from 'zod';
 
 export const QUERY = {
-	USER: (args: { user_id: number }) => {
-		return {
-			sql: `SELECT * FROM view_users WHERE id = $user_id`,
-			args
-		};
-	},
-	USERS_LIST: (args: { region?: string, limit?: number, lead_id?: number, active?: number }) => {
-		const clause: string[] = [];
-		const values = [];
+  USER: (args: { user_id: number }) => {
+    return {
+      sql: `SELECT * FROM view_users WHERE id = $user_id`,
+      args
+    };
+  },
+  USERS_LIST: (args: { region?: string, limit?: number, lead_id?: number, active?: number }) => {
+    const clause: string[] = [];
+    const values = [];
 
-		if (args.region) {
-			clause.push('region = ?');
-			values.push(args.region)
-		}
+    if (args.region) {
+      clause.push('region = ?');
+      values.push(args.region)
+    }
 
-		if (args.lead_id) {
-			clause.push('lead_id = ?')
-			values.push(args.lead_id)
-		}
-		if (args.active != undefined || args.active != null) {
-			clause.push('active = ?')
-			values.push(args.active)
-		}
+    if (args.lead_id) {
+      clause.push('lead_id = ?')
+      values.push(args.lead_id)
+    }
+    if (args.active != undefined || args.active != null) {
+      clause.push('active = ?')
+      values.push(args.active)
+    }
 
-		values.push(!args.limit ? 500 : args.limit)
-		return {
-			sql: `SELECT * FROM view_users ${(clause.length ? 'WHERE ' : '') + clause.join(' AND ')} LIMIT ?`,
-			args: values
+    values.push(!args.limit ? 500 : args.limit)
+    return {
+      sql: `SELECT * FROM view_users ${(clause.length ? 'WHERE ' : '') + clause.join(' AND ')} LIMIT ?`,
+      args: values
 
-		}
-	},
-	USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
-		return {
-			sql: `SELECT 
+    }
+  },
+  USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
+    return {
+      sql: `SELECT 
 				date(current_timestamp, CONCAT(local_offset, ' hours')) as date_at, * 
 				FROM schedules WHERE effective_date <= date_at AND user_id = $user_id
 				ORDER BY effective_date DESC LIMIT $limit`,
-			args: {
-				user_id: args.user_id,
-				limit: !args.limit ? 10 : args.limit
-			}
-		};
-	},
-	SCHEDULES: (args: { user_id: number; limit?: number }) => {
-		return {
-			sql: `SELECT * FROM view_schedules WHERE user_id = $user_id LIMIT $limit`,
-			args: {
-				user_id: args.user_id,
-				limit: !args.limit ? 10 : args.limit
-			}
-		};
-	},
-	LAST_ENTRY: (args: { user_id: number }) => {
-		return {
-			sql: `WITH recent AS 
+      args: {
+        user_id: args.user_id,
+        limit: !args.limit ? 10 : args.limit
+      }
+    };
+  },
+  SCHEDULES: (args: { user_id: number; limit?: number }) => {
+    return {
+      sql: `SELECT * FROM view_schedules WHERE user_id = $user_id LIMIT $limit`,
+      args: {
+        user_id: args.user_id,
+        limit: !args.limit ? 10 : args.limit
+      }
+    };
+  },
+  LAST_ENTRY: (args: { user_id: number }) => {
+    return {
+      sql: `WITH recent AS 
 							(SELECT MAX(date_at) as date_at, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
 						SELECT e.* FROM time_entries e, recent r 
 						WHERE e.date_at = r.date_at and e.user_id = r.user_id`,
-			args
-		};
-	},
-	USER_ENTRIES: (args: { user_id: number; dateStart: string; dateEnd: string }) => {
-		return {
-			sql: `SELECT * FROM view_time_entries WHERE user_id = $user_id AND date_at BETWEEN $dateStart and $dateEnd`,
-			args
-		};
-	},
-	LAST_CLOCKED: (args: { user_id: number }) => {
-		return {
-			sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
-			args
-		};
-	}
+      args
+    };
+  },
+  USER_ENTRIES: (args: { user_id: number; dateStart: string; dateEnd: string }) => {
+    return {
+      sql: `SELECT * FROM view_time_entries WHERE user_id = $user_id AND date_at BETWEEN $dateStart and $dateEnd`,
+      args
+    };
+  },
+  LAST_CLOCKED: (args: { user_id: number }) => {
+    return {
+      sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
+      args
+    };
+  }
 };
 
 export const WRITE = {
-	CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
-		return {
-			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
+  CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
+    return {
+      sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
 				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
-			args
-		};
-	},
-	CLOCKOUT: (args: Pick<TimeEntryRecord, 'id' | 'end_at'>) => {
-		return {
-			sql: `UPDATE time_entries SET end_at = $end_at WHERE id = $id RETURNING *`,
-			args
-		};
-	},
-	BREAK_START: (
-		args: Pick<TimeEntryRecord, 'user_id' | 'sched_id' | 'category' | 'date_at' | 'start_at'>
-	) => {
-		return {
-			sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, remarks)
+      args
+    };
+  },
+  CLOCKOUT: (args: Pick<TimeEntryRecord, 'id' | 'end_at'>) => {
+    return {
+      sql: `UPDATE time_entries SET end_at = $end_at WHERE id = $id RETURNING *`,
+      args
+    };
+  },
+  BREAK_START: (
+    args: Pick<TimeEntryRecord, 'user_id' | 'sched_id' | 'category' | 'date_at' | 'start_at'>
+  ) => {
+    return {
+      sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, remarks)
 				VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $remarks) RETURNING *`,
-			args
-		};
-	},
-	BREAK_END: (args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) => {
-		return {
-			sql: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`,
-			args
-		};
-	},
-	UPDATE_PASSWORD: (args: { user_id: number; password_hash: string }) => {
-		return {
-			sql: `UPDATE users SET password_hash = $password_hash WHERE id = $user_id`,
-			args
-		};
-	}
+      args
+    };
+  },
+  BREAK_END: (args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) => {
+    return {
+      sql: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`,
+      args
+    };
+  },
+  UPDATE_PASSWORD: (args: { user_id: number; password_hash: string }) => {
+    return {
+      sql: `UPDATE users SET password_hash = $password_hash WHERE id = $user_id`,
+      args
+    };
+  }
 };
