@@ -210,3 +210,14 @@ export function timeDiffSec(time1: string, time2: string): number {
 
   return diff;
 }
+
+export function parseJSON(str: any) {
+  if (typeof str !== 'string') return str;
+  try {
+    const obj = JSON.parse(str);
+    return obj;
+  } catch (err) {
+    console.error(err);
+    return null
+  }
+}

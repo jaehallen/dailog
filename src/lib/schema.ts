@@ -60,6 +60,10 @@ export interface UserRecord {
   lead_id: number;
   password_hash: string;
   lock_password: boolean;
+  preferences: {
+    avatar_src: URL;
+    background_src: URL;
+  };
 }
 
 export interface UserProfile extends UserRecord {
@@ -138,6 +142,10 @@ export interface TimeEntryResults {
   sched_id: number;
   timeAction: OptActionState;
 }
+
+//DICEBREAR LINK FOR AVATAR
+export const AVATAR_SRC =
+  'https://api.dicebear.com/9.x/initials/svg?backgroundType=gradientLinear&fontFamily=Arial,Brush%20Script%20MT,Courier%20New&fontWeight=700';
 
 export const ROUTES: RouteProfile[] = [
   {

@@ -8,7 +8,8 @@ import type {
 } from '$lib/schema';
 import { LibsqlError } from '@libsql/client';
 import { QUERY, WRITE } from './sql-queries';
-import { getClient } from './turso';
+import { getClient } from '$lib/server/database/turso';
+import { parseJSON } from '$lib/utility';
 
 export class DatabaseController {
   private client: Client;
@@ -184,18 +185,24 @@ export class DatabaseController {
     };
   }
 
-  public async getUsersList(params: { lead_id?: number, limit?: number, region?: string, active?: number, offset?: number }): Promise<UserRecord[]> {
+  public async getUsersList(params: {
+    lead_id?: number;
+    limit?: number;
+    region?: string;
+    active?: number;
+    offset?: number;
+  }): Promise<UserRecord[]> {
     const { sql, args } = QUERY.USERS_LIST(params);
-    console.log(sql, args)
+    console.log(sql, args);
     const { rows = [] } = (await this.get(sql, args)) || {};
 
     return rows.map(toUserRecord);
   }
-
 }
 
-function toUserRecord(record: Record<string, any>): UserRecord {
-  const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
+export function toUserRecord(record: Record<string, any>): UserRecord {
+  const { id, active, name, region, role, password_hash, lead_id, lock_password, preferences } =
+    record;
 
   return {
     id,
@@ -205,7 +212,8 @@ function toUserRecord(record: Record<string, any>): UserRecord {
     password_hash,
     lead_id,
     active: Boolean(active),
-    lock_password: Boolean(lock_password)
+    lock_password: Boolean(lock_password),
+    preferences: parseJSON(preferences)
   };
 }
 

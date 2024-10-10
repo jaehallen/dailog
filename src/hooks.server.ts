@@ -57,15 +57,15 @@ export const userRoute: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
 	if (isProtectedRoute(pathname)) {
-		if(!event.locals.user){
+		if (!event.locals.user) {
 			return error(405, 'Not Allowed');
-		}else{
+		} else {
 			const routeList = routeProfile(event.locals.user);
 
 			if (!routeList.some((route) => route.path === pathname)) {
 				return error(405, 'Not Allowed');
 			}
-		
+
 			event.locals.routes = routeList;
 		}
 	}

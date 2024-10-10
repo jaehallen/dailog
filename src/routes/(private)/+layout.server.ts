@@ -1,10 +1,13 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { userInitials } from '$lib/utility';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
+  if (!locals.session) {
+    return new Response(null, { status: 401 });
+  }
+
   return {
-    userInitial: locals.user ? userInitials(locals.user?.name) : 'Dailog',
+    user: { ...locals.user },
     routeList: locals.routes
   };
 };

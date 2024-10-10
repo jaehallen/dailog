@@ -5,6 +5,7 @@
   import { page } from '$app/stores';
   export let data: LayoutData;
   // const src = 'https://wallpapercave.com/wp/wp3439114.jpg';
+  console.log(data.user);
   const src = '';
 </script>
 
@@ -14,11 +15,7 @@
 
 <div>
   <ModeWatcher />
-  <LayoutHeader
-    brand={data.userInitial}
-    routeList={data.routeList || []}
-    curPath={$page.url.pathname}
-  />
+  <LayoutHeader user={data.user} routeList={data.routeList || []} curPath={$page.url.pathname} />
   <main
     class="hero is-fullheight-with-navbar"
     class:hero-section={Boolean(src)}

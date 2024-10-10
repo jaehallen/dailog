@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL CHECK (length(password_hash) >= 6),
   lead_id INTEGER REFERENCES users(id),
   lock_password INTEGER NOT NULL DEFAULT 0 CHECK(lock_password BETWEEN 0 AND 1),
+  preferences TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

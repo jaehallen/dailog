@@ -2,12 +2,16 @@
   import Sun from 'lucide-svelte/icons/sun';
   import Moon from 'lucide-svelte/icons/moon';
   import { setTheme, theme } from 'mode-watcher';
-  import type { RouteProfile } from '$lib/schema';
+  import type { RouteProfile, UserRecord } from '$lib/schema';
+  import { AVATAR_SRC } from '$lib/schema';
+  import { onMount } from 'svelte';
   export let routeList: RouteProfile[] = [];
   export let curPath = '/';
-  export let brand = 'Dailog';
-  // export let src = 'https://api.dicebear.com/9.x/open-peeps/svg?seed=Nolan&flip=true&backgroundRotation=360,10,20,40,50,30&randomizeIds=true&accessories=eyepatch,glasses,glasses2,glasses3,glasses4,glasses5,sunglasses&backgroundColor=c0aede,d1d4f9,ffd5dc'
-  export let src = '';
+  export let user: Partial<UserRecord> | undefined;
+
+  let url = new URL(AVATAR_SRC);
+  url.searchParams.set('seed', user?.name ?? 'dailog');
+
   let userRoute: RouteProfile[] = [];
   let adminRoute: RouteProfile[] = [];
   let isActive = false;
@@ -27,21 +31,25 @@
       setTheme('light');
     }
   };
+
+  onMount(() => {
+    try {
+      if (user?.preferences?.avatar_src) {
+        url = new URL(user.preferences.avatar_src);
+      }
+    } catch (err) {
+      console.error('Invalid Avatar url');
+    }
+  });
 </script>
 
 <nav class="navbar" aria-label="main navigation">
   <div class="navbar-brand">
-    {#if !src}
-      <div class="navbar-item">
-        <h1 class="title">{brand}</h1>
-      </div>
-    {:else}
-      <button class="button is-ghost py-0">
-        <figure class="image is-48x48">
-          <img class="is-rounded" {src} alt="avatar" />
-        </figure>
-      </button>
-    {/if}
+    <button class="button is-ghost py-0 pr-0">
+      <figure class="image is-48x48">
+        <img class="is-rounded" src={url.href} alt="avatar" />
+      </figure>
+    </button>
     <button
       class="navbar-burger"
       class:is-active={isActive}
