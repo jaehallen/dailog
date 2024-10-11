@@ -1,4 +1,4 @@
-import type { Client, InStatement, ResultSet } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import type {
   ScheduleRecord,
   TimeEntryRecord,
@@ -6,64 +6,19 @@ import type {
   UserProfile,
   UserRecord
 } from '$lib/schema';
-import { LibsqlError } from '@libsql/client';
 import { QUERY, WRITE } from './sql-queries';
-import { getClient } from '$lib/server/database/turso';
+import { DBClient, getClient } from './turso';
 import { parseJSON } from '$lib/utility';
 
-export class DatabaseController {
-  private client: Client;
+export class DatabaseController extends DBClient{
   constructor(dbClient: Client) {
-    this.client = dbClient;
+    super(dbClient);
   }
 
-  private async get(sql: string, args: {}): Promise<ResultSet | null> {
-    try {
-      const results = await this.client.execute({
-        sql,
-        args
-      });
-      return results;
-    } catch (error) {
-      if (error instanceof LibsqlError) {
-        logError('get', error as Error);
-      }
-    }
-
-    return null;
-  }
-
-  private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
-    try {
-      const results = await this.client.batch(querries, 'read');
-      return results;
-    } catch (error: unknown) {
-      logError('batchGet', error as Error);
-    }
-
-    return null;
-  }
-
-  private async set(sql: string, args: {}): Promise<ResultSet | null> {
-    try {
-      const results = await this.client.execute({
-        sql,
-        args
-      });
-
-      return results;
-    } catch (error) {
-      if (error instanceof LibsqlError) {
-        logError('set', error as Error);
-      }
-    }
-
-    return null;
-  }
 
   public async getUser(id: number): Promise<UserRecord | null> {
     const { sql, args } = QUERY.USER({ user_id: id });
-    const { rows = [] } = (await this.get(sql, args)) || {};
+    const { rows = [] } = (await super.get(sql, args)) || {};
 
     if (!rows.length) {
       return null;
@@ -98,7 +53,7 @@ export class DatabaseController {
     clockOnly: boolean = false,
     schedLimit: number = 10
   ): Promise<Omit<UserInfo, 'user'>> {
-    const results = await this.batchGet([
+    const results = await super.batchGet([
       QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
       !clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
     ]);
@@ -185,18 +140,18 @@ export class DatabaseController {
     };
   }
 
-  public async getUsersList(params: {
+  public async getManyUsers(params: {
     lead_id?: number;
-    limit?: number;
     region?: string;
     active?: number;
     offset?: number;
-  }): Promise<UserRecord[]> {
+    limit?: number;
+  }): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_LIST(params);
-    console.log(sql, args);
+
     const { rows = [] } = (await this.get(sql, args)) || {};
 
-    return rows.map(toUserRecord);
+    return rows
   }
 }
 
@@ -276,17 +231,4 @@ function toTimeEntryRecord(record: Record<string, any>) {
   };
 }
 
-export function log(source: string, message: string | boolean | number): void {
-  console.log(`\n==================${source}====================`);
-  console.log(message);
-}
-
-export function logError(source: string, error: Error) {
-  console.log(`\n==================${source}====================`);
-  if (error instanceof LibsqlError) {
-    console.log(`CODE: ${error.code}`);
-  }
-  console.log(error.stack);
-  console.log(error.message);
-}
 export const db = new DatabaseController(getClient());

@@ -21,7 +21,7 @@ declare module 'lucia' {
   interface Register {
     Lucia: typeof lucia;
     UserId: number;
-    DatabaseUserAttributes: Omit<UserRecord, 'id'>;
+    DatabaseUserAttributes: Omit<UserRecord, 'id'| 'password_hash'>;
   }
 }
 

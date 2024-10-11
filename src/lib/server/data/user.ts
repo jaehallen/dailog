@@ -1,5 +1,5 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
-import { db } from '../database/db-controller';
+import { db } from "$lib/server/database/db-controller";
 import type { ScheduleRecord, UserProfile, UserRecord } from '$lib/schema';
 import { env } from '$env/dynamic/private';
 

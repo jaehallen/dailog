@@ -1,4 +1,4 @@
-import { userLists } from '$lib/server/data/admin';
+import { listOfUsers } from '$lib/server/data/admin';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -8,6 +8,6 @@ export const load = (async ({ locals }) => {
   }
 
   return {
-    usersList: await userLists(locals.user)
+    listOfUsers: await listOfUsers(locals.user, {limit: 5})
   };
 }) satisfies PageServerLoad;

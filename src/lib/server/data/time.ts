@@ -1,6 +1,6 @@
 import type { OptActionState, TimeEntryRecord, UserInfo, UserSchedule } from '$lib/schema';
 import type { Session } from 'lucia';
-import { db } from '../database/db-controller';
+import { db } from "$lib/server/database/db-controller";
 import { getSchedule } from './schedule';
 import { getWeekRange } from '$lib/utility';
 
@@ -57,7 +57,6 @@ export const postTime = async (
 export const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
   const { schedules, timeEntries } = await db.getUserEntryAndSched(session.userId);
   const schedule = getSchedule(schedules, timeEntries);
-
   return {
     timeEntries,
     schedule

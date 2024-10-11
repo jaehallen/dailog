@@ -167,6 +167,51 @@ SELECT
   remarks
   FROM time_entries
 
+-- VIEW USER & SCHEDULES ADMIN DASHBOARD
+CREATE VIEW users_schedules AS
+SELECT
+  users.id,
+  users.active,
+  users.name,
+  users.region,
+  users.role,
+  users.lead_id,
+  schedules.id as sched_id,
+  schedules.effective_date,
+  schedules.utc_offset,
+  schedules.local_offset,
+  schedules.clock_at,
+  schedules.first_break_at,
+  schedules.lunch_at,
+  schedules.second_break_at,
+  schedules.day_off,
+  schedules.clock_dur_min,
+  schedules.break_dur_min,
+  schedules.lunch_dur_min
+FROM
+  users
+  LEFT JOIN schedules ON user.id = schedules.user_id
+
+-- USERS LIST ADMIN DASHBOARD
+CREATE VIEW users_list AS
+SELECT
+  users.id,
+  users.active,
+  users.name,
+  users.region,
+  users.role,
+  users.lead_id,
+  users.name as teamlead,
+  users.lock_password,
+  max(schedules.effective_date) as latest_schedule,
+  count(schedules.id) as total_schedule 
+FROM
+  users
+  LEFT JOIN schedules ON users.id = schedules.user_id
+  GROUP BY users.id
+  ORDER BY users.id
+
+
 -- INSERT DEFAULT USER
 INSERT INTO users ("id","name","region","role","password_hash","lead_id","lock_password")
 VALUES

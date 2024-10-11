@@ -1,6 +1,6 @@
 import type { ScheduleRecord, TimeEntryRecord } from '$lib/schema';
 import { DEFAULT_GRACE_HOUR, DEFAULT_MIN_WORKDATE } from '$lib/schema';
-import { db } from '../database/db-controller';
+import { db } from "$lib/server/database/db-controller";
 import { env } from '$env/dynamic/private';
 import { dateAtOffsetStr, timeDiffSec } from '$lib/utility';
 

@@ -1,5 +1,4 @@
 import type { TimeEntryRecord } from '$lib/schema';
-import type { string } from 'zod';
 
 export const QUERY = {
   USER: (args: { user_id: number }) => {
@@ -8,29 +7,30 @@ export const QUERY = {
       args
     };
   },
-  USERS_LIST: (args: { region?: string, limit?: number, lead_id?: number, active?: number }) => {
-    const clause: string[] = [];
-    const values = [];
-
+  USERS_LIST: (args: { region?: string, lead_id?: number, active?: number, last_id?: number, limit?: number, }) => {
+    const where = [];
+    const values: { region?: string, limit?: number, lead_id?: number, active?: number, last_id?: number } = {
+      last_id: args.last_id || 0,
+      limit: args.limit || 10
+    }
     if (args.region) {
-      clause.push('region = ?');
-      values.push(args.region)
+      where.push('region = $region');
+      values.region = args.region;
     }
 
     if (args.lead_id) {
-      clause.push('lead_id = ?')
-      values.push(args.lead_id)
-    }
-    if (args.active != undefined || args.active != null) {
-      clause.push('active = ?')
-      values.push(args.active)
+      where.push('lead_id = $lead_id');
+      values.lead_id = args.lead_id;
     }
 
-    values.push(!args.limit ? 500 : args.limit)
+    if (args.active !== null && args.active !== undefined) {
+      where.push('active = $active');
+      values.active = args.active;
+    }
+
     return {
-      sql: `SELECT * FROM view_users ${(clause.length ? 'WHERE ' : '') + clause.join(' AND ')} LIMIT ?`,
+      sql: `SELECT * FROM users_list WHERE id > $last_id ${(where.length ? `AND ${where.join(' AND ')}` : '') } LIMIT $limit`,
       args: values
-
     }
   },
   USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {

@@ -3,6 +3,7 @@ import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
 import { validateUser } from '$lib/server/data/user';
+import { timeProcess } from '$lib/utility';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.session) {
@@ -17,13 +18,13 @@ export const actions = {
     const form = await request.formData();
     const data: Record<string, any> = Object.fromEntries(form);
     const inputValid = validateSignIn.safeParse(data);
-
     if (!inputValid.success) {
       return fail(400);
     }
 
+    timeProcess()
     const user = await validateUser(inputValid.data);
-
+    timeProcess('User Validation')
     if (!user) {
       return fail(400);
     }
@@ -38,6 +39,8 @@ export const actions = {
       path: '.',
       ...sessionCookie.attributes
     });
+
+
     redirect(302, `/user/${user.id}/timesheets`);
   }
 } satisfies Actions;

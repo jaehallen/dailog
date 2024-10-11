@@ -1,3 +1,17 @@
+import { dev } from "$app/environment";
+let t0 = 0;
+
+export const timeProcess = (note?: string) => {
+  if (dev) {
+    if (note) {
+      console.log(`${note} - ${performance.now() - t0}\r\n`);
+    } else {
+      t0 = performance.now()
+    }
+  }
+}
+
+
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
   const d = Date.UTC(1970, 0, 1, parseInt(hr) || 0, parseInt(min) || 0);

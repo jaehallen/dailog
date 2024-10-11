@@ -70,6 +70,12 @@ export interface UserProfile extends UserRecord {
   teamlead: string;
 }
 
+export interface UsersList extends Omit<UserRecord, "password_hash" | "preferences"> {
+  teamlead: string;
+  latest_schedule: string;
+  total_schedule: number
+}
+
 export interface SessionRecord {
   id: string;
   user_id: number;

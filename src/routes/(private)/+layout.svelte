@@ -5,7 +5,6 @@
   import { page } from '$app/stores';
   export let data: LayoutData;
   // const src = 'https://wallpapercave.com/wp/wp3439114.jpg';
-  console.log(data.user);
   const src = '';
 </script>
 
