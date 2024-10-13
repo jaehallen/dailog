@@ -1,6 +1,6 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
 import { db } from "$lib/server/database/db-controller";
-import type { ScheduleRecord, UserProfile, UserRecord } from '$lib/schema';
+import type { ScheduleRecord, UserProfile, UserRecord } from '$lib/types/schema';
 import { env } from '$env/dynamic/private';
 
 export const validateUser = async ({

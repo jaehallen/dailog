@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { timeLog } from '$lib/data-store';
-  import type { OptActionState } from '$lib/schema';
+  import type { OptActionState } from '$lib/types/schema';
   import RoundButton from '$lib/component/RoundButton.svelte';
   import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
   import LeftButton from '$lib/component/LeftButton.svelte';

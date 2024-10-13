@@ -216,13 +216,7 @@ export function startOfday(date: Date) {
 export function timeDiffSec(time1: string, time2: string): number {
   const date1 = new Date(`2000-01-01T${time1}Z`);
   const date2 = new Date(`2000-01-01T${time2}Z`);
-  let diff = (date2.getTime() - date1.getTime()) / 1000;
-
-  // if (diff < 0) {
-  // 	diff += 86400;
-  // }
-
-  return diff;
+  return (date2.getTime() - date1.getTime()) / 1000;
 }
 
 export function parseJSON(str: any) {

@@ -2,8 +2,8 @@ import { Lucia } from 'lucia';
 import { TursoClient } from './sqlite';
 import { getClient } from '../database/turso';
 import { dev } from '$app/environment';
-import type { RouteProfile, UserRecord } from '$lib/schema';
-import { ROUTES } from '$lib/schema';
+import type { RouteProfile, UserRecord } from '$lib/types/schema';
+import { ROUTES } from '$lib/defaults';
 
 const adapter = new TursoClient(getClient());
 export const lucia = new Lucia(adapter, {
@@ -21,7 +21,7 @@ declare module 'lucia' {
   interface Register {
     Lucia: typeof lucia;
     UserId: number;
-    DatabaseUserAttributes: Omit<UserRecord, 'id'| 'password_hash'>;
+    DatabaseUserAttributes: Omit<UserRecord, 'id' | 'password_hash'>;
   }
 }
 

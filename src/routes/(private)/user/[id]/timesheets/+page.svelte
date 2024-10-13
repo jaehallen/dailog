@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { OptActionState, OptCategory, TimeEntryRecord } from '$lib/schema';
+	import type { OptActionState, OptCategory, TimeEntryRecord } from '$lib/types/schema';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import StartButtons from '$lib/component/StartButtons.svelte';
 	import EndButtons from '$lib/component/EndButtons.svelte';
@@ -14,7 +14,7 @@
 	import { enhance } from '$app/forms';
 	import { timesheetColumn } from '$lib/table-schema';
 	import { browser } from '$app/environment';
-	import { STORAGENAME } from '$lib/schema';
+	import { STORAGENAME } from '$lib/defaults';
 
 	export let data: PageData;
 	const FORM_ID = 'posttime';

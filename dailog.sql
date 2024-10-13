@@ -201,15 +201,37 @@ SELECT
   users.region,
   users.role,
   users.lead_id,
-  users.name as teamlead,
+  lead.name as teamlead,
   users.lock_password,
   max(schedules.effective_date) as latest_schedule,
   count(schedules.id) as total_schedule 
 FROM
   users
-  LEFT JOIN schedules ON users.id = schedules.user_id
+  LEFT JOIN users lead
+  LEFT JOIN schedules
+  WHERE users.id = schedules.user_id AND users.lead_id = lead.id
   GROUP BY users.id
   ORDER BY users.id
+
+-- Create a table. And an external content fts5 table to index it.
+CREATE VIRTUAL TABLE fts_users USING fts5(name, tokenize='trigram', content='users', content_rowid='id' )
+
+-- Triggers to keep the FTS index up to date.
+CREATE TRIGGER fts_user_insert AFTER INSERT ON users BEGIN
+  INSERT INTO fts_users(rowid, name) VALUES (new.id, new.name);
+END;
+
+CREATE TRIGGER fts_user_delete AFTER DELETE ON users BEGIN
+  INSERT INTO fts_users(fts_users, rowid, name) VALUES('delete', old.id, old.name);
+END;
+
+CREATE TRIGGER fts_user_update AFTER UPDATE ON users WHEN old.name <> new.name
+BEGIN 
+  INSERT INTO fts_users(fts_users, rowid, name) VALUES('delete', old.id, old.name);
+  INSERT INTO fts_users(rowid, name) VALUES (new.id, new.name);
+END;
+
+INSERT INTO fts_users(fts_users) VALUES('rebuild');
 
 
 -- INSERT DEFAULT USER

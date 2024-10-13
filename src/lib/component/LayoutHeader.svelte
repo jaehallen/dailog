@@ -2,8 +2,8 @@
   import Sun from 'lucide-svelte/icons/sun';
   import Moon from 'lucide-svelte/icons/moon';
   import { setTheme, theme } from 'mode-watcher';
-  import type { RouteProfile, UserRecord } from '$lib/schema';
-  import { AVATAR_SRC } from '$lib/schema';
+  import type { RouteProfile, UserRecord } from '$lib/types/schema';
+  import { AVATAR_SRC } from '$lib/defaults';
   import { onMount } from 'svelte';
   export let routeList: RouteProfile[] = [];
   export let curPath = '/';

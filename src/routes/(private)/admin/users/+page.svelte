@@ -21,9 +21,9 @@
   const { headerRows, rows, tableAttrs, tableBodyAttrs } = table.createViewModel(columns);
 </script>
 
-{#if !browser}
-  <main class="container is-fluid">
-    <table class="table" {...$tableAttrs}>
+{#if browser}
+  <main class="container">
+    <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
       <thead>
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>

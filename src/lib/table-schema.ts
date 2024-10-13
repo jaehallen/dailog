@@ -1,4 +1,4 @@
-import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from '$lib/schema';
+import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from '$lib/types/schema';
 import { formatDateOrTime, getOffsetTimezoneStr, minToDuration, secToDuration } from '$lib/utility';
 
 interface TableColumns<T> {

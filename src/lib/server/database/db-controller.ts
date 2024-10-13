@@ -5,16 +5,15 @@ import type {
   UserInfo,
   UserProfile,
   UserRecord
-} from '$lib/schema';
+} from '$lib/types/schema';
 import { QUERY, WRITE } from './sql-queries';
 import { DBClient, getClient } from './turso';
 import { parseJSON } from '$lib/utility';
 
-export class DatabaseController extends DBClient{
+export class DatabaseController extends DBClient {
   constructor(dbClient: Client) {
     super(dbClient);
   }
-
 
   public async getUser(id: number): Promise<UserRecord | null> {
     const { sql, args } = QUERY.USER({ user_id: id });
@@ -33,8 +32,8 @@ export class DatabaseController extends DBClient{
     const { rows = [] } =
       (await this.get(
         `SELECT users.id, users.active, users.password_hash, sched.id as sched_id
-				FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
-				WHERE users.id = $userId LIMIT 1`,
+            FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
+            WHERE users.id = $userId LIMIT 1`,
         { userId }
       )) || {};
 
@@ -83,34 +82,22 @@ export class DatabaseController extends DBClient{
     };
   }
 
-  public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) {
-    const q = WRITE.CLOCKIN(args);
-    const results = await this.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
-  }
-
-  public async clockOut(args: Pick<TimeEntryRecord, 'id' | 'end_at'>) {
-    const q = WRITE.CLOCKOUT(args);
-    const results = await this.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
-  }
-
   public async startTime(
     args: Omit<
       TimeEntryRecord,
-      'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent' | 'total_sec'
+      'id' | 'end_at' | 'elapse_sec' | 'total_sec'
     >
   ) {
-    const q = WRITE.BREAK_START(args);
+    const q = WRITE.STARTTIME(args);
     const results = await this.set(q.sql, q.args);
     if (!results) return null;
     return toTimeEntryRecord(results.rows[0]);
   }
 
-  public async endTime(args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) {
-    const q = WRITE.BREAK_END(args);
+  public async endTime(
+    args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
+  ) {
+    const q = WRITE.ENDTIME(args);
     const results = await this.set(q.sql, q.args);
     if (!results) return null;
     return toTimeEntryRecord(results.rows[0]);
@@ -151,7 +138,7 @@ export class DatabaseController extends DBClient{
 
     const { rows = [] } = (await this.get(sql, args)) || {};
 
-    return rows
+    return rows;
   }
 }
 

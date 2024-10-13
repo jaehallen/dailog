@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OptCategory } from '$lib/schema';
+  import type { OptCategory } from '$lib/types/schema';
   import { createEventDispatcher } from 'svelte';
   import RoundButton from '$lib/component/RoundButton.svelte';
   import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';

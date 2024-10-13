@@ -2,8 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { validatePostTime } from '$lib/validation';
 import { userCurrentEntries, postTime } from '$lib/server/data/time';
-import type { TimeEntryRecord } from '$lib/schema';
-
+import type { TimeEntryRecord } from '$lib/types/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.session) {

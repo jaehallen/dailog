@@ -1,6 +1,6 @@
 import type { User } from "lucia";
 import { db } from "$lib/server/database/db-controller";
-import type { UsersList } from "$lib/schema";
+import type { UsersList } from "$lib/types/schema";
 
 export const listOfUsers = async (user: User, options: {
   lead_id?: number;

@@ -1,5 +1,5 @@
 import { derived, writable } from 'svelte/store';
-import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from './schema';
+import type { ScheduleRecord, TimeEntryRecord, TimeEntryReport } from './types/schema';
 
 export const timeReports = recordsStore();
 

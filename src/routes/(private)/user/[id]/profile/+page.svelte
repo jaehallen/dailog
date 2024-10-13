@@ -8,7 +8,7 @@
   import type { SubmitFunction } from '@sveltejs/kit';
   import type { SvelteComponent } from 'svelte';
   import { browser } from '$app/environment';
-  import type { ScheduleRecord } from '$lib/schema';
+  import type { ScheduleRecord } from '$lib/types/schema';
 
   const RESET_FORM_ID = 'resetform';
   export let data: PageData;

@@ -1,5 +1,6 @@
 import { z, type ZodType } from 'zod';
-import { CATEGORY, ACTIONSTATE, type ZPostTime } from './schema';
+import { CATEGORY, ACTIONSTATE } from './defaults';
+import type { ZPostTime } from './types/schema';
 
 export const validateSignIn: ZodType<{ id: number; password: string }> = z.object({
   id: z.coerce.number().gte(100000).lte(999999),

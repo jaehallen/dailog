@@ -7,7 +7,7 @@
   import { enhance } from '$app/forms';
   import { DateInput } from 'date-picker-svelte';
   import CalendarSearch from 'lucide-svelte/icons/calendar-search';
-  import type { OptCategory } from '$lib/schema';
+  import type { OptCategory } from '$lib/types/schema';
 
   export let data: PageData;
   let date = new Date();
