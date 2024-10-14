@@ -135,7 +135,7 @@ export class DatabaseController extends DBClient {
     limit?: number;
   }): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_LIST(params);
-
+    console.log(sql, args)
     const { rows = [] } = (await this.get(sql, args)) || {};
 
     return rows;

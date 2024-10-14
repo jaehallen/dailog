@@ -1,4 +1,5 @@
 import { dev } from "$app/environment";
+import { string } from "zod";
 let t0 = 0;
 
 export const timeProcess = (note?: string) => {
@@ -10,7 +11,6 @@ export const timeProcess = (note?: string) => {
     }
   }
 }
-
 
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
@@ -51,18 +51,18 @@ export const dateAtOffsetStr = (date: Date | number, offset: number): string => 
   return dateAtOffset(date, offset).toISOString().split('T', 1)[0];
 };
 
-export const getTimeStr = (date: Date, isHour12 = false) => {
-  if (!(date instanceof Date)) {
-    throw new Error('Invalid Date');
-  }
+// export const getTimeStr = (date: Date, isHour12 = false) => {
+//   if (!(date instanceof Date)) {
+//     throw new Error('Invalid Date');
+//   }
 
-  return Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: isHour12,
-    timeZone: 'UTC'
-  }).format(date);
-};
+//   return Intl.DateTimeFormat('en-US', {
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     hour12: isHour12,
+//     timeZone: 'UTC'
+//   }).format(date);
+// };
 
 //This should only be executed at client side. UTC-Offset timezone is not supported.
 export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
@@ -89,22 +89,6 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
   }
 
   return Intl.DateTimeFormat('en-US', options).format(date);
-};
-
-export const userInitials = (fullname: string): string => {
-  const allNames = fullname.trim().split(' ');
-
-  if (allNames.length === 1) {
-    return allNames[0].toUpperCase().substring(0, 2);
-  }
-
-  return allNames.reduce((acc, curr, idx) => {
-    if (idx === 0 || idx === allNames.length - 1) {
-      acc = `${acc}${curr.charAt(0).toUpperCase()}`;
-    }
-
-    return acc;
-  }, '');
 };
 
 export const timeDuration = (start: number, end: number | null) => {
@@ -205,20 +189,6 @@ export function getWeekRange(dateStr: string): { dateStart: string; dateEnd: str
   };
 }
 
-export function startOfday(date: Date) {
-  if (date instanceof Date) {
-    return new Date(date.toDateString());
-  }
-
-  return new Date(new Date().toDateString());
-}
-
-export function timeDiffSec(time1: string, time2: string): number {
-  const date1 = new Date(`2000-01-01T${time1}Z`);
-  const date2 = new Date(`2000-01-01T${time2}Z`);
-  return (date2.getTime() - date1.getTime()) / 1000;
-}
-
 export function parseJSON(str: any) {
   if (typeof str !== 'string') return str;
   try {
@@ -228,4 +198,13 @@ export function parseJSON(str: any) {
     console.error(err);
     return null
   }
+}
+
+export function textFilter({ filterValue, value }: Record<"filterValue" | "value", string>) {
+  return new RegExp(filterValue, 'i').test(value);
+}
+
+export function matchFilter({ filterValue, value }: Record<"filterValue" | "value", string>) {
+  if (filterValue === undefined) return true;
+  return filterValue === value
 }

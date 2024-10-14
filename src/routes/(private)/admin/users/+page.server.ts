@@ -8,7 +8,7 @@ export const load = (async ({ locals }) => {
   }
 
   return {
-    listOfUsers: await listOfUsers(locals.user, { limit: 20 })
+    listOfUsers: await listOfUsers(locals.user, { limit: 50 })
   };
 }) satisfies PageServerLoad;
 

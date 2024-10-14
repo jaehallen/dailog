@@ -2,7 +2,7 @@ import type { ScheduleRecord, TimeEntryRecord } from '$lib/types/schema';
 import { DEFAULT_GRACE_HOUR, DEFAULT_MIN_WORKDATE } from '$lib/defaults';
 import { db } from '$lib/server/database/db-controller';
 import { env } from '$env/dynamic/private';
-import { dateAtOffsetStr, timeDiffSec } from '$lib/utility';
+import { dateAtOffsetStr } from '$lib/utility';
 
 export const getUserSchedule = async (
   userId: number
@@ -47,25 +47,24 @@ export function getSchedule(schedules: ScheduleRecord[], timeEntries: TimeEntryR
   };
 }
 
-function getLocalTime(local_offset: number) {
-  const d = new Date();
-  d.setHours(d.getHours() + local_offset);
-  const [hh, mm] = d.toISOString().split('T')[1].split(':');
-
-  return `${hh}:${mm}`;
+function getFloatHour(offset: number, time?: string) {
+  let d = time ? new Date(`2000-01-01T${time}Z`) : new Date()
+  d.setHours(d.getHours() + offset);
+  return d.getHours() + d.getMinutes() / 60;
 }
 
 function withinGraceHour(latestSchedule: ScheduleRecord, workDur: number): boolean {
-  const localTime = getLocalTime(latestSchedule.local_offset);
-  const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
-  const currentHour = new Date(`2000-01-01T${localTime}Z`);
   const halfWorkhour = Math.round(workDur / 120);
-  const minHour = new Date(`2000-01-01T${latestSchedule.clock_at}Z`);
-  const maxHour = new Date(`2000-01-01T${latestSchedule.clock_at}Z`);
-  minHour.setHours(minHour.getHours() - graceHour);
-  maxHour.setHours(maxHour.getHours() + halfWorkhour);
+  const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
+  const currentHour = getFloatHour(latestSchedule.local_offset);
+  const minHour = getFloatHour((-1 * graceHour), latestSchedule.clock_at);
+  const maxHour = getFloatHour(halfWorkhour, latestSchedule.clock_at);
+  
+  if (maxHour > minHour) {
+    return currentHour >= minHour && currentHour <= maxHour;
+  }
 
-  return false;
+  return currentHour >= minHour || currentHour <= maxHour;
 }
 
 export function isStartOfDuty(
@@ -75,24 +74,17 @@ export function isStartOfDuty(
 ): boolean {
   const today = new Date();
   const clockStart = new Date((clockEntry.start_at + entrySchedule.utc_offset * 3600) * 1000);
-  const localTime = getLocalTime(latestSchedule.local_offset);
-  const timeDiffHour = timeDiffSec(localTime, latestSchedule.clock_at) / 3600;
-  const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
   today.setHours(today.getHours() + entrySchedule.utc_offset);
 
-  const minDiff = (today.getTime() - clockStart.getTime()) / 60000; //minute diff
+  const minDiff = (today.getTime() - clockStart.getTime()) / 60000; //diff in minute
   const workDur =
     latestSchedule.clock_dur_min ??
     ((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2; //work duration in minute
 
-  console.log(localTime, latestSchedule.clock_at);
-
-  //negative: after schduled time based on total working hours
   if (
     today.getDate() !== clockStart.getDate() &&
     minDiff >= workDur &&
-    timeDiffHour >= workDur / -120 &&
-    timeDiffHour <= graceHour
+    withinGraceHour(latestSchedule, workDur)
   )
     return true;
 
