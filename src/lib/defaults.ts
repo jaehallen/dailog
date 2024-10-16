@@ -1,6 +1,10 @@
 import type { OptActionState, OptCategory, RouteProfile, TimesheetStateInfo } from './types/schema';
 
-
+export const LIMIT = {
+  SCHEDULES: 5,
+  USERS: 50,
+  LIST: 50
+};
 export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
@@ -17,10 +21,9 @@ export const CATEGORY = [
   'coaching'
 ] as const;
 
-
 //DICEBREAR LINK FOR AVATAR
 export const AVATAR_SRC =
-'https://api.dicebear.com/9.x/initials/svg?seed=Jessica&radius=50&fontWeight=900';
+  'https://api.dicebear.com/9.x/initials/svg?seed=Jessica&radius=50&fontWeight=900';
 
 export const ROUTES: RouteProfile[] = [
   {

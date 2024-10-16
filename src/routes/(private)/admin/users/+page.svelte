@@ -98,12 +98,12 @@
         }
       }
     }),
-    table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' }),
-    table.column({ header: 'Total Schedule', accessor: 'total_schedule' })
+    table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' })
   ]);
   const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } =
     table.createViewModel(columns);
   const { filterValues } = pluginStates.filter;
+  $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 </script>
 
 {#if browser}
@@ -131,7 +131,9 @@
               <th
                 >No.
                 <div>
-                  <button class="button is-small is-text" on:click={() => ($filterValues = {})}
+                  <button
+                    class={`button is-small  + ${hasFilter ? 'is-link' : 'is-text'}`}
+                    on:click={() => ($filterValues = {})}
                     ><span class="icon is-small">
                       <FilterX />
                     </span></button
@@ -166,7 +168,11 @@
               {#each row.cells as cell (cell.id)}
                 <Subscribe attrs={cell.attrs()} let:attrs>
                   <td {...attrs}>
-                    <Render of={cell.render()} />
+                    <Render
+                      of={cell.isData() && cell.value != null && cell.value != undefined
+                        ? cell.render()
+                        : '-'}
+                    />
                   </td>
                 </Subscribe>
               {/each}

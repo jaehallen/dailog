@@ -32,7 +32,7 @@ export class DatabaseController extends DBClient {
     const { rows = [] } =
       (await this.get(
         `SELECT users.id, users.active, users.password_hash, sched.id as sched_id
-            FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
+            FROM users LEFT JOIN schedules sched ON users.id = sched.user_id
             WHERE users.id = $userId LIMIT 1`,
         { userId }
       )) || {};
@@ -83,10 +83,7 @@ export class DatabaseController extends DBClient {
   }
 
   public async startTime(
-    args: Omit<
-      TimeEntryRecord,
-      'id' | 'end_at' | 'elapse_sec' | 'total_sec'
-    >
+    args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
   ) {
     const q = WRITE.STARTTIME(args);
     const results = await this.set(q.sql, q.args);
@@ -134,8 +131,7 @@ export class DatabaseController extends DBClient {
     offset?: number;
     limit?: number;
   }): Promise<Row[]> {
-    const { sql, args } = QUERY.USERS_LIST(params);
-    console.log(sql, args)
+    const { sql, args } = QUERY.USERS_INFO(params);
     const { rows = [] } = (await this.get(sql, args)) || {};
 
     return rows;

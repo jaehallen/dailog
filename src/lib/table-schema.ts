@@ -59,7 +59,10 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
     title: 'Remarks',
     key: 'remarks',
     render(val) {
-      return `<span class="is-size-7 is-italic">${val || '-'}</span>`;
+      const str = String(val || '-')
+        .replace('[start]', '🚀 ')
+        .replace('[end]', '🏁 ');
+      return `<span class="remarks is-size-7 is-italic">${str}</span>`;
     }
   }
 ];
@@ -208,7 +211,10 @@ export const reportColumn: TableColumns<TimeEntryReport>[] = [
     title: 'Remarks',
     key: 'remarks',
     render(val) {
-      return `<span class="is-size-7 is-italic">${val || '-'}</span>`;
+      const str = String(val || '-')
+        .replace('[start]', '🚀 ')
+        .replace('[end]', '🏁 ');
+      return `<span class="is-size-7 is-italic">${str}</span>`;
     }
   },
   {

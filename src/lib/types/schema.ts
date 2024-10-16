@@ -59,7 +59,7 @@ export interface UserProfile extends UserRecord {
 export interface UsersList extends Omit<UserRecord, 'password_hash' | 'preferences'> {
   teamlead: string;
   latest_schedule: string;
-  total_schedule: number;
+  schedules: ScheduleRecord[]
 }
 
 export interface SessionRecord {

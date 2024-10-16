@@ -33,7 +33,6 @@ export class TursoClient {
   public async getSessionAndUser(
     sessionId: string
   ): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
-
     const { rows = [] } = await this.controller.execute({
       sql: `SELECT sessions.*, 
                 users.active, 
@@ -90,7 +89,6 @@ export class TursoClient {
       sql: `INSERT INTO sessions (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`,
       args: [...values]
     });
-
   }
 
   public async updateSessionExpiration(sessionId: string, expiresAt: Date): Promise<void> {
@@ -133,7 +131,8 @@ function transformIntoDatabaseUser(raw: UserSchema): DatabaseUser {
   return {
     id,
     attributes: {
-      ...attributes, preferences: parseJSON(attributes.preferences)
+      ...attributes,
+      preferences: parseJSON(attributes.preferences)
     }
   };
 }

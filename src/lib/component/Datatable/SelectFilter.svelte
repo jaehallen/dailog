@@ -5,18 +5,22 @@
 </script>
 
 <script lang="ts">
-  import { boolean } from "zod";
+  import { boolean } from 'zod';
 
   export let filterValue;
   export let preFilteredValues;
   $: uniqueValues = getDistinct($preFilteredValues);
   const format = (v: string | number | boolean) => {
-    if(typeof v === 'boolean'){
-        return v ? "Yes" : 'No'
+    if (typeof v === 'boolean') {
+      return v ? 'Yes' : 'No';
+    }
+
+    if (v === null || v === undefined) {
+      return '(Blank)';
     }
 
     return v;
-  }
+  };
 </script>
 
 <div class="field">

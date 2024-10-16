@@ -1,3 +1,4 @@
+import { LIMIT } from '$lib/defaults';
 import type { TimeEntryRecord } from '$lib/types/schema';
 
 export const QUERY = {
@@ -7,8 +8,8 @@ export const QUERY = {
       args
     };
   },
-  
-  USERS_LIST: (args: {
+
+  USERS_INFO: (args: {
     region?: string;
     lead_id?: number;
     active?: number;
@@ -24,25 +25,55 @@ export const QUERY = {
       last_id?: number;
     } = {
       last_id: args.last_id || 0,
-      limit: args.limit || 10
+      limit: args.limit || LIMIT.USERS
     };
     if (args.region) {
-      where.push('region = $region');
+      where.push('users.region = $region');
       values.region = args.region;
     }
-    
+
     if (args.lead_id) {
-      where.push('lead_id = $lead_id');
+      where.push('users.lead_id = $lead_id');
       values.lead_id = args.lead_id;
     }
-    
+
     if (args.active !== null && args.active !== undefined) {
       where.push('active = $active');
       values.active = args.active;
     }
-    
+
     return {
-      sql: `SELECT * FROM users_list WHERE id > $last_id ${where.length ? `AND ${where.join(' AND ')}` : ''} LIMIT $limit`,
+      sql: `SELECT
+              users.id,
+              users.active,
+              users.name,
+              users.lead_id,
+              lead.name teamlead,
+              users.region,
+              users.role,
+              users.lock_password,
+              (
+                SELECT
+                  JSON_GROUP_ARRAY(JSON_OBJECT(
+                'id', id,
+                'effective_date', effective_date,
+                'utc_offset', utc_offset,
+                'local_offset', local_offset,
+                'clock_at', clock_at,
+                'first_break_at', first_break_at,
+                'lunch_at', lunch_at,
+                'second_break_at', second_break_at,
+                'day_off', day_off,
+                'clock_dur_min', clock_dur_min,
+                'lunch_dur_min', lunch_dur_min,
+                'break_dur_min', break_dur_min
+              ))
+                FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
+              ) as schedules
+            FROM users
+              LEFT JOIN users lead ON users.lead_id = lead.id
+              WHERE users.id > $last_id ${where.length ? `AND ${where.join(' AND ')}` : ''}
+              GROUP BY users.id ORDER BY users.id LIMIT $limit`,
       args: values
     };
   },
@@ -54,7 +85,7 @@ export const QUERY = {
       ORDER BY effective_date DESC LIMIT $limit`,
       args: {
         user_id: args.user_id,
-        limit: !args.limit ? 10 : args.limit
+        limit: !args.limit ? LIMIT.SCHEDULES : args.limit
       }
     };
   },
@@ -63,7 +94,7 @@ export const QUERY = {
       sql: `SELECT * FROM view_schedules WHERE user_id = $user_id LIMIT $limit`,
       args: {
         user_id: args.user_id,
-        limit: !args.limit ? 10 : args.limit
+        limit: !args.limit ? LIMIT.SCHEDULES : args.limit
       }
     };
   },
@@ -87,12 +118,6 @@ export const QUERY = {
       sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
       args
     };
-  },
-  USERS_INFO: (args: { user_id: number }) => {
-    return {
-      sql: `SELECT * FROM view_dashboard WHERE user_id = $user_id`,
-      args
-    };
   }
 };
 
@@ -101,7 +126,7 @@ export const WRITE = {
     return {
       sql: `INSERT INTO time_entries 
       (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
-      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
+      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, ('[start]' || $remarks)) RETURNING *`,
       args
     };
   },
@@ -113,37 +138,8 @@ export const WRITE = {
       end_at = $end_at,
       user_ip = CONCAT(user_ip, ' | ', $user_ip),
       user_agent = CONCAT(user_agent, ' | ', $user_agent),
-      remarks = NULLIF(CONCAT(remarks || ' | ', $remarks), '')
+      remarks = NULLIF(CONCAT(remarks || CHAR(10), '[end]' || $remarks), '')
       WHERE id = $id RETURNING *`,
-      args
-    };
-  },
-  CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
-    return {
-      sql: `INSERT INTO time_entries 
-      (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
-      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
-      args
-    };
-  },
-  CLOCKOUT: (args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_id' | 'user_agent'>) => {
-    return {
-      sql: `UPDATE time_entries SET end_at = $end_at WHERE id = $id RETURNING *`,
-      args
-    };
-  },
-  BREAK_START: (
-    args: Pick<TimeEntryRecord, 'user_id' | 'sched_id' | 'category' | 'date_at' | 'start_at'>
-  ) => {
-    return {
-      sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, remarks)
-      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $remarks) RETURNING *`,
-      args
-    };
-  },
-  BREAK_END: (args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) => {
-    return {
-      sql: `UPDATE time_entries SET end_at = $end_at, user_ip = $user_ip, user_agent = $user_agent WHERE id = $id RETURNING *`,
       args
     };
   },

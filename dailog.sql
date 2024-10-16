@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_leadrole ON users(lead_id, role, region);
+CREATE INDEX IF NOT EXISTS idx_users ON users(region, role, lead_id);
 
 CREATE TRIGGER IF NOT EXISTS users_updated 
 AFTER UPDATE ON users WHEN old.updated_at <> CURRENT_TIMESTAMP
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS schedules (
   UNIQUE(user_id, effective_date)
 );
 
-CREATE INDEX IF NOT EXISTS schedules_idx ON schedules(user_id, effective_date);
+CREATE INDEX IF NOT EXISTS schedules_idx ON schedules(effective_date, user_id);
 
 -- time_entries
 CREATE TABLE IF NOT EXISTS time_entries (
@@ -189,27 +189,6 @@ SELECT
 FROM
   users
   LEFT JOIN schedules ON user.id = schedules.user_id;
-
--- USERS LIST ADMIN DASHBOARD
-CREATE VIEW users_list AS
-SELECT
-  users.id,
-  users.active,
-  users.name,
-  users.region,
-  users.role,
-  users.lead_id,
-  lead.name as teamlead,
-  users.lock_password,
-  max(schedules.effective_date) as latest_schedule,
-  count(schedules.id) as total_schedule 
-FROM
-  users
-  LEFT JOIN users lead
-  LEFT JOIN schedules
-  WHERE users.id = schedules.user_id AND users.lead_id = lead.id
-  GROUP BY users.id
-  ORDER BY users.id;
   
 -- ADMIN DASHBOARD QUERY
 CREATE VIEW IF NOT EXISTS users_info AS SELECT
@@ -237,7 +216,7 @@ CREATE VIEW IF NOT EXISTS users_info AS SELECT
     'lunch_dur_min', lunch_dur_min,
     'break_dur_min', break_dur_min
   ))
-    FROM (SELECT * FROM schedules WHERE schedules.user_id = users.idORDER BY effective_date DESC LIMIT 5 )
+    FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
   ) as schedules
 FROM users
   LEFT JOIN users lead ON users.lead_id = lead.id
