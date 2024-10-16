@@ -124,7 +124,7 @@
       </div>
     </div>
     <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
-      <thead>
+      <thead class="block is-primary">
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
             <tr {...rowAttrs}>
@@ -177,3 +177,15 @@
     </table>
   </main>
 {/if}
+
+<style>
+  table {
+    border-collapse: separate;
+  }
+
+  thead {
+    position: sticky;
+    inset-block-start: 0;
+    background: var(--bulma-scheme-main);
+  }
+</style>

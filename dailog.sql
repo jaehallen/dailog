@@ -106,8 +106,6 @@ BEGIN
  UPDATE time_entries SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
 END;
 
--- 
-
 -- VIEW USERS
 CREATE VIEW IF NOT EXISTS view_users AS
 SELECT
@@ -122,7 +120,7 @@ SELECT
   user.lock_password
 FROM
   users user
-  LEFT JOIN users lead ON lead.id = user.lead_id
+  LEFT JOIN users lead ON lead.id = user.lead_id;
 
 -- VIEW SCHEDULES
 CREATE VIEW IF NOT EXISTS view_schedules AS
@@ -140,7 +138,7 @@ SELECT
   lunch_dur_min,
   break_dur_min,
   day_off
-FROM schedules
+FROM schedules;
 
 -- expensive make sure to query with user_id
 CREATE VIEW current_schedules AS
@@ -152,7 +150,7 @@ FROM
 WHERE
   effective_date <= date_at
 ORDER BY
-  effective_date desc
+  effective_date desc;
 
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS
@@ -165,7 +163,7 @@ SELECT
   start_at,
   end_at,
   remarks
-  FROM time_entries
+  FROM time_entries;
 
 -- VIEW USER & SCHEDULES ADMIN DASHBOARD
 CREATE VIEW users_schedules AS
@@ -190,7 +188,7 @@ SELECT
   schedules.lunch_dur_min
 FROM
   users
-  LEFT JOIN schedules ON user.id = schedules.user_id
+  LEFT JOIN schedules ON user.id = schedules.user_id;
 
 -- USERS LIST ADMIN DASHBOARD
 CREATE VIEW users_list AS
@@ -211,10 +209,43 @@ FROM
   LEFT JOIN schedules
   WHERE users.id = schedules.user_id AND users.lead_id = lead.id
   GROUP BY users.id
-  ORDER BY users.id
+  ORDER BY users.id;
+  
+-- ADMIN DASHBOARD QUERY
+CREATE VIEW IF NOT EXISTS users_info AS SELECT
+  users.id,
+  users.active,
+  users.name,
+  users.lead_id,
+  lead.name teamlead,
+  users.region,
+  users.role,
+  users.lock_password,
+  (
+    SELECT
+      JSON_GROUP_ARRAY(JSON_OBJECT(
+    'id', id,
+    'effective_date', effective_date,
+    'utc_offset', utc_offset,
+    'local_offset', local_offset,
+    'clock_at', clock_at,
+    'first_break_at', first_break_at,
+    'lunch_at', lunch_at,
+    'second_break_at', second_break_at,
+    'day_off', day_off,
+    'clock_dur_min', clock_dur_min,
+    'lunch_dur_min', lunch_dur_min,
+    'break_dur_min', break_dur_min
+  ))
+    FROM (SELECT * FROM schedules WHERE schedules.user_id = users.idORDER BY effective_date DESC LIMIT 5 )
+  ) as schedules
+FROM users
+  LEFT JOIN users lead ON users.lead_id = lead.id
+  GROUP BY users.id
+  ORDER BY users.id;
 
 -- Create a table. And an external content fts5 table to index it.
-CREATE VIRTUAL TABLE fts_users USING fts5(name, tokenize='trigram', content='users', content_rowid='id' )
+CREATE VIRTUAL TABLE fts_users USING fts5(name, tokenize='trigram', content='users', content_rowid='id' );
 
 -- Triggers to keep the FTS index up to date.
 CREATE TRIGGER fts_user_insert AFTER INSERT ON users BEGIN

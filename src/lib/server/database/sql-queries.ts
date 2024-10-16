@@ -7,7 +7,7 @@ export const QUERY = {
       args
     };
   },
-
+  
   USERS_LIST: (args: {
     region?: string;
     lead_id?: number;
@@ -30,17 +30,17 @@ export const QUERY = {
       where.push('region = $region');
       values.region = args.region;
     }
-
+    
     if (args.lead_id) {
       where.push('lead_id = $lead_id');
       values.lead_id = args.lead_id;
     }
-
+    
     if (args.active !== null && args.active !== undefined) {
       where.push('active = $active');
       values.active = args.active;
     }
-
+    
     return {
       sql: `SELECT * FROM users_list WHERE id > $last_id ${where.length ? `AND ${where.join(' AND ')}` : ''} LIMIT $limit`,
       args: values
@@ -49,9 +49,9 @@ export const QUERY = {
   USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
     return {
       sql: `SELECT 
-	      date(current_timestamp, CONCAT(local_offset, ' hours')) as date_at, * 
-	      FROM schedules WHERE effective_date <= date_at AND user_id = $user_id
-	      ORDER BY effective_date DESC LIMIT $limit`,
+      date(current_timestamp, CONCAT(local_offset, ' hours')) as date_at, * 
+      FROM schedules WHERE effective_date <= date_at AND user_id = $user_id
+      ORDER BY effective_date DESC LIMIT $limit`,
       args: {
         user_id: args.user_id,
         limit: !args.limit ? 10 : args.limit
@@ -70,9 +70,9 @@ export const QUERY = {
   LAST_ENTRY: (args: { user_id: number }) => {
     return {
       sql: `WITH recent AS 
-	      (SELECT MAX(date_at) as date_at, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
-	      SELECT e.* FROM time_entries e, recent r 
-	    WHERE e.date_at = r.date_at and e.user_id = r.user_id`,
+      (SELECT MAX(date_at) as date_at, user_id FROM time_entries WHERE user_id = $user_id AND category = 'clock')
+      SELECT e.* FROM time_entries e, recent r 
+      WHERE e.date_at = r.date_at and e.user_id = r.user_id`,
       args
     };
   },
@@ -87,6 +87,12 @@ export const QUERY = {
       sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
       args
     };
+  },
+  USERS_INFO: (args: { user_id: number }) => {
+    return {
+      sql: `SELECT * FROM view_dashboard WHERE user_id = $user_id`,
+      args
+    };
   }
 };
 
@@ -94,8 +100,8 @@ export const WRITE = {
   STARTTIME: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
     return {
       sql: `INSERT INTO time_entries 
-	      (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
-	      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
+      (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
+      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
       args
     };
   },
@@ -104,19 +110,19 @@ export const WRITE = {
   ) => {
     return {
       sql: `UPDATE time_entries SET 
-	      end_at = $end_at,
-	      user_ip = CONCAT(user_ip, ' | ', $user_ip),
-	      user_agent = CONCAT(user_agent, ' | ', $user_agent),
-	      remarks = NULLIF(CONCAT(remarks || ' | ', $remarks), '')
-	      WHERE id = $id RETURNING *`,
+      end_at = $end_at,
+      user_ip = CONCAT(user_ip, ' | ', $user_ip),
+      user_agent = CONCAT(user_agent, ' | ', $user_agent),
+      remarks = NULLIF(CONCAT(remarks || ' | ', $remarks), '')
+      WHERE id = $id RETURNING *`,
       args
     };
   },
   CLOCKIN: (args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) => {
     return {
       sql: `INSERT INTO time_entries 
-	      (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
-	      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
+      (user_id, sched_id, category, date_at, start_at, user_ip, user_agent, remarks)
+      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $user_ip, $user_agent, $remarks) RETURNING *`,
       args
     };
   },
@@ -131,7 +137,7 @@ export const WRITE = {
   ) => {
     return {
       sql: `INSERT INTO time_entries (user_id, sched_id, category, date_at, start_at, remarks)
-	      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $remarks) RETURNING *`,
+      VALUES ($user_id, $sched_id, $category, $date_at, $start_at, $remarks) RETURNING *`,
       args
     };
   },
