@@ -1,23 +1,33 @@
 <script lang="ts">
-    export let pageCount: number = 1;
-    export let pageSize: number = 10;
-    export let pageIndex: number = 0;
-    export let hasPreviousPage: boolean = false;
-    export let hasNextPage: boolean = true;
+  import { Filter } from 'lucide-svelte/icons';
+  import { createEventDispatcher } from 'svelte';
+  export let pageCount: number = 1;
+  export let pageSize: number = 10;
+  export let pageIndex: number = 0;
+  export let hasPreviousPage: boolean = false;
+  export let hasNextPage: boolean = true;
+
+  const dispatch = createEventDispatcher();
+  const onFilter = () => {
+    dispatch('advfilter')
+  }
 </script>
 
-<nav class="pagination is-small" aria-label="pagination">
-  <button class="pagination-previous" disabled={!hasPreviousPage}>Previous</button>
-  <button class="pagination-next" disabled={!hasNextPage}>Next page</button>
-  <ul class="pagination-list">
-    <li><button class="pagination-link">1</button></li>
-    <li><span class="pagination-ellipsis">&hellip;</span></li>
-    <li><button class="pagination-link">45</button></li>
-    <li>
-      <button class="pagination-link is-current">46</button>
-    </li>
-    <li><button class="pagination-link">47</button></li>
-    <li><span class="pagination-ellipsis">&hellip;</span></li>
-    <li><button class="pagination-link">86</button></li>
-  </ul>
-</nav>
+<div class="field is-grouped is-grouped-right">
+  <button class="button is-ghost is-text" on:click={onFilter}>
+    <span class="icon"><Filter /></span>
+  </button>
+  <p class="control is-expanded">
+    <select class="input is-small">
+      <option value="50">50 rows</option>
+      <option value="100">100 rows</option>
+      <option value="500">500 rows</option>
+    </select>
+  </p>
+  <p class="control">
+    <button class="button is-small">Previous</button>
+  </p>
+  <p class="control">
+    <button class="button is-small">Next Page</button>
+  </p>
+</div>

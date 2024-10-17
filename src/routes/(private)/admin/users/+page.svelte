@@ -3,14 +3,16 @@
   import BooleanRender from '$lib/component/Datatable/BooleanRender.svelte';
   import SelectFilter from '$lib/component/Datatable/SelectFilter.svelte';
   import Pagination from '$lib/component/Datatable/Pagination.svelte';
-  import FilterX from 'lucide-svelte/icons/filter-x';
+  import { FilterX, Filter } from 'lucide-svelte/icons';
   import { browser } from '$app/environment';
   import { matchFilter, textFilter } from '$lib/utility';
   import { createRender, createTable, Subscribe, Render } from 'svelte-headless-table';
   import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
   import { readable } from 'svelte/store';
   import type { PageData } from './$types';
+  import FilterPanel from '$lib/component/Datatable/FilterDropdown.svelte';
 
+  let advanceFilter = false;
   export let data: PageData;
   const table = createTable(readable(data.listOfUsers), {
     filter: addColumnFilters(),
@@ -108,19 +110,17 @@
 
 {#if browser}
   <main class="container">
-    <div class="grid">
+    <div class="grid pb-0 mb-0">
       <div class="cell">
-        <input type="text" placeholder="Search..." class="input is-small" />
+        <div class="cell">
+          {#if advanceFilter}
+            <FilterPanel />
+          {/if}
+        </div>
       </div>
+      <div class="cell"></div>
       <div class="cell">
-        <select class="input is-small">
-          <option value="50">50</option>
-          <option value="100">100</option>
-          <option value="100">500</option>
-        </select>
-      </div>
-      <div class="cell">
-        <Pagination />
+        <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)}/>
       </div>
     </div>
     <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
@@ -193,5 +193,9 @@
     position: sticky;
     inset-block-start: 0;
     background: var(--bulma-scheme-main);
+  }
+
+  .filter-panel {
+    width: 300px;
   }
 </style>

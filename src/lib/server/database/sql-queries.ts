@@ -55,20 +55,19 @@ export const QUERY = {
               (
                 SELECT
                   JSON_GROUP_ARRAY(JSON_OBJECT(
-                'id', id,
-                'effective_date', effective_date,
-                'utc_offset', utc_offset,
-                'local_offset', local_offset,
-                'clock_at', clock_at,
-                'first_break_at', first_break_at,
-                'lunch_at', lunch_at,
-                'second_break_at', second_break_at,
-                'day_off', day_off,
-                'clock_dur_min', clock_dur_min,
-                'lunch_dur_min', lunch_dur_min,
-                'break_dur_min', break_dur_min
-              ))
-                FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
+                    'id', id,
+                    'effective_date', effective_date,
+                    'utc_offset', utc_offset,
+                    'local_offset', local_offset,
+                    'clock_at', clock_at,
+                    'first_break_at', first_break_at,
+                    'lunch_at', lunch_at,
+                    'second_break_at', second_break_at,
+                    'day_off', day_off,
+                    'clock_dur_min', clock_dur_min,
+                    'lunch_dur_min', lunch_dur_min,
+                    'break_dur_min', break_dur_min
+                  )) FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
               ) as schedules
             FROM users
               LEFT JOIN users lead ON users.lead_id = lead.id
