@@ -23,7 +23,6 @@ function toUsersList(record: Record<string, any>): UsersList {
 
   const sched = parseJSON(schedules);
   const currentSched = getCurrentSchedule(sched);
-  console.log(currentSched);
 
   return {
     id,

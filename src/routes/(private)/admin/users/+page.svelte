@@ -1,130 +1,54 @@
 <script lang="ts">
-  import TextFilter from '$lib/component/Datatable/TextFilter.svelte';
-  import BooleanRender from '$lib/component/Datatable/BooleanRender.svelte';
-  import SelectFilter from '$lib/component/Datatable/SelectFilter.svelte';
-  import Pagination from '$lib/component/Datatable/Pagination.svelte';
-  import { FilterX, Filter } from 'lucide-svelte/icons';
+  import { slide } from 'svelte/transition';
+  import { quintInOut } from 'svelte/easing';
+  import { Pagination, FilterDropdown as FilterPanel, SearchUser } from '$lib/component/Datatable';
+  import { FilterX } from 'lucide-svelte/icons';
   import { browser } from '$app/environment';
-  import { matchFilter, textFilter } from '$lib/utility';
-  import { createRender, createTable, Subscribe, Render } from 'svelte-headless-table';
-  import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
+  import { Subscribe, Render } from 'svelte-headless-table';
   import { readable } from 'svelte/store';
   import type { PageData } from './$types';
-  import FilterPanel from '$lib/component/Datatable/FilterDropdown.svelte';
+  import { getUsersTable } from '$lib/table-users';
 
-  let advanceFilter = false;
+  let advanceFilter = true;
   export let data: PageData;
-  const table = createTable(readable(data.listOfUsers), {
-    filter: addColumnFilters(),
-    resize: addResizedColumns()
-  });
-  const columns = table.createColumns([
-    table.column({
-      header: 'Active',
-      accessor: 'active',
-      cell: ({ value }) => createRender(BooleanRender, { value }),
-      plugins: {
-        filter: {
-          fn: matchFilter,
-          render: ({ filterValue, preFilteredValues }) =>
-            createRender(SelectFilter, { filterValue, preFilteredValues })
-        }
-      }
-    }),
-    table.column({
-      header: 'GAID',
-      accessor: 'id',
-      plugins: {
-        resize: { initialWidth: 100, minWidth: 100 },
-        filter: {
-          fn: textFilter,
-          initialFilterValue: '',
-          render: ({ filterValue }) => createRender(TextFilter, { filterValue })
-        }
-      }
-    }),
-    table.column({
-      header: 'Name',
-      accessor: 'name',
-      plugins: {
-        filter: {
-          fn: textFilter,
-          initialFilterValue: '',
-          render: ({ filterValue }) => createRender(TextFilter, { filterValue })
-        }
-      }
-    }),
-    table.column({
-      header: 'Region',
-      accessor: 'region',
-      plugins: {
-        filter: {
-          fn: matchFilter,
-          render: ({ filterValue, preFilteredValues }) =>
-            createRender(SelectFilter, { filterValue, preFilteredValues })
-        }
-      }
-    }),
-    table.column({
-      header: 'Role',
-      accessor: 'role',
-      plugins: {
-        filter: {
-          fn: matchFilter,
-          render: ({ filterValue, preFilteredValues }) =>
-            createRender(SelectFilter, { filterValue, preFilteredValues })
-        }
-      }
-    }),
-    table.column({ header: 'Lead Id', accessor: 'lead_id' }),
-    table.column({
-      header: 'Team Lead',
-      accessor: 'teamlead',
-      plugins: {
-        filter: {
-          fn: matchFilter,
-          render: ({ filterValue, preFilteredValues }) =>
-            createRender(SelectFilter, { filterValue, preFilteredValues })
-        }
-      }
-    }),
-    table.column({
-      header: 'Lock Password',
-      accessor: 'lock_password',
-      cell: ({ value }) => createRender(BooleanRender, { value }),
-      plugins: {
-        filter: {
-          fn: matchFilter,
-          render: ({ filterValue, preFilteredValues }) =>
-            createRender(SelectFilter, { filterValue, preFilteredValues })
-        }
-      }
-    }),
-    table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' })
-  ]);
-  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } =
-    table.createViewModel(columns);
+  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(
+    readable(data.listOfUsers)
+  );
   const { filterValues } = pluginStates.filter;
   $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 </script>
 
 {#if browser}
   <main class="container">
-    <div class="grid pb-0 mb-0">
+    <div class="grid mb-1">
       <div class="cell">
         <div class="cell">
           {#if advanceFilter}
-            <FilterPanel />
+            <form
+              transition:slide={{ delay: 50, duration: 300, easing: quintInOut, axis: 'y' }}
+              action=""
+              class="block"
+            >
+              <FilterPanel />
+            </form>
+          {:else}
+            <form
+              transition:slide={{ delay: 50, duration: 300, easing: quintInOut, axis: 'y' }}
+              action=""
+              class="block"
+            >
+              <SearchUser />
+            </form>
           {/if}
         </div>
       </div>
       <div class="cell"></div>
       <div class="cell">
-        <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)}/>
+        <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)} />
       </div>
     </div>
     <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
-      <thead class="block is-primary">
+      <thead class="block">
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
             <tr {...rowAttrs}>
@@ -160,14 +84,11 @@
       <tbody {...$tableBodyAttrs}>
         {#each $rows as row, idx (row.id)}
           <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-            <tr
-              class:has-background-danger-light={row.isData() && row.original.lock_password}
-              {...rowAttrs}
-            >
-              <td>{idx + 1}</td>
+            <tr {...rowAttrs}>
+              <td class="has-text-grey has-text-right has-text-weight-light">{idx + 1}</td>
               {#each row.cells as cell (cell.id)}
                 <Subscribe attrs={cell.attrs()} let:attrs>
-                  <td {...attrs}>
+                  <td {...attrs} class:has-text-danger={row.isData() && row.original.lock_password}>
                     <Render
                       of={cell.isData() && cell.value != null && cell.value != undefined
                         ? cell.render()

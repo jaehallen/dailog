@@ -66,12 +66,6 @@
 
   <div class="navbar-menu" class:is-active={isActive}>
     <div class="navbar-start">
-      {#each userRoute as route}
-        <a class="navbar-item is-tab" class:is-active={curPath == route.path} href={route.path}>
-          {route.name}
-        </a>
-      {/each}
-
       {#if adminRoute.length > 0}
         <div class="navbar-item has-dropdown is-hoverable">
           <button class="navbar-link"> Admin </button>
@@ -89,6 +83,11 @@
           </div>
         </div>
       {/if}
+      {#each userRoute as route}
+        <a class="navbar-item is-tab" class:is-active={curPath == route.path} href={route.path}>
+          {route.name}
+        </a>
+      {/each}
     </div>
 
     <div class="navbar-end">
