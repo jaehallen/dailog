@@ -69,7 +69,6 @@ export function getUsersTable(userslist: Readable<UsersList[]>) {
         }
       }
     }),
-    table.column({ header: 'Lead Id', accessor: 'lead_id' }),
     table.column({
       header: 'Team Lead',
       accessor: 'teamlead',

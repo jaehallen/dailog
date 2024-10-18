@@ -1,7 +1,7 @@
 <script lang="ts">
+  import type { SubmitFunction } from '@sveltejs/kit';
   import type { PageData } from './$types';
   import type { OptActionState, OptCategory, TimeEntryRecord } from '$lib/types/schema';
-  import type { SubmitFunction } from '@sveltejs/kit';
   import StartButtons from '$lib/component/StartButtons.svelte';
   import EndButtons from '$lib/component/EndButtons.svelte';
   import TimesheetModal from '$lib/component/TimesheetModal.svelte';

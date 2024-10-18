@@ -5,7 +5,7 @@
 </script>
 
 <div class="field is-horizontal">
-  <div class="field-label" class:is-small={small}>
+  <div class="field-label" class:is-small={small} class:is-normal={!small}>
     <label for={id} class="label"> {label} </label>
   </div>
   <div class="field-body">
