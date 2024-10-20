@@ -9,6 +9,7 @@
   import type { SvelteComponent } from 'svelte';
   import { browser } from '$app/environment';
   import type { ScheduleRecord } from '$lib/types/schema';
+  import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
 
   const RESET_FORM_ID = 'resetform';
   export let data: PageData;
@@ -99,17 +100,15 @@
       class="button card-footer-item is-ghost">Save</button
     >
   </Modal>
-  {#await data.user}
-    <section class="skeleton-block"></section>
-  {:then user}
+  {#if data.user}
     <section class="section">
       <div class="fixed-grid has-2-cols">
         <div class="grid">
           <div class="cell">
-            <h2 class="title is-4">{user?.name || 'No User'}</h2>
+            <h2 class="title is-4">{data.user?.name || 'No User'}</h2>
             <p class="subtitle is-6">
-              {user?.id || 'No ID'}
-              {#if !user?.lock_password}
+              {data.user?.id || 'No ID'}
+              {#if !data.user?.lock_password}
                 <br />
                 <button class="button is-ghost p-0 m-0" on:click={() => (isActive = true)}
                   >Reset Password</button
@@ -122,13 +121,13 @@
               <div class="level-item">
                 <p class="heading">Team Lead:&emsp;</p>
                 <p class="title is-5">
-                  {user?.teamlead || '-'}
+                  {data.user?.teamlead || '-'}
                 </p>
               </div>
               <div class="level-item">
                 <p class="heading">Region:&emsp;</p>
                 <p class="title is-5">
-                  {user?.region || '-'}
+                  {data.user?.region || '-'}
                 </p>
               </div>
             </div>
@@ -138,28 +137,9 @@
       </div>
     </section>
     <section>
-      <table class="table is-fullwidth is-striped is-hoverable">
-        <thead>
-          <tr>
-            {#each scheduleColumn as column, cid (cid)}
-              <th class="has-text-right"> {column.title} </th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#if data.schedules.length && browser}
-            {#each data.schedules.toSorted(sortSchedule) as sched (sched.id)}
-              <tr>
-                {#each scheduleColumn as column, cid (cid)}
-                  <td class="has-text-right">
-                    {@html column.render(sched[column.key] || '-')}
-                  </td>
-                {/each}
-              </tr>
-            {/each}
-          {/if}
-        </tbody>
-      </table>
+      {#if data.schedules.length && browser}
+        <UserScheduleTable schedules={data.schedules} />
+      {/if}
     </section>
-  {/await}
+  {/if}
 </main>

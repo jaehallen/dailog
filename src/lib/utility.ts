@@ -1,5 +1,4 @@
-import { dev } from "$app/environment";
-import { string } from "zod";
+import { dev } from '$app/environment';
 let t0 = 0;
 
 export const timeProcess = (note?: string) => {
@@ -7,10 +6,10 @@ export const timeProcess = (note?: string) => {
     if (note) {
       console.log(`${note} - ${performance.now() - t0}\r\n`);
     } else {
-      t0 = performance.now()
+      t0 = performance.now();
     }
   }
-}
+};
 
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
@@ -51,19 +50,6 @@ export const dateAtOffsetStr = (date: Date | number, offset: number): string => 
   return dateAtOffset(date, offset).toISOString().split('T', 1)[0];
 };
 
-// export const getTimeStr = (date: Date, isHour12 = false) => {
-//   if (!(date instanceof Date)) {
-//     throw new Error('Invalid Date');
-//   }
-
-//   return Intl.DateTimeFormat('en-US', {
-//     hour: '2-digit',
-//     minute: '2-digit',
-//     hour12: isHour12,
-//     timeZone: 'UTC'
-//   }).format(date);
-// };
-
 //This should only be executed at client side. UTC-Offset timezone is not supported.
 export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
   let isTime = false;
@@ -81,8 +67,8 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
   if (isTime) {
     options = { ...timeOpt, timeZone: 'UTC' };
   } else if (long) {
-    date = dateAtOffset(date, offset)
-    options = { ...dateOpt, ...timeOpt, timeZone: 'UTC' }
+    date = dateAtOffset(date, offset);
+    options = { ...dateOpt, ...timeOpt, timeZone: 'UTC' };
     // options = { ...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset) };
   } else {
     options = { ...dateOpt };
@@ -196,15 +182,16 @@ export function parseJSON(str: any) {
     return obj;
   } catch (err) {
     console.error(err);
-    return null
+    return null;
   }
 }
 
-export function textFilter({ filterValue, value }: Record<"filterValue" | "value", string>) {
+export function textFilter({ filterValue, value }: Record<'filterValue' | 'value', string>) {
   return new RegExp(filterValue, 'i').test(value);
 }
 
-export function matchFilter({ filterValue, value }: Record<"filterValue" | "value", string>) {
+export function matchFilter({ filterValue, value }: Record<'filterValue' | 'value', string>) {
   if (filterValue === undefined) return true;
-  return filterValue === value
+  return filterValue === value;
 }
+

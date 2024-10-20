@@ -1,10 +1,49 @@
 import type { OptActionState, OptCategory, RouteProfile, TimesheetStateInfo } from './types/schema';
 
+export const TEMPID = 100002;
 export const LIMIT = {
   SCHEDULES: 5,
   USERS: 50,
   LIST: 50
 };
+export const UTCOFFSET: [string, number][] = [
+  ['UTC−12:00', -12],
+  ['UTC−11:00', -11],
+  ['UTC−10:00', -10],
+  ['UTC−09:30', -9.5],
+  ['UTC−09:00', -9],
+  ['UTC−07:00', -7],
+  ['UTC−06:00', -6],
+  ['UTC−05:00', -5],
+  ['UTC−04:30', -4.5],
+  ['UTC−04:00', -4],
+  ['UTC−03:00', -3],
+  ['UTC−02:00', -2],
+  ['UTC−01:00', -1],
+  ['UTC±00:00', 0],
+  ['UTC+01:00', 1],
+  ['UTC+02:00', 2],
+  ['UTC+03:00', 3],
+  ['UTC+04:00', 4],
+  ['UTC+04:30', 4.5],
+  ['UTC+05:00', 5],
+  ['UTC+05:30', 5.5],
+  ['UTC+05:45', 5.75],
+  ['UTC+06:00', 6],
+  ['UTC+06:30', 6.5],
+  ['UTC+07:00', 7],
+  ['UTC+08:00', 8],
+  ['UTC+08:45', 8.75],
+  ['UTC+09:00', 9],
+  ['UTC+09:30', 9.5],
+  ['UTC+10:00', 10],
+  ['UTC+11:00', 11],
+  ['UTC+11:30', 11.5],
+  ['UTC+12:00', 12],
+  ['UTC+13:00', 13],
+  ['UTC+14:00', 14]
+];
+
 export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;

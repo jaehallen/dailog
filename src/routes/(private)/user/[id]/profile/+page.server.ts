@@ -8,7 +8,7 @@ export const load = (async ({ locals }) => {
     redirect(302, '/login');
   }
 
-  return getUserProfile(locals.user.id, 20);
+  return await getUserProfile(locals.user.id, 20);
 }) satisfies PageServerLoad;
 
 export const actions = {

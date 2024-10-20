@@ -48,7 +48,7 @@ export function getSchedule(schedules: ScheduleRecord[], timeEntries: TimeEntryR
 }
 
 function getFloatHour(offset: number, time?: string) {
-  let d = time ? new Date(`2000-01-01T${time}Z`) : new Date()
+  let d = time ? new Date(`2000-01-01T${time}Z`) : new Date();
   d.setHours(d.getHours() + offset);
   return d.getHours() + d.getMinutes() / 60;
 }
@@ -57,9 +57,9 @@ function withinGraceHour(latestSchedule: ScheduleRecord, workDur: number): boole
   const halfWorkhour = Math.round(workDur / 120);
   const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
   const currentHour = getFloatHour(latestSchedule.local_offset);
-  const minHour = getFloatHour((-1 * graceHour), latestSchedule.clock_at);
+  const minHour = getFloatHour(-1 * graceHour, latestSchedule.clock_at);
   const maxHour = getFloatHour(halfWorkhour, latestSchedule.clock_at);
-  
+
   if (maxHour > minHour) {
     return currentHour >= minHour && currentHour <= maxHour;
   }

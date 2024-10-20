@@ -41,4 +41,15 @@
         var(--background-image-url) lightgray 50% / cover no-repeat;
     }
   }
+
+  /* Chrome, Safari, Edge, Opera */
+  :global(input::-webkit-outer-spin-button, input::-webkit-inner-spin-button) {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  :global(input[type='number']) {
+    -moz-appearance: textfield;
+  }
 </style>

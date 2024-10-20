@@ -1,6 +1,8 @@
 import type { Client, Row } from '@libsql/client';
 import type {
+  OptRole,
   ScheduleRecord,
+  SessionRecord,
   TimeEntryRecord,
   UserInfo,
   UserProfile,
@@ -69,7 +71,7 @@ export class DatabaseController extends DBClient {
     userId: number,
     schedule_count: number = 10
   ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
-    const results = await this.batchGet([
+    const results = await super.batchGet([
       QUERY.USER({ user_id: userId }),
       QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
     ]);
@@ -86,7 +88,7 @@ export class DatabaseController extends DBClient {
     args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
   ) {
     const q = WRITE.STARTTIME(args);
-    const results = await this.set(q.sql, q.args);
+    const results = await super.set(q.sql, q.args);
     if (!results) return null;
     return toTimeEntryRecord(results.rows[0]);
   }
@@ -95,17 +97,25 @@ export class DatabaseController extends DBClient {
     args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
   ) {
     const q = WRITE.ENDTIME(args);
-    const results = await this.set(q.sql, q.args);
+    const results = await super.set(q.sql, q.args);
     if (!results) return null;
     return toTimeEntryRecord(results.rows[0]);
   }
 
   public async updatePassword(userId: number, password: string) {
     const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
-    const results = await this.set(q.sql, q.args);
+    const results = await super.set(q.sql, q.args);
 
     if (!results) return null;
     return results.rowsAffected > 0;
+  }
+
+  public async createUserSchedule(args: Omit<ScheduleRecord, 'id'>) {
+    const q = WRITE.ADD_USER_SCHEDULE(args);
+    const results = await super.set(q.sql, q.args);
+
+    if (!results) return null;
+    return toUserScheddule(results.rows[0]);
   }
 
   public async getTimEntries(
@@ -113,7 +123,7 @@ export class DatabaseController extends DBClient {
     dateRange: { dateStart: string; dateEnd: string }
   ): Promise<Omit<UserInfo, 'user'>> {
     const [schedules, timeEntries] =
-      (await this.batchGet([
+      (await super.batchGet([
         QUERY.SCHEDULES({ user_id: userId, limit: 10 }),
         QUERY.USER_ENTRIES({ user_id: userId, ...dateRange })
       ])) || [];
@@ -132,9 +142,19 @@ export class DatabaseController extends DBClient {
     limit?: number;
   }): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_INFO(params);
-    const { rows = [] } = (await this.get(sql, args)) || {};
+    const { rows = [] } = (await super.get(sql, args)) || {};
 
     return rows;
+  }
+
+  public async getAdmninInitData(role: OptRole) {
+    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
+    return {
+      regions: regions?.rows.map((r) => String(r.region)) || [],
+      leads: leads?.rows.map((l) => {
+        return { id: Number(l.id), name: String(l.name) };
+      })
+    };
   }
 }
 

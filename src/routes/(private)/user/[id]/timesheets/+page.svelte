@@ -92,7 +92,7 @@
           }
         }
       } else {
-        console.log(result);
+        console.error(result);
       }
       await update({ invalidateAll: false, reset: false });
       disabled = false;
@@ -105,8 +105,9 @@
   };
 
   const cancel = () => {
-    timeAction.cancel();
     disabled = false;
+    remarks = '';
+    timeAction.cancel();
   };
 </script>
 
@@ -164,7 +165,7 @@
             {#each $timesheet as entry (entry.id)}
               <tr class:is-dark={entry.category === 'clock'}>
                 {#each timesheetColumn as column, cid (cid)}
-                  <td>
+                  <td class:is-light={entry.category !== 'clock' && column.key == 'date_at'}>
                     {@html column.render(entry[column.key] || '-', {
                       local_offset: $timeAction.local_offset
                     })}

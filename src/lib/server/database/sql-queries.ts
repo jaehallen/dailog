@@ -1,10 +1,22 @@
-import { LIMIT } from '$lib/defaults';
-import type { TimeEntryRecord } from '$lib/types/schema';
+import { LIMIT, TEMPID } from '$lib/defaults';
+import type { OptRole, ScheduleRecord, TimeEntryRecord } from '$lib/types/schema';
 
 export const QUERY = {
+  REGIONS: () => {
+    return {
+      sql: 'SELECT region FROM opt_region',
+      args: {}
+    };
+  },
+  LEADS: (role: OptRole) => {
+    return {
+      sql: "SELECT id, name FROM users WHERE id > $id AND role in ('admin','lead','poc')",
+      args: { id: role === 'admin' ? 0 : TEMPID }
+    };
+  },
   USER: (args: { user_id: number }) => {
     return {
-      sql: `SELECT * FROM view_users WHERE id = $user_id`,
+      sql: 'SELECT * FROM view_users WHERE id = $user_id',
       args
     };
   },
@@ -146,6 +158,32 @@ export const WRITE = {
     return {
       sql: `UPDATE users SET password_hash = $password_hash WHERE id = $user_id`,
       args
+    };
+  },
+  ADD_USER_SCHEDULE: (args: Omit<ScheduleRecord, 'id'>) => {
+    const {
+      user_id,
+      effective_date,
+      utc_offset,
+      clock_at,
+      first_break_at,
+      lunch_at,
+      second_break_at,
+      day_off
+    } = args;
+    return {
+      sql: `INSERT INTO schedules (user_id, effective_date, utc_offset, clock_at, first_break_at, lunch_at, second_break_at, day_off)
+              VALUES($user_id, $effective_date, $utc_offset, $clock_at, $first_break_at, $lunch_at, $second_break_at, $day_off) RETURNING *`,
+      args: {
+        user_id,
+        effective_date,
+        utc_offset,
+        clock_at,
+        first_break_at,
+        lunch_at,
+        second_break_at,
+        day_off
+      }
     };
   }
 };

@@ -1,6 +1,9 @@
 import { z, type ZodType } from 'zod';
+import type { ZPostTime, ScheduleRecord } from './types/schema';
 import { CATEGORY, ACTIONSTATE } from './defaults';
-import type { ZPostTime } from './types/schema';
+
+const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+const isTime = (key: string) => TIMEREG.test(key);
 
 export const validateSignIn: ZodType<{ id: number; password: string }> = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
@@ -24,3 +27,18 @@ export const validatePasswordReset: ZodType<{ oldPassword: string; newPassword: 
     oldPassword: z.coerce.string().min(6),
     newPassword: z.coerce.string().min(6)
   });
+
+export const validateSchedule: ZodType<Omit<ScheduleRecord, 'id'>> = z.object({
+  user_id: z.coerce.number().gte(100000).lte(999999),
+  effective_date: z.coerce.string().date(),
+  utc_offset: z.coerce.number().gte(-12).lte(14),
+  local_offset: z.coerce.number().gte(-12).lte(14),
+  clock_at: z.coerce.string().regex(TIMEREG),
+  first_break_at: z.coerce.string().regex(TIMEREG),
+  lunch_at: z.coerce.string().regex(TIMEREG),
+  second_break_at: z.coerce.string().regex(TIMEREG),
+  work_dur_min: z.coerce.number().gte(60).optional(),
+  lunch_dur_min: z.coerce.number().gte(60).optional(),
+  break_dur_min: z.coerce.number().gte(60).optional(),
+  day_off: z.coerce.string()
+});

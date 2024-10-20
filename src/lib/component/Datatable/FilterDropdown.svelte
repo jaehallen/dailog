@@ -2,19 +2,19 @@
   import FieldH from '$lib/component/FieldH.svelte';
 </script>
 
-<FieldH id="active" label="Active">
+<FieldH id="active" label="Active" small={true}>
   <select name="active" class="input is-small is-rounded">
     <option value="-1">All</option>
     <option value="1">Active</option>
     <option value="0">Inactive</option>
   </select>
 </FieldH>
-<FieldH id="teamlead" label="Teamlead">
+<FieldH id="teamlead" label="Teamlead" small={true}>
   <select name="teamlead" id="teamlead" class="input is-small is-rounded">
     <option value="-1">All</option>
   </select>
 </FieldH>
-<FieldH id="region" label="Region">
+<FieldH id="region" label="Region" small={true}>
   <select name="region" id="region" class="input is-small is-rounded">
     <option value="APAC">APAC</option>
     <option value="EMEA">EMEA</option>

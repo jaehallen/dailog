@@ -1,61 +1,75 @@
 <script lang="ts">
+  import type { OptRole } from '$lib/types/schema';
+  import { USERROLE } from '$lib/defaults';
   import FieldH from './FieldH.svelte';
   export let id: number;
   export let name: string;
   export let lead_id: number;
   export let region: string;
-  export let active: number;
-  export let role: string;
-  export let lock_password: number;
+  export let active: Boolean;
+  export let role: OptRole;
+  export let lock_password: Boolean;
+  export let regions: string[] = [];
+  export let leads: { id: number; name: string }[] = [];
+
+  $: lockpassStr = lock_password ? '1' : '0';
+  $: activeStr = active ? '1' : '0';
 </script>
 
 <h4 class="title is-4">{name}</h4>
-<h6 class="subtitle is-6">{id}</h6>
-<FieldH id="name" label="Name" small={false}>
-  <input type="text" class="input" id="name" name="name" value={name}/>
+<h6 class="subtitle is-6">
+  <button class="button is-ghost p-0" formaction="?/password-reset"> Reset Password </button>
+</h6>
+
+<FieldH id="id" label="GAID">
+  <input type="number" class="input is-static" readonly value={id} />
 </FieldH>
-<FieldH id="lead_id" label="Teamlead" small={false}>
-  <select name="lead_id" id="lead_id" class="input" value={lead_id}>
-    <option value="411055">Teamlead</option>
+<FieldH id="name" label="Name">
+  <input type="text" class="input" id="name" name="name" value={name} />
+</FieldH>
+<FieldH id="lead_id" label="Teamlead">
+  <select name="lead_id" id="lead_id" class="input">
+    <option value="">(Blank)</option>
+    {#each leads as lead (lead.id)}
+      <option value={lead_id} selected={lead.id === lead_id}>{lead.name}</option>
+    {/each}
   </select>
 </FieldH>
-<FieldH id="region" label="Region" small={false}>
-  <select name="region" id="region" class="input" value={region}>
-    <option value="APAC">APAC</option>
+<FieldH id="region" label="Region">
+  <select name="region" id="region" class="input">
+    <option value="">(Blank)</option>
+    {#each regions as optRegion}
+      <option value={optRegion} selected={optRegion == region}>{optRegion}</option>
+    {/each}
   </select>
 </FieldH>
-<FieldH id="active" label="Active" small={false}>
-  <select name="active" id="active" class="input" value={active}>
+<FieldH id="active" label="Active">
+  <select name="active" id="active" class="input" bind:value={activeStr}>
     <option value="1">Yes</option>
     <option value="0">No</option>
   </select>
+  {#if activeStr === '0'}
+    <p class="help is-danger">User Login Disabled</p>
+  {/if}
 </FieldH>
-<FieldH id="role" label="Role" small={false}>
+<FieldH id="role" label="Role">
   <select name="role" id="role" class="input" value={role}>
-    <option value="admin">admin</option>
-    <option value="user">user</option>
-    <option value="lead">lead</option>
-    <option value="poc">poc</option>
+    {#each USERROLE as role}
+      <option value={role}>{role}</option>
+    {/each}
   </select>
 </FieldH>
-<FieldH id="lock_password" label="Lock" small={false}>
-  <select name="lock_password" id="lock_password" class="input" value={lock_password}>
+<FieldH id="lock_password" label="Lock">
+  <select name="lock_password" id="lock_password" class="input" bind:value={lockpassStr}>
     <option value="1">Yes</option>
     <option value="0">No</option>
   </select>
-  <p class="help is-danger">Prevent user from resetting the password</p>
+  {#if lockpassStr === '1'}
+    <p class="help is-danger">Password Reset Block</p>
+  {/if}
 </FieldH>
-<div class="field is-horizontal">
-  <div class="field-label">
-    <!-- Left empty for spacing -->
-  </div>
-  <div class="field-body">
-    <div class="field">
-      <div class="control">
-        <button class="button is-primary">
-          Update Info
-        </button>
-      </div>
-    </div>
-  </div>
+<div class="field is-grouped is-grouped-right">
+  <p class="control">
+    <button class="button is-primary"> Update Info </button>
+  </p>
 </div>

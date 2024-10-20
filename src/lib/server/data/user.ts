@@ -24,7 +24,7 @@ export const validateUser = async ({
   return user;
 };
 
-export function getUserProfile(
+export async function getUserProfile(
   userId: number,
   schedule_count: number
 ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {

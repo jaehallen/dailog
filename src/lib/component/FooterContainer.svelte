@@ -7,17 +7,17 @@
 </script>
 
 <aside
-  class="aside-container my-1 p-4 card"
-  in:fly={{ x: 100, duration: 300, delay: 100, easing: quintOut }}
-  out:fly={{ x: 100, duration: 300, easing: quintIn }}
+  class="aside-footer-container my-1 p-4 card"
+  in:fly={{ y: 100, duration: 300, delay: 100, easing: quintOut }}
+  out:fly={{ y: 100, duration: 300, easing: quintIn }}
 >
   <button class="delete" on:click={exit}></button>
   <slot />
 </aside>
 
 <style>
-  .aside-container {
-    min-width: 500px;
+  .aside-footer-container {
+    min-width: 800px;
     right: 20px;
     bottom: 15px;
     position: fixed;
@@ -26,16 +26,16 @@
   }
 
   @media (max-width: 480px) {
-    .aside-container {
+    .aside-footer-container {
       position: relative;
       width: 100%;
     }
   }
 
   @media (max-width: 1024px) {
-    .aside-container {
+    .aside-footer-container {
       position: fixed;
-      width: 500px;
+      width: 800px;
     }
   }
 </style>
