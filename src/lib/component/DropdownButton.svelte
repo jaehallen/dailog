@@ -9,7 +9,7 @@
 
 <div class="dropdown" class:is-up={dropup} class:is-active={isDropdown}>
   <div class="dropdown-trigger">
-    <button class="button" class:is-small={small} on:click={() => (isDropdown = !isDropdown)}>
+    <button class="button" type="button" class:is-small={small} on:click={() => (isDropdown = !isDropdown)}>
       <span>{label}</span>
       <span class="icon" class:is-small={small}>
         {#if (dropup && !isDropdown) || (!dropup && isDropdown)}

@@ -81,7 +81,7 @@ export const scheduleColumn: TableColumns<ScheduleRecord>[] = [
     title: 'Effective Date',
     key: 'effective_date',
     render: (val) => {
-      return formatDateOrTime(val as string);
+      return `<strong>${formatDateOrTime(val as string)}</strong>`;
     }
   },
   {

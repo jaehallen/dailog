@@ -1,5 +1,6 @@
 import { LIMIT, TEMPID } from '$lib/defaults';
-import type { OptRole, ScheduleRecord, TimeEntryRecord } from '$lib/types/schema';
+import type { OptRole, ScheduleRecord, TimeEntryRecord, UserRecord } from '$lib/types/schema';
+import { Sqlite3Client } from '@libsql/client/sqlite3';
 
 export const QUERY = {
   REGIONS: () => {
@@ -160,6 +161,12 @@ export const WRITE = {
       args
     };
   },
+  UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
+    return {
+      sql: `UPDATE users SET name = $name, region = $region, lead_id = $lead_id, role = $role, active = $active, lock_password = $lock_password WHERE id = $id RETURNING *`,
+      args
+    }
+  },
   ADD_USER_SCHEDULE: (args: Omit<ScheduleRecord, 'id'>) => {
     const {
       user_id,
@@ -173,7 +180,16 @@ export const WRITE = {
     } = args;
     return {
       sql: `INSERT INTO schedules (user_id, effective_date, utc_offset, clock_at, first_break_at, lunch_at, second_break_at, day_off)
-              VALUES($user_id, $effective_date, $utc_offset, $clock_at, $first_break_at, $lunch_at, $second_break_at, $day_off) RETURNING *`,
+              VALUES($user_id, $effective_date, $utc_offset, $clock_at, $first_break_at, $lunch_at, $second_break_at, $day_off) 
+              ON CONFLICT (user_id, effective_date)
+              DO UPDATE SET 
+                utc_offset = excluded.utc_offset,
+                clock_at = excluded.clock_at,
+                first_break_at = excluded.first_break_at,
+                lunch_at = excluded.lunch_at,
+                second_break_at = excluded.second_break_at,
+                day_off = excluded.day_off
+              RETURNING *`,
       args: {
         user_id,
         effective_date,

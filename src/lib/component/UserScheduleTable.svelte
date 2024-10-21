@@ -9,12 +9,13 @@
   const sortSchedule = (a: ScheduleRecord, b: ScheduleRecord) => {
     return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
   };
+
 </script>
 
 <div class="content">
-  <table class="table is-fullwidth is-striped is-hoverable">
+  <table class="table is-fullwidth is-hoverable">
     <thead>
-      <tr>
+      <tr class="is-primary">
         {#each column as column, cid (cid)}
           <th class="has-text-right"> {column.title} </th>
         {/each}
@@ -22,8 +23,8 @@
     </thead>
     <tbody>
       {#if schedules.length}
-        {#each schedules.toSorted(sortSchedule) as sched (sched.id)}
-          <tr>
+        {#each schedules.toSorted(sortSchedule) as sched,idx (sched.id)}
+          <tr class:is-light={idx % 2 == 0}>
             {#each column as column, cid (cid)}
               <td class="has-text-right">
                 {@html column.render(sched[column.key] || '-')}

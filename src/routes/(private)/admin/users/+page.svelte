@@ -1,19 +1,18 @@
 <script lang="ts">
   import type { ScheduleRecord, UsersList } from '$lib/types/schema';
   import type { PageData } from './$types';
-  import { enhance } from '$app/forms';
+  import type { SubmitFunction } from '@sveltejs/kit';
   import AsideContainer from '$lib/component/AsideContainer.svelte';
   import UserInputs from '$lib/component/UserInputs.svelte';
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
+  import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
+  import { enhance } from '$app/forms';
   import { slide } from 'svelte/transition';
   import { onMount } from 'svelte';
   import { Pagination, FilterDropdown, SearchUser } from '$lib/component/Datatable';
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
-  import { readable } from 'svelte/store';
-  import { getUsersTable } from '$lib/table-users';
-  import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
-  import type { SubmitFunction } from '@sveltejs/kit';
+  import { getUsersTable, usersData } from '$lib/table-users';
 
   export let data: PageData;
   let advanceFilter = true;
@@ -21,26 +20,8 @@
   let disabled = false;
   let show: 'sched' | 'user';
   let itemId = 0;
-  let selectedUserScheds: {
-    schedules: ScheduleRecord[];
-    exclude: (keyof ScheduleRecord)[];
-  } = {
-    schedules: [],
-    exclude: ['id', 'clock_dur_min', 'break_dur_min', 'lunch_dur_min']
-  };
-  let selectedUserInfo: Omit<UsersList, 'teamlead' | 'latest_schedule' | 'schedules'> = {
-    id: 0,
-    name: '',
-    lead_id: 0,
-    region: '',
-    active: true,
-    role: 'user',
-    lock_password: false
-  };
 
-  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(
-    readable(data.listOfUsers)
-  );
+  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(usersData);
   const { filterValues } = pluginStates.filter;
   $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 
@@ -51,26 +32,22 @@
   };
 
   const onUserUpdate = (itemData: UsersList, showType: 'sched' | 'user') => {
-    const { id, name, lead_id, region, active, role, lock_password } = itemData;
     show = showType;
     userUpdate = true;
     itemId = itemData.id;
-    selectedUserInfo = { id, name, lead_id, region, active, role, lock_password };
-    selectedUserScheds.schedules = itemData.schedules;
   };
 
-  onMount(() => {
-    window.addEventListener('keydown', closePopup);
-    return () => {
-      window.removeEventListener('keydown', () => {});
-    };
-  });
-
-  const scheduleOnSubmit: SubmitFunction = ({ formData }) => {
+  const scheduleOnSubmit: SubmitFunction = () => {
     disabled = true;
     return async ({ update, result }) => {
       if (result.type === 'success') {
-        console.log(result.data);
+        if(result.data?.schedule){
+          usersData.addUserSched(result.data.schedule)
+        }
+
+        if(result.data?.user){
+          usersData.updateUser()
+        }
       } else {
         console.error(result);
       }
@@ -78,15 +55,26 @@
       disabled = false;
     };
   };
+
+  onMount(() => {
+    usersData.set(data.listOfUsers);
+    window.addEventListener('keydown', closePopup);
+    return () => {
+      window.removeEventListener('keydown', () => {});
+    };
+  });
+
+  $: selectedUser = $usersData.find((user) => user.id === itemId) || null;
+  $: selectedUserSchedules = selectedUser?.schedules || []
 </script>
 
-{#if userUpdate}
+{#if userUpdate && selectedUser}
   {#if data.user?.role === 'admin' && show == 'user'}
     {#key itemId}
       <AsideContainer on:exit={() => (userUpdate = !userUpdate)}>
         <form action="?/update-user">
           <UserInputs
-            {...selectedUserInfo}
+            user={selectedUser}
             leads={data?.defaultOptions?.leads}
             regions={data?.defaultOptions?.regions}
           />
@@ -96,9 +84,9 @@
   {:else if show == 'sched'}
     {#key itemId}
       <AsideContainer on:exit={() => (userUpdate = !userUpdate)}>
-        <UserScheduleTable {...selectedUserScheds} />
+        <UserScheduleTable schedules={selectedUserSchedules} exclude={['id', 'clock_dur_min', 'break_dur_min', 'lunch_dur_min']} />
         <form action="?/add-schedule" method="POST" use:enhance={scheduleOnSubmit}>
-          <ScheduleInputs schedule={selectedUserScheds.schedules[0]} user_id={itemId} {disabled} />
+          <ScheduleInputs schedule={selectedUserSchedules.at(0) ?? null} user_id={itemId} {disabled} />
         </form>
       </AsideContainer>
     {/key}

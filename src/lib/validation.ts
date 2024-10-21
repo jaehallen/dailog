@@ -1,9 +1,8 @@
 import { z, type ZodType } from 'zod';
-import type { ZPostTime, ScheduleRecord } from './types/schema';
+import type { ZPostTime, ScheduleRecord, UserRecord } from './types/schema';
 import { CATEGORY, ACTIONSTATE } from './defaults';
 
 const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-const isTime = (key: string) => TIMEREG.test(key);
 
 export const validateSignIn: ZodType<{ id: number; password: string }> = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
@@ -42,3 +41,14 @@ export const validateSchedule: ZodType<Omit<ScheduleRecord, 'id'>> = z.object({
   break_dur_min: z.coerce.number().gte(60).optional(),
   day_off: z.coerce.string()
 });
+
+export const validateUser = z.object({
+  id: z.coerce.number().gte(100000).lte(999999),
+  name: z.coerce.string(),
+  lead_id: z.coerce.number().gte(100000).lte(999999),
+  region: z.coerce.string(),
+  role: z.enum(['admin', 'lead', 'poc', 'user']),
+  active: z.enum(['1', '0']).transform(v => Boolean(Number(v))),
+  lock_password: z.enum(['1', '0']).transform(v => Boolean(Number(v)))
+});
+

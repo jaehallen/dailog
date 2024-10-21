@@ -84,40 +84,7 @@ export class DatabaseController extends DBClient {
     };
   }
 
-  public async startTime(
-    args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
-  ) {
-    const q = WRITE.STARTTIME(args);
-    const results = await super.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
-  }
-
-  public async endTime(
-    args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
-  ) {
-    const q = WRITE.ENDTIME(args);
-    const results = await super.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
-  }
-
-  public async updatePassword(userId: number, password: string) {
-    const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
-    const results = await super.set(q.sql, q.args);
-
-    if (!results) return null;
-    return results.rowsAffected > 0;
-  }
-
-  public async createUserSchedule(args: Omit<ScheduleRecord, 'id'>) {
-    const q = WRITE.ADD_USER_SCHEDULE(args);
-    const results = await super.set(q.sql, q.args);
-
-    if (!results) return null;
-    return toUserScheddule(results.rows[0]);
-  }
-
+  
   public async getTimEntries(
     userId: number,
     dateRange: { dateStart: string; dateEnd: string }
@@ -155,6 +122,48 @@ export class DatabaseController extends DBClient {
         return { id: Number(l.id), name: String(l.name) };
       })
     };
+  }
+
+  public async startTime(
+    args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
+  ) {
+    const q = WRITE.STARTTIME(args);
+    const results = await super.set(q.sql, q.args);
+    if (!results) return null;
+    return toTimeEntryRecord(results.rows[0]);
+  }
+
+  public async endTime(
+    args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
+  ) {
+    const q = WRITE.ENDTIME(args);
+    const results = await super.set(q.sql, q.args);
+    if (!results) return null;
+    return toTimeEntryRecord(results.rows[0]);
+  }
+
+  public async updatePassword(userId: number, password: string) {
+    const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
+    const results = await super.set(q.sql, q.args);
+
+    if (!results) return null;
+    return results.rowsAffected > 0;
+  }
+
+  public async createUserSchedule(args: Omit<ScheduleRecord, 'id'>) {
+    const q = WRITE.ADD_USER_SCHEDULE(args);
+    const results = await super.set(q.sql, q.args);
+
+    if (!results) return null;
+    return toUserScheddule(results.rows[0]);
+  }
+
+  public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>){
+    const q = WRITE.UPDATE_USER(user)
+    const results = await super.set(q.sql, q.args);
+
+    if(!results) return null;
+    return toUserRecord(results.rows[0])
   }
 }
 

@@ -1,6 +1,6 @@
 import type { User } from 'lucia';
 import { db } from '$lib/server/database/db-controller';
-import type { ScheduleRecord, UsersList } from '$lib/types/schema';
+import type { ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
 import { parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
 
@@ -20,6 +20,10 @@ export const listOfUsers = async (
 
 export const addUserSchedule = async (args: Omit<ScheduleRecord, "id">) => {
   return db.createUserSchedule(args);
+};
+
+export const updateUser = async (user: Omit<UserRecord, "password_hash" | "preferences">) => {
+  return db.updateUser(user);
 };
 
 function toUsersList(record: Record<string, any>): UsersList {

@@ -1,6 +1,8 @@
 import { derived, writable } from 'svelte/store';
 import type {
+  UsersList,
   OptCategory,
+  ScheduleRecord,
   TimeEntryRecord,
   TimesheetStateInfo,
   UserSchedule
@@ -11,6 +13,8 @@ import { browser } from '$app/environment';
 
 export const timeAction = userTimeAction(STORAGENAME.action);
 export const timesheet = timesheetStore(STORAGENAME.timesheet);
+
+
 
 export const timeLog = derived(timesheet, ($timesheet) => {
   if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
