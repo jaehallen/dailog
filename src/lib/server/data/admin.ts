@@ -27,7 +27,7 @@ export const updateUser = async (user: Omit<UserRecord, "password_hash" | "prefe
 };
 
 function toUsersList(record: Record<string, any>): UsersList {
-  const { id, active, name, region, role, lead_id, teamlead, lock_password, schedules } = record;
+  const { id, active, name, region, role, lead_id, teamlead, lock_password, schedules, created_at, updated_at } = record;
 
   const sched = parseJSON(schedules);
   const currentSched = getCurrentSchedule(sched);
@@ -41,6 +41,8 @@ function toUsersList(record: Record<string, any>): UsersList {
     teamlead,
     active: Boolean(active),
     lock_password: Boolean(lock_password),
+    created_at,
+    updated_at,
     latest_schedule: currentSched?.effective_date ?? null,
     schedules: sched
   };

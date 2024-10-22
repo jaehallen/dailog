@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ScheduleRecord } from '$lib/types/schema';
   import { scheduleColumn } from '$lib/table-schema';
+  import { fade } from 'svelte/transition';
   export let schedules: ScheduleRecord[];
   export let exclude: (keyof ScheduleRecord)[] = [];
 
@@ -9,7 +10,6 @@
   const sortSchedule = (a: ScheduleRecord, b: ScheduleRecord) => {
     return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
   };
-
 </script>
 
 <div class="content">
@@ -23,14 +23,16 @@
     </thead>
     <tbody>
       {#if schedules.length}
-        {#each schedules.toSorted(sortSchedule) as sched,idx (sched.id)}
-          <tr class:is-light={idx % 2 == 0}>
-            {#each column as column, cid (cid)}
-              <td class="has-text-right">
-                {@html column.render(sched[column.key] || '-')}
-              </td>
-            {/each}
-          </tr>
+        {#each schedules.toSorted(sortSchedule) as sched, idx (sched.id)}
+          {#key `${idx}${sched.id}`}
+            <tr class:is-light={idx % 2 == 0} in:fade|local>
+              {#each column as column, cid (cid)}
+                <td class="has-text-right">
+                  {@html column.render(sched[column.key] || '-')}
+                </td>
+              {/each}
+            </tr>
+          {/key}
         {/each}
       {:else}
         <tr>

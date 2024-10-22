@@ -42,7 +42,8 @@
     {/each}
   </select>
 </FieldH>
-<FieldH id="active" label="Active">
+<FieldH id="temp_a" label="Active">
+  <input class="is-hidden" type="number" name="active" value={Number(activeStr)} />
   <select name="active" id="active" class="input" bind:value={activeStr}>
     <option value="1">Yes</option>
     <option value="0">No</option>
@@ -51,13 +52,14 @@
     <p class="help is-danger">User Login Disabled</p>
   {/if}
 </FieldH>
-<FieldH id="lock_password" label="Lock">
-  <select name="lock_password" id="lock_password" class="input" bind:value={lockpassStr}>
+<FieldH id="temp_b" label="Lock">
+  <input class="is-hidden" type="number" name="lock_password" value={Number(lockpassStr)} />
+  <select id="lock_password" class="input" bind:value={lockpassStr}>
     <option value="1">Yes</option>
     <option value="0">No</option>
   </select>
   {#if lockpassStr === '1'}
-    <p class="help is-danger">Password Reset Block</p>
+    <p class="help is-danger">Password Reset Blocked</p>
   {/if}
 </FieldH>
 <div class="field is-grouped is-grouped-right">

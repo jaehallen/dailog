@@ -65,6 +65,8 @@ export const QUERY = {
               users.region,
               users.role,
               users.lock_password,
+              users.created_at,
+              users.updated_at,
               (
                 SELECT
                   JSON_GROUP_ARRAY(JSON_OBJECT(
@@ -162,7 +164,7 @@ export const WRITE = {
     };
   },
   UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
-    const {lock_password, active, ...user} = args;
+    const { lock_password, active, ...user } = args;
     return {
       sql: `UPDATE users SET name = $name, region = $region, lead_id = $lead_id, role = $role, active = $active, lock_password = $lock_password WHERE id = $id RETURNING *`,
       args: {
@@ -170,7 +172,7 @@ export const WRITE = {
         lock_password: Number(lock_password),
         active: Number(active)
       }
-    }
+    };
   },
   ADD_USER_SCHEDULE: (args: Omit<ScheduleRecord, 'id'>) => {
     const {

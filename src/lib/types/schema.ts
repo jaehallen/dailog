@@ -46,10 +46,12 @@ export interface UserRecord {
   lead_id: number;
   password_hash: string;
   lock_password: boolean;
+  created_at?: string;
+  updated_at?: string;
   preferences: {
     avatar_src: URL;
     background_src: URL;
-  };
+  } | null;
 }
 
 export interface UserProfile extends UserRecord {
@@ -59,7 +61,8 @@ export interface UserProfile extends UserRecord {
 export interface UsersList extends Omit<UserRecord, 'password_hash' | 'preferences'> {
   teamlead: string;
   latest_schedule: string;
-  schedules: ScheduleRecord[]
+  schedules: ScheduleRecord[];
+  [key: string]: string | number | boolean | ScheduleRecord[] | null | undefined;
 }
 
 export interface SessionRecord {

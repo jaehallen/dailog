@@ -53,11 +53,6 @@
       await update({ invalidateAll: false, reset: false });
     };
   };
-
-  const isClock = (category: OptCategory) => {
-    console.log(category);
-    return false;
-  };
 </script>
 
 <main class="container">

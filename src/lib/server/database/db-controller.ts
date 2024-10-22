@@ -2,7 +2,6 @@ import type { Client, Row } from '@libsql/client';
 import type {
   OptRole,
   ScheduleRecord,
-  SessionRecord,
   TimeEntryRecord,
   UserInfo,
   UserProfile,
@@ -84,7 +83,6 @@ export class DatabaseController extends DBClient {
     };
   }
 
-  
   public async getTimEntries(
     userId: number,
     dateRange: { dateStart: string; dateEnd: string }
@@ -158,19 +156,29 @@ export class DatabaseController extends DBClient {
     return toUserScheddule(results.rows[0]);
   }
 
-  public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>){
-    const q = WRITE.UPDATE_USER(user)
-    console.log(q)
+  public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>) {
+    const q = WRITE.UPDATE_USER(user);
     const results = await super.set(q.sql, q.args);
 
-    if(!results) return null;
-    return toUserRecord(results.rows[0])
+    if (!results) return null;
+    return toUserRecord(results.rows[0]);
   }
 }
 
 export function toUserRecord(record: Record<string, any>): UserRecord {
-  const { id, active, name, region, role, password_hash, lead_id, lock_password, preferences } =
-    record;
+  const {
+    id,
+    active,
+    name,
+    region,
+    role,
+    password_hash,
+    lead_id,
+    lock_password,
+    preferences,
+    created_at,
+    updated_at
+  } = record;
 
   return {
     id,
@@ -181,6 +189,8 @@ export function toUserRecord(record: Record<string, any>): UserRecord {
     lead_id,
     active: Boolean(active),
     lock_password: Boolean(lock_password),
+    created_at,
+    updated_at,
     preferences: parseJSON(preferences)
   };
 }

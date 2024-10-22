@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type {  UsersList } from '$lib/types/schema';
+  import type { UsersList } from '$lib/types/schema';
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
   import AsideContainer from '$lib/component/AsideContainer.svelte';
@@ -7,12 +7,13 @@
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
   import { enhance } from '$app/forms';
-  import { slide, fly } from 'svelte/transition';
+  import { slide, fly, fade } from 'svelte/transition';
   import { onMount } from 'svelte';
   import { Pagination, FilterDropdown, SearchUser } from '$lib/component/Datatable';
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
+  import { validateUser } from '$lib/validation';
 
   export let data: PageData;
   let advanceFilter = true;
@@ -37,15 +38,27 @@
     itemId = itemData.id;
   };
 
-  const scheduleOnSubmit: SubmitFunction = () => {
-    disabled = true;
+  const isDirty = (formData: FormData) => {
+    const data = Object.fromEntries(formData);
+    const valid = validateUser.safeParse(data);
+    return (
+      selectedUser &&
+      valid.success &&
+      Object.entries(valid.data).some(([key, val]) => selectedUser[key] !== val)
+    );
+  };
+
+  const scheduleOnSubmit: SubmitFunction = ({ formData, cancel, action }) => {
+    if (!isDirty(formData) && action.search === '?/update-user') {
+      cancel();
+    } else {
+      disabled = true;
+    }
     return async ({ update, result }) => {
       if (result.type === 'success') {
         if (result.data?.schedule) {
           usersData.addUserSched(result.data.schedule);
-        }
-
-        if (result.data?.user) {
+        } else if (result.data?.user) {
           usersData.updateUser(result.data.user, data?.defaultOptions?.leads ?? []);
         }
       } else {
@@ -158,42 +171,41 @@
       {#each $rows as row (row.id)}
         <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
           {#if row.isData()}
-            <tr {...rowAttrs} class:is-selected={itemId === row.original.id} in:slide>
-              <td>
-                <div class="buttons">
-                  <button
-                    class="button is-small"
-                    on:click={() => onUserUpdate(row.original, 'user')}
-                    disabled={!row.original.region}
-                    ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
-                      ><UserRoundPen /></span
-                    ></button
-                  >
-                  <button
-                    class="button is-small"
-                    on:click={() => onUserUpdate(row.original, 'sched')}
-                    disabled={!row.original.region}
-                    ><span title={`${row.original.name} Schedule`} class="icon is-small"
-                      ><CalendarCog /></span
-                    ></button
-                  >
-                </div>
-              </td>
-              {#each row.cells as cell (cell.id)}
-                <Subscribe attrs={cell.attrs()} let:attrs>
-                    <td
-                      {...attrs}
-                      class={!row.original.active ? 'has-text-danger is-italic' : ''}
+            {#key row.original.updated_at}
+              <tr {...rowAttrs} class:is-selected={itemId === row.original.id} in:fade>
+                <td>
+                  <div class="buttons">
+                    <button
+                      class="button is-small"
+                      on:click={() => onUserUpdate(row.original, 'user')}
+                      disabled={!row.original.region}
+                      ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
+                        ><UserRoundPen /></span
+                      ></button
                     >
+                    <button
+                      class="button is-small"
+                      on:click={() => onUserUpdate(row.original, 'sched')}
+                      disabled={!row.original.region}
+                      ><span title={`${row.original.name} Schedule`} class="icon is-small"
+                        ><CalendarCog /></span
+                      ></button
+                    >
+                  </div>
+                </td>
+                {#each row.cells as cell (cell.id)}
+                  <Subscribe attrs={cell.attrs()} let:attrs>
+                    <td {...attrs} class={!row.original.active ? 'has-text-danger is-italic' : ''}>
                       <Render
                         of={cell.isData() && cell.value != null && cell.value != undefined
                           ? cell.render()
                           : '-'}
                       />
                     </td>
-                </Subscribe>
-              {/each}
-            </tr>
+                  </Subscribe>
+                {/each}
+              </tr>
+            {/key}
           {/if}
         </Subscribe>
       {/each}

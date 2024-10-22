@@ -1,5 +1,5 @@
 import { z, type ZodType } from 'zod';
-import type { ZPostTime, ScheduleRecord, UserRecord } from './types/schema';
+import type { ZPostTime, ScheduleRecord } from './types/schema';
 import { CATEGORY, ACTIONSTATE } from './defaults';
 
 const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -48,7 +48,6 @@ export const validateUser = z.object({
   lead_id: z.coerce.number().gte(100000).lte(999999),
   region: z.coerce.string(),
   role: z.enum(['admin', 'lead', 'poc', 'user']),
-  active: z.enum(['1', '0']).transform(v => Boolean(Number(v))),
-  lock_password: z.enum(['1', '0']).transform(v => Boolean(Number(v)))
+  active: z.coerce.number().transform(Boolean),
+  lock_password: z.coerce.number().transform(Boolean)
 });
-
