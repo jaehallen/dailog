@@ -160,6 +160,7 @@ export class DatabaseController extends DBClient {
 
   public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>){
     const q = WRITE.UPDATE_USER(user)
+    console.log(q)
     const results = await super.set(q.sql, q.args);
 
     if(!results) return null;

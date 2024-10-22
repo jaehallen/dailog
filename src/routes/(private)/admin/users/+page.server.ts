@@ -35,24 +35,32 @@ export const actions = {
       schedule: await addUserSchedule(validSched.data)
     };
   },
-  'update-user': async({request, locals}) => {
+
+  'update-user': async ({ request, locals }) => {
     if (!locals.user || !locals.session) {
       return fail(404, { message: 'User not found' });
     }
 
-    if(!['admin'].includes(locals.user.role)){
+    if (!['admin'].includes(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
     const form = await request.formData();
     const validUser = validateUser.safeParse(Object.fromEntries(form))
-
-    if(!validUser.success) {
+    
+    if (!validUser.success) {
       return fail(404, { message: validUser.error });
     }
-
-    return {
-      user: await updateUser(validUser.data)
+    const updates = await updateUser(validUser.data);
+    
+    if (updates) {
+      const {password_hash, preferences, ...user} = updates
+      return {
+        user
+      }
     }
+
+
+    return null;
   }
 } satisfies Actions;

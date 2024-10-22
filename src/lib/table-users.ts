@@ -1,6 +1,6 @@
 import type { UsersList, ScheduleRecord, UserRecord } from './types/schema';
 import type { Writable } from 'svelte/store';
-import {writable} from 'svelte/store'
+import { writable } from 'svelte/store'
 import { createRender, createTable } from 'svelte-headless-table';
 import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
@@ -110,10 +110,10 @@ function usersListStore() {
         const scheds = lists[idx].schedules
         const schedIdx = scheds.findIndex(s => Number(s.id) === Number(schedule.id))
 
-        if(schedIdx != undefined){
-          scheds[schedIdx] = {...schedule}
+        if (schedIdx != undefined) {
+          scheds[schedIdx] = { ...schedule }
           lists[idx].schedules = [...scheds]
-        }else{
+        } else {
           lists[idx].schedules = [schedule, ...scheds.slice(0, 4)]
         }
       }
@@ -121,12 +121,19 @@ function usersListStore() {
     });
   }
 
-  const updateUser = (updates : UserRecord) => {
+  const updateUser = (updates: UserRecord, leads: { id: number, name: string }[]) => {
     update((lists) => {
       const idx = lists.findIndex((u) => u.id == updates.id);
       if (idx) {
-        const {id, password_hash, ...rest} = updates
-        lists[idx] = {...lists[idx], ...rest}
+        let { lead_id, teamlead } = lists[idx];
+
+        if (lead_id !== updates.lead_id) {
+          const updatedLead = leads.find((l) => l.id === updates.lead_id)?.name
+          teamlead = updatedLead ?? teamlead;
+          lead_id = updatedLead ? updates.lead_id : lead_id;
+        }
+
+        lists[idx] = { ...lists[idx], ...updates, lead_id, teamlead }
       }
       return lists;
     });
