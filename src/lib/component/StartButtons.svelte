@@ -19,7 +19,7 @@
 </script>
 
 <ButtonsContainer>
-  <div class="field is-grouped" slot="left">
+  <div class="field is-grouped  is-justify-content-center" slot="left">
     <LeftButton on:left />
     <RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
     <RoundButton
@@ -29,7 +29,7 @@
       on:click={() => startTime('lunch')}
     />
   </div>
-  <div class="field is-grouped is-justify-content-center" slot="right">
+  <div class="field is-grouped  is-justify-content-center" slot="right">
     <RoundButton {disabled} class="is-link is-light" name="Bio" on:click={() => startTime('bio')} />
 
     <div class="dropdown" class:is-active={isDropdown}>

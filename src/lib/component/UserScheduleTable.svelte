@@ -2,13 +2,14 @@
   import type { ScheduleRecord } from '$lib/types/schema';
   import { scheduleColumn } from '$lib/table-schema';
   import { fade } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
   export let schedules: ScheduleRecord[];
   export let exclude: (keyof ScheduleRecord)[] = [];
 
   const column = scheduleColumn.filter((sched) => !exclude.includes(sched.key));
 
   const sortSchedule = (a: ScheduleRecord, b: ScheduleRecord) => {
-    return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
+    return new Date(a.effective_date).getTime() - new Date(b.effective_date).getTime();
   };
 </script>
 
@@ -24,15 +25,15 @@
     <tbody>
       {#if schedules.length}
         {#each schedules.toSorted(sortSchedule) as sched, idx (sched.id)}
-          {#key `${idx}${sched.id}`}
-            <tr class:is-light={idx % 2 == 0} in:fade|local>
-              {#each column as column, cid (cid)}
-                <td class="has-text-right">
+          <tr class:is-light={idx % 2 == 0} animate:flip>
+            {#each column as column, cid (cid)}
+              {#key sched[column.key]}
+                <td class="has-text-right" in:fade|local={{ delay: 100, duration: 500 }}>
                   {@html column.render(sched[column.key] || '-')}
                 </td>
-              {/each}
-            </tr>
-          {/key}
+              {/key}
+            {/each}
+          </tr>
         {/each}
       {:else}
         <tr>

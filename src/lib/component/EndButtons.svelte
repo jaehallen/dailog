@@ -22,7 +22,7 @@
       on:click={() => endTime(category)}
     />
   </div>
-  <div class="field is-justify-content-center" slot="right">
+  <div class="field" slot="right">
     <h1 class="subtitle is-capitalized">{category}: <Timer {timestamp} /></h1>
   </div>
 </ButtonsContainer>

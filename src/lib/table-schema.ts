@@ -6,7 +6,7 @@ interface TableColumns<T> {
   key: keyof T;
   render: (
     val: string | number | boolean | undefined | null,
-    entry?: { local_offset: number } & Partial<T>
+    entry?: { local_offset: number, clientWidth: number } & Partial<T>
   ) => string | number;
 }
 
@@ -36,7 +36,7 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
     title: 'Start At',
     key: 'start_at',
     render: (val, entry) => {
-      return formatDateOrTime(new Date(Number(val) * 1000), true, entry?.local_offset || 8);
+      return formatDateOrTime(new Date(Number(val) * 1000), true, entry?.local_offset || 8, entry?.clientWidth ? entry.clientWidth < 800 : false);
     }
   },
   {
@@ -44,7 +44,7 @@ export const timesheetColumn: TableColumns<TimeEntryRecord>[] = [
     key: 'end_at',
     render: (val, entry) => {
       const sec = Number(val);
-      return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, entry?.local_offset);
+      return !sec ? '-' : formatDateOrTime(new Date(Number(sec) * 1000), true, entry?.local_offset, entry?.clientWidth ? entry.clientWidth < 800 : false);
     }
   },
   {
@@ -214,7 +214,7 @@ export const reportColumn: TableColumns<TimeEntryReport>[] = [
       const str = String(val || '-')
         .replace('[start]', '🚀 ')
         .replace('[end]', '🏁 ');
-      return `<span class="is-size-7 is-italic">${str}</span>`;
+      return `<span class="remarks is-size-7 is-italic">${str}</span>`;
     }
   },
   {

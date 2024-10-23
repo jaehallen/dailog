@@ -7,7 +7,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
   }
 
   return {
-    user: { ...locals.user },
+    user: locals.user,
     routeList: locals.routes,
     defaultOptions:
       locals.user && url.pathname.includes('admin')

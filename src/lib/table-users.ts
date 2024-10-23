@@ -136,7 +136,7 @@ function usersListStore() {
           lead_id = updatedLead ? updates.lead_id : lead_id;
         }
 
-        lists[idx] = { ...lists[idx], ...updates, lead_id, teamlead };
+        lists[idx] = { ...lists[idx], ...updates, lead_id, teamlead, updated_at: new Date().toISOString() };
       }
       return lists;
     });

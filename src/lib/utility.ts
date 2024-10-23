@@ -51,8 +51,7 @@ export const dateAtOffsetStr = (date: Date | number, offset: number): string => 
 };
 
 //This should only be executed at client side. UTC-Offset timezone is not supported.
-export const formatDateOrTime = (val: string | Date, long = false, offset = 0): string => {
-  let isTime = false;
+export const formatDateOrTime = (val: string | Date, long = false, offset = 0, isTime = false): string => {
   let date = val instanceof Date ? val : new Date(val);
 
   if (!date.getTime() && typeof val === 'string') {
@@ -65,11 +64,13 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0): 
   let options: Intl.DateTimeFormatOptions = {};
 
   if (isTime) {
+    if(offset){
+      date = dateAtOffset(date, offset);
+    }
     options = { ...timeOpt, timeZone: 'UTC' };
   } else if (long) {
     date = dateAtOffset(date, offset);
     options = { ...dateOpt, ...timeOpt, timeZone: 'UTC' };
-    // options = { ...dateOpt, ...timeOpt, timeZone: getOffsetTimezoneStr(offset) };
   } else {
     options = { ...dateOpt };
   }

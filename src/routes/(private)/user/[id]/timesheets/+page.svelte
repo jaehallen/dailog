@@ -109,6 +109,8 @@
     remarks = '';
     timeAction.cancel();
   };
+
+  let clientWidth=300;
 </script>
 
 {#if browser}
@@ -152,7 +154,7 @@
       {/if}
     </section>
     <section class="section">
-      <table class="table is-fullwidth is-striped is-hoverable">
+      <table class="table is-fullwidth is-striped is-hoverable" bind:clientWidth={clientWidth}>
         <thead>
           <tr>
             {#each timesheetColumn as column, cid (cid)}
@@ -167,7 +169,8 @@
                 {#each timesheetColumn as column, cid (cid)}
                   <td class:is-light={entry.category !== 'clock' && column.key == 'date_at'}>
                     {@html column.render(entry[column.key] || '-', {
-                      local_offset: $timeAction.local_offset
+                      local_offset: $timeAction.local_offset,
+                      clientWidth: clientWidth
                     })}
                   </td>
                 {/each}

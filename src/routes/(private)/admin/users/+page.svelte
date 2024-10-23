@@ -7,7 +7,8 @@
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
   import { enhance } from '$app/forms';
-  import { slide, fly, fade } from 'svelte/transition';
+  import { slide, fly, fade, scale } from 'svelte/transition';
+  import { elasticIn, quintIn, quintInOut, quintOut, sineIn, sineOut } from 'svelte/easing';
   import { onMount } from 'svelte';
   import { Pagination, FilterDropdown, SearchUser } from '$lib/component/Datatable';
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
@@ -16,7 +17,7 @@
   import { validateUser } from '$lib/validation';
 
   export let data: PageData;
-  let advanceFilter = true;
+  let advanceFilter = false;
   let userUpdate = false;
   let disabled = false;
   let show: 'sched' | 'user';
@@ -113,105 +114,119 @@
     {/key}
   {/if}
 {/if}
-<main class="container mt-4">
-  <div class="grid mb-1">
-    <div class="cell">
+{#if data?.user}
+  <main class="container mt-4">
+    <div class="grid mb-1">
       <div class="cell">
-        {#if advanceFilter}
-          <form transition:slide={{ duration: 200 }} action="" class="block">
-            <FilterDropdown />
-          </form>
-        {:else}
-          <form transition:slide={{ duration: 200 }} action="" class="block">
-            <SearchUser />
-          </form>
-        {/if}
+        <div class="cell">
+          {#if advanceFilter}
+            <form transition:slide={{ duration: 200 }} action="" class="block">
+              <FilterDropdown
+                leads={data?.defaultOptions?.leads}
+                regions={data?.defaultOptions?.regions}
+                user={data.user}
+              />
+            </form>
+          {:else}
+            <form transition:slide={{ duration: 200 }} action="" class="block">
+              <SearchUser />
+            </form>
+          {/if}
+        </div>
+      </div>
+      <div class="cell"></div>
+      <div class="cell">
+        <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)} />
       </div>
     </div>
-    <div class="cell"></div>
-    <div class="cell">
-      <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)} />
-    </div>
-  </div>
-  <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
-    <thead class="">
-      {#each $headerRows as headerRow (headerRow.id)}
-        <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-          <tr {...rowAttrs}>
-            <th
-              >No.
-              <div>
-                <button
-                  class={`button is-small  + ${hasFilter ? 'is-danger is-light' : 'is-text'}`}
-                  on:click={() => ($filterValues = {})}
-                  ><span class="icon is-small">
-                    <FilterX />
-                  </span></button
-                >
-              </div>
-            </th>
+    <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
+      <thead class="">
+        {#each $headerRows as headerRow (headerRow.id)}
+          <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+            <tr {...rowAttrs}>
+              <th
+                >No.
+                <div>
+                  <button
+                    class={`button is-small  + ${hasFilter ? 'is-danger is-light' : 'is-text'}`}
+                    on:click={() => ($filterValues = {})}
+                    ><span class="icon is-small">
+                      <FilterX />
+                    </span></button
+                  >
+                </div>
+              </th>
 
-            {#each headerRow.cells as cell (cell.id)}
-              <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-                <th {...attrs}>
-                  <Render of={cell.render()} />
-                  {#if props.filter?.render}
-                    <div class="has-text-centered">
-                      <Render of={props.filter?.render} />
+              {#each headerRow.cells as cell (cell.id)}
+                <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+                  <th {...attrs}>
+                    <Render of={cell.render()} />
+                    {#if props.filter?.render}
+                      <div class="has-text-centered">
+                        <Render of={props.filter?.render} />
+                      </div>
+                    {/if}
+                  </th>
+                </Subscribe>
+              {/each}
+            </tr>
+          </Subscribe>
+        {/each}
+      </thead>
+      <tbody {...$tableBodyAttrs}>
+        {#each $rows as row (row.id)}
+          <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+            {#if row.isData()}
+              {#key row.original.updated_at}
+                <tr
+                  {...rowAttrs}
+                  class:is-selected={itemId === row.original.id}
+                  in:fly={{ delay: 100, duration: 200, easing: quintInOut, y: '-1rem' }}
+                  out:fly={{ duration: 100, easing: sineOut, y: '1rem' }}
+                >
+                  <td>
+                    <div class="buttons">
+                      <button
+                        class="button is-small"
+                        on:click={() => onUserUpdate(row.original, 'user')}
+                        disabled={!row.original.region}
+                        ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
+                          ><UserRoundPen /></span
+                        ></button
+                      >
+                      <button
+                        class="button is-small"
+                        on:click={() => onUserUpdate(row.original, 'sched')}
+                        disabled={!row.original.region}
+                        ><span title={`${row.original.name} Schedule`} class="icon is-small"
+                          ><CalendarCog /></span
+                        ></button
+                      >
                     </div>
-                  {/if}
-                </th>
-              </Subscribe>
-            {/each}
-          </tr>
-        </Subscribe>
-      {/each}
-    </thead>
-    <tbody {...$tableBodyAttrs}>
-      {#each $rows as row (row.id)}
-        <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-          {#if row.isData()}
-            {#key row.original.updated_at}
-              <tr {...rowAttrs} class:is-selected={itemId === row.original.id} in:fade>
-                <td>
-                  <div class="buttons">
-                    <button
-                      class="button is-small"
-                      on:click={() => onUserUpdate(row.original, 'user')}
-                      disabled={!row.original.region}
-                      ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
-                        ><UserRoundPen /></span
-                      ></button
-                    >
-                    <button
-                      class="button is-small"
-                      on:click={() => onUserUpdate(row.original, 'sched')}
-                      disabled={!row.original.region}
-                      ><span title={`${row.original.name} Schedule`} class="icon is-small"
-                        ><CalendarCog /></span
-                      ></button
-                    >
-                  </div>
-                </td>
-                {#each row.cells as cell (cell.id)}
-                  <Subscribe attrs={cell.attrs()} let:attrs>
-                    <td {...attrs} class={!row.original.active ? 'has-text-danger is-italic' : ''}>
-                      <Render
-                        of={cell.isData() && cell.value != null && cell.value != undefined
-                          ? cell.render()
-                          : '-'}
-                      />
-                    </td>
-                  </Subscribe>
-                {/each}
-              </tr>
-            {/key}
-          {/if}
-        </Subscribe>
-      {/each}
-    </tbody>
-  </table>
-</main>
+                  </td>
+                  {#each row.cells as cell (cell.id)}
+                    <Subscribe attrs={cell.attrs()} let:attrs>
+                      {#if cell.isData()}
+                        <td
+                          {...attrs}
+                          class={!row.original.active ? 'has-text-danger is-italic' : ''}
+                        >
+                          <Render
+                            of={cell.value != null && cell.value != undefined ? cell.render() : '-'}
+                          />
+                        </td>
+                      {/if}
+                    </Subscribe>
+                  {/each}
+                </tr>
+              {/key}
+            {/if}
+          </Subscribe>
+        {/each}
+      </tbody>
+    </table>
+  </main>
+{/if}
 
 <style>
   table {
