@@ -7,17 +7,16 @@
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
   import { enhance } from '$app/forms';
-  import { slide, fly, fade, scale } from 'svelte/transition';
-  import { elasticIn, quintIn, quintInOut, quintOut, sineIn, sineOut } from 'svelte/easing';
+  import { fly } from 'svelte/transition';
+  import { quintInOut, sineOut } from 'svelte/easing';
   import { onMount } from 'svelte';
-  import { Pagination, FilterDropdown, SearchUser } from '$lib/component/Datatable';
+  import { AdvanceFilter } from '$lib/component/Datatable';
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
   import { validateUser } from '$lib/validation';
 
   export let data: PageData;
-  let advanceFilter = false;
   let userUpdate = false;
   let disabled = false;
   let show: 'sched' | 'user';
@@ -114,33 +113,18 @@
     {/key}
   {/if}
 {/if}
-{#if data?.user}
-  <main class="container mt-4">
-    <div class="grid mb-1">
-      <div class="cell">
-        <div class="cell">
-          {#if advanceFilter}
-            <form transition:slide={{ duration: 200 }} action="" class="block">
-              <FilterDropdown
-                leads={data?.defaultOptions?.leads}
-                regions={data?.defaultOptions?.regions}
-                user={data.user}
-              />
-            </form>
-          {:else}
-            <form transition:slide={{ duration: 200 }} action="" class="block">
-              <SearchUser />
-            </form>
-          {/if}
-        </div>
-      </div>
-      <div class="cell"></div>
-      <div class="cell">
-        <Pagination on:advfilter={() => (advanceFilter = !advanceFilter)} />
-      </div>
-    </div>
+<main class="container mt-4">
+  <form action="/search" class="box" use:enhance>
+    <AdvanceFilter
+      user={data?.user ? data.user : {}}
+      regions={data?.defaultOptions?.regions}
+      leads={data?.defaultOptions?.leads}
+    />
+  </form>
+
+  <div class="box">
     <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
-      <thead class="">
+      <thead>
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
             <tr {...rowAttrs}>
@@ -225,8 +209,8 @@
         {/each}
       </tbody>
     </table>
-  </main>
-{/if}
+  </div>
+</main>
 
 <style>
   table {
@@ -238,9 +222,5 @@
     inset-block-start: 0;
     background: var(--bulma-scheme-main) !important;
     z-index: 1;
-  }
-
-  .filter-panel {
-    width: 300px;
   }
 </style>

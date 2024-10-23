@@ -1,10 +1,10 @@
 <script lang="ts">
   import FieldH from '$lib/component/FieldH.svelte';
   import type { User } from 'lucia/dist/core';
-  export let leads: {id: number, name: string}[] = []
+  export let leads: { id: number; name: string }[] = [];
   export let regions: string[] = [];
-  export let user: User | null;
-  let activeStr = '-1'
+  export let user: Partial<User>;
+  let activeStr = '-1';
 </script>
 
 <FieldH id="temp_a" label="Active" small={true}>
@@ -17,7 +17,7 @@
 </FieldH>
 <FieldH id="lead_id" label="Teamlead" small={true}>
   <select name="lead_id" id="lead_id" class="input is-small is-rounded">
-      <option value="-1">All</option>
+    <option value="-1">All</option>
     {#each leads as lead (lead.id)}
       <option value={lead.id} selected={lead.id === user?.id}>{lead.name}</option>
     {/each}
