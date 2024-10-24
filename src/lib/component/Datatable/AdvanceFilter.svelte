@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SearchOptions } from '$lib/validation';
   import type { User } from 'lucia';
-  import { isAdmin, isLepo } from '$lib/utility';
+  import { isAdmin } from '$lib/utility';
   import { ChevronRight, ChevronLeft, SlidersHorizontal } from 'lucide-svelte/icons';
   export let user: Partial<User>;
   export let regions: string[] = [];
@@ -9,10 +9,10 @@
   export let disabled = false;
   export let queries: Partial<SearchOptions> = {};
   let onFilter = false;
-  let username = queries.username
-  let tempLeads = leads.filter(l => isAdmin(user.role) || l.region === user.region);
-  let tempRegions = regions.filter(r => isAdmin(user.role) || r === user.region)
-
+  let username = queries.username;
+  let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
+  let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
+  console.log(queries);
 </script>
 
 <div class="level">
@@ -20,7 +20,13 @@
     <div class="level-item">
       <div class="field has-addons">
         <div class="control">
-          <input type="number" class="is-hidden" readonly />
+          <input
+            type="number"
+            name="last_id"
+            value={queries.last_id || 0}
+            class="is-hidden"
+            readonly
+          />
           <input
             type="text"
             class="input is-small is-rounded"
@@ -38,7 +44,11 @@
   </div>
   <div class="level-right">
     <div class="level-item has-text-centered">
-      <button class="button is-small is-rounded" on:click={() => (onFilter = !onFilter)}>
+      <button
+        type="button"
+        class="button is-small is-rounded"
+        on:click={() => (onFilter = !onFilter)}
+      >
         <span class="icon is-small">
           <SlidersHorizontal />
         </span>
@@ -53,7 +63,7 @@
             </div>
             <div class="control">
               <div class="select is-small is-rounded">
-                <select name="active">
+                <select name="active" value={String(queries.active ?? -1)}>
                   <option value="-1">All</option>
                   <option value="1">Yes</option>
                   <option value="0">No</option>
@@ -67,7 +77,10 @@
             </div>
             <div class="control">
               <div class="select is-small is-rounded is-static">
-                <select name="region" class="is-static">
+                <select name="region" class="is-static" value={queries.region || user.region || ''}>
+                  {#if tempRegions.length > 1}
+                    <option value="">All</option>
+                  {/if}
                   {#each tempRegions as region, id (id)}
                     <option value={region}>{region}</option>
                   {/each}
@@ -82,7 +95,7 @@
             <div class="control">
               <div class="select is-small is-rounded">
                 <select name="lead_id" {disabled}>
-                  <option value="-1">All</option>
+                  <option value="">All</option>
                   {#each tempLeads as lead (lead.id)}
                     <option value={lead.id} selected={lead.id === user?.id}>{lead.name}</option>
                   {/each}

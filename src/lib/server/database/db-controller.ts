@@ -10,6 +10,7 @@ import type {
 import { QUERY, WRITE } from './sql-queries';
 import { DBClient, getClient } from './turso';
 import { parseJSON } from '$lib/utility';
+import type { SearchOptions } from '$lib/validation';
 
 export class DatabaseController extends DBClient {
   constructor(dbClient: Client) {
@@ -99,14 +100,7 @@ export class DatabaseController extends DBClient {
     };
   }
 
-  public async getManyUsers(params: {
-    lead_id?: number;
-    region?: string;
-    active?: number;
-    offset?: number;
-    limit?: number;
-    last_id?: number;
-  }): Promise<Row[]> {
+  public async getManyUsers(params: SearchOptions): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_INFO(params);
     const { rows = [] } = (await super.get(sql, args)) || {};
 

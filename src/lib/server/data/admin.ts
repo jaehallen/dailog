@@ -1,42 +1,75 @@
 import type { User } from 'lucia';
 import { db } from '$lib/server/database/db-controller';
 import type { ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
-import { parseJSON } from '$lib/utility';
+import { isAdmin, isLepo, parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
+import type { SearchOptions } from '$lib/validation';
+import { TEMPID } from '$lib/defaults';
 
-export const listOfUsers = async (
-  user: User,
-  options: {
-    lead_id?: number;
-    region?: string;
-    active?: number;
-    offset?: number;
-    limit?: number;
-    last_id?: number;
-  } = {}
-): Promise<UsersList[]> => {
+export const listOfUsers = async (options: SearchOptions): Promise<UsersList[]> => {
   const usersList = await db.getManyUsers(options);
   return usersList.map(toUsersList);
 };
 
-export const addUserSchedule = async (args: Omit<ScheduleRecord, "id">) => {
+export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
   return db.createUserSchedule(args);
 };
 
-export const updateUser = async (user: Omit<UserRecord, "password_hash" | "preferences">) => {
+export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
   return db.updateUser(user);
 };
 
-export const defaultQuery = (user: User, ) => {
-  if(user.role === 'admin'){
-    return {}
+export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
+  if (query.size) {
+    const temp = {
+      username: query.get('username') ?? '',
+      active: Number(query.get('active')) ?? null,
+      limit: Number(query.get('limit')) ?? 100,
+      region: query.get('region') ?? null,
+      lead_id: Number(query.get('lead_id')) ?? null,
+      last_id: Number(query.get('last_id')) ?? 0
+    };
+
+    if (!isLepo(user.role) && temp.last_id <= TEMPID) {
+      temp.last_id = TEMPID;
+    }
+
+    return temp;
+  } else if (isAdmin(user.role)) {
+    return {
+      username: '',
+      active: null,
+      limit: 100,
+      region: null,
+      lead_id: null,
+      last_id: 0
+    };
   }
 
-  return {limit: 100}
-}
+  return {
+    username: '',
+    active: 1,
+    limit: 100,
+    region: user.region,
+    lead_id: user.id,
+    last_id: TEMPID
+  };
+};
 
 function toUsersList(record: Record<string, any>): UsersList {
-  const { id, active, name, region, role, lead_id, teamlead, lock_password, schedules, created_at, updated_at } = record;
+  const {
+    id,
+    active,
+    name,
+    region,
+    role,
+    lead_id,
+    teamlead,
+    lock_password,
+    schedules,
+    created_at,
+    updated_at
+  } = record;
 
   const sched = parseJSON(schedules);
   const currentSched = getCurrentSchedule(sched);

@@ -1,6 +1,6 @@
 import { LIMIT, TEMPID } from '$lib/defaults';
 import type { OptRole, ScheduleRecord, TimeEntryRecord, UserRecord } from '$lib/types/schema';
-import { Sqlite3Client } from '@libsql/client/sqlite3';
+import type { SearchOptions } from '$lib/validation';
 
 export const QUERY = {
   REGIONS: () => {
@@ -22,26 +22,14 @@ export const QUERY = {
     };
   },
 
-  USERS_INFO: (args: {
-    region?: string;
-    lead_id?: number;
-    active?: number;
-    last_id?: number;
-    limit?: number;
-    offset?: number;
-  }) => {
+  USERS_INFO: (args: SearchOptions) => {
     const where = [];
-    const values: {
-      region?: string;
-      limit?: number;
-      lead_id?: number;
-      active?: number;
-      last_id?: number;
-    } = {
-      last_id: args.last_id || 0,
-      limit: args.limit || LIMIT.USERS
+    const values: Partial<SearchOptions> = {
+      limit: args.limit || LIMIT.USERS,
+      last_id: args.last_id || 0
     };
-    if (args.region) {
+
+    if (args.region && args.region.length > 0) {
       where.push('users.region = $region');
       values.region = args.region;
     }
@@ -51,8 +39,8 @@ export const QUERY = {
       values.lead_id = args.lead_id;
     }
 
-    if (args.active !== null && args.active !== undefined) {
-      where.push('active = $active');
+    if (args.active !== null && !isNaN(args.active)) {
+      where.push('users.active = $active');
       values.active = args.active;
     }
 

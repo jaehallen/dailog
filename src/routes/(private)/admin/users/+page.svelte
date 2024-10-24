@@ -14,8 +14,8 @@
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
-  import { validateUser } from '$lib/validation';
-  import { replaceState } from '$app/navigation';
+  import { validateUser, type SearchOptions } from '$lib/validation';
+  import { goto } from '$app/navigation';
   import { page } from '$app/stores';
 
   export let data: PageData;
@@ -77,10 +77,11 @@
     };
   };
 
-  const onFilter: SubmitFunction = ({ formData, cancel, action }) => {
+  const onFilter: SubmitFunction = ({ formData }) => {
+    console.log(formData);
     return async ({ update, result }) => {
       if (result.type === 'success') {
-        console.log(result.data)
+        usersData.set(result.data?.listOfUsers ?? []);
       } else {
         console.error(result);
       }
@@ -89,15 +90,19 @@
     };
   };
 
-  const replaceQuery = (values: Record<string, string>) => {
-    const url = new URL(window.location.toString());
+  const replaceQuery = async (values: SearchOptions) => {
     Object.entries(values).forEach(([key, value]) => {
-      url.searchParams.set(key, value);
+      $page.url.searchParams.set(key, String(value || ''));
     });
-    replaceState(url, $page.state);
-  }
+
+    goto($page.url);
+  };
+
   onMount(() => {
-    usersData.set(data.listOfUsers);
+    usersData.set(data.listOfUsers ?? []);
+    if (data.queries) {
+      replaceQuery(data.queries ?? {}).catch((e) => console.error(e));
+    }
     window.addEventListener('keydown', closePopup);
     return () => {
       window.removeEventListener('keydown', () => {});
@@ -133,7 +138,8 @@
 <main class="container mt-4">
   <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
-      user={data?.user ? data.user : {}}
+      queries={data.queries ?? {}}
+      user={data?.user ?? {}}
       regions={data?.defaultOptions?.regions}
       leads={data?.defaultOptions?.leads}
     />
