@@ -51,3 +51,14 @@ export const validateUser = z.object({
   active: z.coerce.number().transform(Boolean),
   lock_password: z.coerce.number().transform(Boolean)
 });
+
+export const validdateSearch = z.object({
+  username: z.coerce.string().transform((v) => (v == '' ? null : v)).nullable(),
+  lead_id: z.coerce.number().nullable(),
+  last_id: z.coerce.number(),
+  limit: z.coerce.number(),
+  active: z.coerce.number().transform((v) => (v < 0 ? null : v)),
+  region: z.coerce.string().transform((v) => (v == '' ? null : v)).nullable()
+})
+
+export type SearchOptions = z.infer<typeof validdateSearch>;

@@ -3,7 +3,7 @@
   import Field from '$lib/component/Field.svelte';
   import DropdownButton from '$lib/component/DropdownButton.svelte';
   import { WEEKDAYS, UTCOFFSET } from '$lib/defaults';
-  export let schedule: ScheduleRecord | null;
+  export let schedule: ScheduleRecord | null = null;
   export let user_id: number;
   export let disabled = false;
   const DAYS = [...WEEKDAYS.slice(1), WEEKDAYS[0]];

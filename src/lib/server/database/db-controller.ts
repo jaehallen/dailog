@@ -105,6 +105,7 @@ export class DatabaseController extends DBClient {
     active?: number;
     offset?: number;
     limit?: number;
+    last_id?: number;
   }): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_INFO(params);
     const { rows = [] } = (await super.get(sql, args)) || {};
@@ -117,7 +118,7 @@ export class DatabaseController extends DBClient {
     return {
       regions: regions?.rows.map((r) => String(r.region)) || [],
       leads: leads?.rows.map((l) => {
-        return { id: Number(l.id), name: String(l.name) };
+        return { id: Number(l.id), name: String(l.name), region: String(l.region) };
       })
     };
   }

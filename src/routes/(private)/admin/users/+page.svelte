@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { UsersList } from '$lib/types/schema';
+  import type { ScheduleRecord, UsersList } from '$lib/types/schema';
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
   import AsideContainer from '$lib/component/AsideContainer.svelte';
@@ -15,16 +15,24 @@
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
   import { validateUser } from '$lib/validation';
+  import { replaceState } from '$app/navigation';
+  import { page } from '$app/stores';
 
   export let data: PageData;
+
   let userUpdate = false;
   let disabled = false;
   let show: 'sched' | 'user';
   let itemId = 0;
 
+  const OMIT_SCHED_COLUMN: (keyof ScheduleRecord)[] = [
+    'id',
+    'clock_dur_min',
+    'break_dur_min',
+    'lunch_dur_min'
+  ];
   const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(usersData);
   const { filterValues } = pluginStates.filter;
-  $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 
   const closePopup = (e: KeyboardEvent) => {
     if (e.key == 'Escape') {
@@ -69,6 +77,25 @@
     };
   };
 
+  const onFilter: SubmitFunction = ({ formData, cancel, action }) => {
+    return async ({ update, result }) => {
+      if (result.type === 'success') {
+        console.log(result.data)
+      } else {
+        console.error(result);
+      }
+      await update({ invalidateAll: false, reset: false });
+      disabled = false;
+    };
+  };
+
+  const replaceQuery = (values: Record<string, string>) => {
+    const url = new URL(window.location.toString());
+    Object.entries(values).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+    replaceState(url, $page.state);
+  }
   onMount(() => {
     usersData.set(data.listOfUsers);
     window.addEventListener('keydown', closePopup);
@@ -77,14 +104,15 @@
     };
   });
 
+  $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
   $: selectedUser = $usersData.find((user) => user.id === itemId) || null;
   $: selectedUserSchedules = selectedUser?.schedules || [];
 </script>
 
 {#if userUpdate && selectedUser}
-  {#if data.user?.role === 'admin' && show == 'user'}
-    {#key itemId}
-      <AsideContainer on:exit={() => (userUpdate = !userUpdate)}>
+  {#key `${itemId}${show}`}
+    <AsideContainer on:exit={() => (userUpdate = !userUpdate)}>
+      {#if show == 'user'}
         <form action="?/update-user" method="POST" use:enhance={scheduleOnSubmit}>
           <UserInputs
             user={selectedUser}
@@ -93,28 +121,17 @@
             {disabled}
           />
         </form>
-      </AsideContainer>
-    {/key}
-  {:else if show == 'sched'}
-    {#key itemId}
-      <AsideContainer on:exit={() => (userUpdate = !userUpdate)}>
-        <UserScheduleTable
-          schedules={selectedUserSchedules}
-          exclude={['id', 'clock_dur_min', 'break_dur_min', 'lunch_dur_min']}
-        />
+      {:else}
+        <UserScheduleTable schedules={selectedUserSchedules} exclude={OMIT_SCHED_COLUMN} />
         <form action="?/add-schedule" method="POST" use:enhance={scheduleOnSubmit}>
-          <ScheduleInputs
-            schedule={selectedUserSchedules.at(0) ?? null}
-            user_id={itemId}
-            {disabled}
-          />
+          <ScheduleInputs schedule={selectedUserSchedules.at(0)} user_id={itemId} {disabled} />
         </form>
-      </AsideContainer>
-    {/key}
-  {/if}
+      {/if}
+    </AsideContainer>
+  {/key}
 {/if}
 <main class="container mt-4">
-  <form action="/search" class="box" use:enhance>
+  <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
       user={data?.user ? data.user : {}}
       regions={data?.defaultOptions?.regions}
@@ -128,8 +145,8 @@
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
             <tr {...rowAttrs}>
-              <th
-                >No.
+              <th>
+                No.
                 <div>
                   <button
                     class={`button is-small  + ${hasFilter ? 'is-danger is-light' : 'is-text'}`}
@@ -140,7 +157,6 @@
                   >
                 </div>
               </th>
-
               {#each headerRow.cells as cell (cell.id)}
                 <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
                   <th {...attrs}>
@@ -170,14 +186,16 @@
                 >
                   <td>
                     <div class="buttons">
-                      <button
-                        class="button is-small"
-                        on:click={() => onUserUpdate(row.original, 'user')}
-                        disabled={!row.original.region}
-                        ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
-                          ><UserRoundPen /></span
-                        ></button
-                      >
+                      {#if data.user?.role == 'admin'}
+                        <button
+                          class="button is-small"
+                          on:click={() => onUserUpdate(row.original, 'user')}
+                          disabled={!row.original.region}
+                          ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
+                            ><UserRoundPen /></span
+                          ></button
+                        >
+                      {/if}
                       <button
                         class="button is-small"
                         on:click={() => onUserUpdate(row.original, 'sched')}

@@ -12,6 +12,7 @@ export const listOfUsers = async (
     active?: number;
     offset?: number;
     limit?: number;
+    last_id?: number;
   } = {}
 ): Promise<UsersList[]> => {
   const usersList = await db.getManyUsers(options);
@@ -25,6 +26,14 @@ export const addUserSchedule = async (args: Omit<ScheduleRecord, "id">) => {
 export const updateUser = async (user: Omit<UserRecord, "password_hash" | "preferences">) => {
   return db.updateUser(user);
 };
+
+export const defaultQuery = (user: User, ) => {
+  if(user.role === 'admin'){
+    return {}
+  }
+
+  return {limit: 100}
+}
 
 function toUsersList(record: Record<string, any>): UsersList {
   const { id, active, name, region, role, lead_id, teamlead, lock_password, schedules, created_at, updated_at } = record;

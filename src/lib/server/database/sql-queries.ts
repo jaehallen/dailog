@@ -11,7 +11,7 @@ export const QUERY = {
   },
   LEADS: (role: OptRole) => {
     return {
-      sql: "SELECT id, name FROM users WHERE id > $id AND role in ('admin','lead','poc')",
+      sql: "SELECT id, name, region FROM users WHERE id > $id AND active = 1 AND role in ('admin','lead','poc')",
       args: { id: role === 'admin' ? 0 : TEMPID }
     };
   },
@@ -28,6 +28,7 @@ export const QUERY = {
     active?: number;
     last_id?: number;
     limit?: number;
+    offset?: number;
   }) => {
     const where = [];
     const values: {
