@@ -55,8 +55,8 @@ export const validateUser = z.object({
 export const validateSearch = z.object({
   limit: z.coerce.number().gt(0),
   last_id: z.coerce.number().gte(0),
-  lead_id: z.coerce.number().transform((v) => (v <= 0 ? null : v)),
-  active: z.coerce.number().transform((v) => (v < 0 ? null : v)),
+  lead_id: z.string().transform((v) => isNaN(parseInt(v)) ? null : parseInt(v)).pipe(z.number().nullable()),
+  active: z.string().transform((v) => isNaN(parseInt(v)) ? null : parseInt(v)).pipe(z.number().nullable()),
   username: z.coerce
     .string()
     .transform((v) => (v == '' ? null : v))
@@ -67,4 +67,5 @@ export const validateSearch = z.object({
     .nullable()
 });
 
-export type SearchOptions = z.infer<typeof validateSearch>;
+
+export type SearchOptions = z.infer<typeof validateSearch> & {[key: string]: string | number | null}

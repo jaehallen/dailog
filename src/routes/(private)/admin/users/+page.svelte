@@ -14,7 +14,7 @@
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
-  import { validateUser, type SearchOptions } from '$lib/validation';
+  import { validateSearch, validateUser, type SearchOptions } from '$lib/validation';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
 
@@ -22,8 +22,10 @@
 
   let userUpdate = false;
   let disabled = false;
+  let loading = false;
   let show: 'sched' | 'user';
   let itemId = 0;
+  let currentFilter: SearchOptions = data?.queries || {};
 
   const OMIT_SCHED_COLUMN: (keyof ScheduleRecord)[] = [
     'id',
@@ -46,7 +48,7 @@
     itemId = itemData.id;
   };
 
-  const isDirty = (formData: FormData) => {
+  const isDirtyUserInput = (formData: FormData) => {
     const data = Object.fromEntries(formData);
     const valid = validateUser.safeParse(data);
     return (
@@ -56,8 +58,17 @@
     );
   };
 
+  const isDirtyFilterInput = (formData: FormData) => {
+    const data = Object.fromEntries(formData);
+    const validInput = validateSearch.safeParse(data);
+    return (
+      validInput.success &&
+      Object.entries(validInput.data).some(([key, val]) => currentFilter[key] !== val)
+    );
+  };
+
   const scheduleOnSubmit: SubmitFunction = ({ formData, cancel, action }) => {
-    if (!isDirty(formData) && action.search === '?/update-user') {
+    if (!isDirtyUserInput(formData) && action.search === '?/update-user') {
       cancel();
     } else {
       disabled = true;
@@ -77,16 +88,25 @@
     };
   };
 
-  const onFilter: SubmitFunction = ({ formData }) => {
-    console.log(formData);
+  const onFilter: SubmitFunction = ({ formData, action, cancel }) => {
+    loading = true
+    if (!isDirtyFilterInput(formData) && action.search === '?/filter') {
+      cancel();
+      loading = false;
+    }else {
+    }
     return async ({ update, result }) => {
       if (result.type === 'success') {
-        usersData.set(result.data?.listOfUsers ?? []);
+        if(result.data){
+          usersData.set(result.data.listOfUsers ?? []);
+          replaceQuery(result.data.queries ?? {})
+          currentFilter = result.data.queries ?? {};
+        }
       } else {
         console.error(result);
       }
       await update({ invalidateAll: false, reset: false });
-      disabled = false;
+      loading = false;
     };
   };
 
@@ -101,7 +121,7 @@
   onMount(() => {
     usersData.set(data.listOfUsers ?? []);
     if (data.queries) {
-      replaceQuery(data.queries ?? {}).catch((e) => console.error(e));
+      replaceQuery(data.queries ?? {});
     }
     window.addEventListener('keydown', closePopup);
     return () => {
@@ -135,18 +155,19 @@
     </AsideContainer>
   {/key}
 {/if}
-<main class="container mt-4">
+<main class="container mt-4" class:is-skeleton={loading}>
   <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
       queries={data.queries ?? {}}
       user={data?.user ?? {}}
       regions={data?.defaultOptions?.regions}
       leads={data?.defaultOptions?.leads}
+      disabled={loading}
     />
   </form>
 
   <div class="box">
-    <table class="table is-hoverable is-fullwidth is-striped" {...$tableAttrs}>
+    <table class="table is-hoverable is-fullwidth is-striped" class:is-skeleton={loading} {...$tableAttrs}>
       <thead>
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>

@@ -3,6 +3,7 @@
   import type { User } from 'lucia';
   import { isAdmin } from '$lib/utility';
   import { ChevronRight, ChevronLeft, SlidersHorizontal } from 'lucide-svelte/icons';
+  import {usersData} from '$lib/table-users';
   export let user: Partial<User>;
   export let regions: string[] = [];
   export let leads: { id: number; name: string; region: string }[] = [];
@@ -12,7 +13,7 @@
   let username = queries.username;
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
-  console.log(queries);
+  $: isMaxSize = $usersData.length < (queries?.limit ?? 0)
 </script>
 
 <div class="level">
@@ -63,8 +64,8 @@
             </div>
             <div class="control">
               <div class="select is-small is-rounded">
-                <select name="active" value={String(queries.active ?? -1)}>
-                  <option value="-1">All</option>
+                <select name="active" value={String(queries.active || '')}>
+                  <option value="">All</option>
                   <option value="1">Yes</option>
                   <option value="0">No</option>
                 </select>
@@ -94,10 +95,10 @@
             </div>
             <div class="control">
               <div class="select is-small is-rounded">
-                <select name="lead_id" {disabled}>
+                <select name="lead_id" {disabled} value={queries.lead_id ?? ''}>
                   <option value="">All</option>
                   {#each tempLeads as lead (lead.id)}
-                    <option value={lead.id} selected={lead.id === user?.id}>{lead.name}</option>
+                    <option value={lead.id}>{lead.name}</option>
                   {/each}
                 </select>
               </div>
@@ -105,7 +106,7 @@
           </div>
           <div class="field">
             <div class="control">
-              <select class="input is-small is-rounded" name="limit" {disabled}>
+              <select class="input is-small is-rounded" name="limit" {disabled} value={String(queries.limit || 50)}>
                 <option value="50">50 rows</option>
                 <option value="100">100 rows</option>
                 <option value="500">500 rows</option>
@@ -123,14 +124,14 @@
       </div>
     </div>
     <div class="level-item has-text-centered">
-      <button class="button is-small is-rounded" disabled={disabled || Boolean(username)}>
+      <button class="button is-small is-rounded" disabled={disabled || Boolean(username) || isMaxSize}>
         <span class="icon is-small">
           <ChevronLeft />
         </span>
       </button>
     </div>
     <div class="level-item has-text-centered">
-      <button class="button is-small is-rounded" disabled={disabled || Boolean(username)}>
+      <button class="button is-small is-rounded" disabled={disabled || Boolean(username) || isMaxSize}>
         <span class="icon is-small">
           <ChevronRight />
         </span>

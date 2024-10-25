@@ -3,6 +3,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { validateSchedule, validateUser, validateSearch } from '$lib/validation';
 import { isAdmin, isEditor } from '$lib/utility';
+
 export const load = (async ({ locals, url }) => {
   if (!locals.user) {
     redirect(302, '/login');
@@ -12,36 +13,27 @@ export const load = (async ({ locals, url }) => {
     redirect(302, '/');
   }
 
-  const temp = userFilters(locals.user, url.searchParams);
-  const filterData = validateSearch.safeParse(temp);
-
-  if (filterData.error) {
-    return {
-      queries: null,
-      listOfUsers: null
-    };
-  }
-  console.log(temp);
-  console.log(filterData.data);
-
+  const filterOptions = userFilters(locals.user, url.searchParams);
   return {
-    queries: filterData.data,
-    listOfUsers: await listOfUsers(filterData.data)
+    queries: filterOptions,
+    listOfUsers: await listOfUsers(filterOptions)
   };
 }) satisfies PageServerLoad;
 
 export const actions = {
-  filter: async ({ request }) => {
+  filter: async (event) => {
+    const request = event.request;
+    console.log(event.url)
+    console.log(event.params)
     const form = await request.formData();
-
     const validFilter = validateSearch.safeParse(Object.fromEntries(form));
+
     if (!validFilter.success) {
       return fail(401, { message: 'Invalid Filter' });
     }
 
-    console.log(validFilter.data);
-
     return {
+      queries: validFilter.data,
       listOfUsers: await listOfUsers(validFilter.data)
     };
   },

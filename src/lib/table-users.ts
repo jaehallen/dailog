@@ -1,12 +1,13 @@
 import type { UsersList, ScheduleRecord, UserRecord } from './types/schema';
 import type { Writable } from 'svelte/store';
-import { writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 import { createRender, createTable } from 'svelte-headless-table';
 import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
 import { textFilter, matchFilter } from './utility';
 
 export const usersData = usersListStore();
+export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0)
 
 export function getUsersTable(userslist: Writable<UsersList[]>) {
   const table = createTable(userslist, {
@@ -106,7 +107,8 @@ function usersListStore() {
   const addUserSched = (schedule: ScheduleRecord) => {
     update((lists) => {
       const idx = lists.findIndex((u) => u.id == schedule.user_id);
-      if (idx) {
+
+      if (idx >= 0) {
         const scheds = [...lists[idx].schedules];
         const schedIdx = scheds.findIndex((s) => Number(s.id) === Number(schedule.id));
 
@@ -114,7 +116,9 @@ function usersListStore() {
           scheds[schedIdx] = { ...schedule };
           lists[idx].schedules = [...scheds];
         } else {
-          lists[idx].schedules = [schedule, ...scheds.slice(0, 4)];
+          lists[idx].schedules = [schedule, ...scheds]
+            .toSorted((a: ScheduleRecord, b: ScheduleRecord) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())
+            .slice(0, 5)
         }
       }
       return lists;

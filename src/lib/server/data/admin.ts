@@ -3,7 +3,7 @@ import { db } from '$lib/server/database/db-controller';
 import type { ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
 import { isAdmin, isLepo, parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
-import type { SearchOptions } from '$lib/validation';
+import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
 
 export const listOfUsers = async (options: SearchOptions): Promise<UsersList[]> => {
@@ -20,40 +20,37 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 };
 
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
-  if (query.size) {
-    const temp = {
-      username: query.get('username') ?? '',
-      active: Number(query.get('active')) ?? null,
-      limit: Number(query.get('limit')) ?? 100,
-      region: query.get('region') ?? null,
-      lead_id: Number(query.get('lead_id')) ?? null,
-      last_id: Number(query.get('last_id')) ?? 0
-    };
-
-    if (!isLepo(user.role) && temp.last_id <= TEMPID) {
-      temp.last_id = TEMPID;
-    }
-
-    return temp;
-  } else if (isAdmin(user.role)) {
-    return {
-      username: '',
-      active: null,
-      limit: 100,
-      region: null,
-      lead_id: null,
-      last_id: 0
-    };
-  }
-
-  return {
+  const defaultSearch = isAdmin(user.role) ? {
+    username: '',
+    active: null,
+    limit: 100,
+    region: null,
+    lead_id: null,
+    last_id: 0
+  } : {
     username: '',
     active: 1,
     limit: 100,
     region: user.region,
     lead_id: user.id,
     last_id: TEMPID
-  };
+  }
+
+  if (query.size) {
+    const temp = {
+      username: query.get('username'),
+      active: query.get('active'),
+      limit: Number(query.get('limit')),
+      region: query.get('region'),
+      lead_id: query.get('lead_id'),
+      last_id: Number(query.get('last_id'))
+    };
+
+    const zSearch = validateSearch.safeParse(temp)
+    return zSearch.success ? zSearch.data : defaultSearch
+  }
+
+  return defaultSearch
 };
 
 function toUsersList(record: Record<string, any>): UsersList {

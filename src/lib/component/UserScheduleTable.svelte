@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { ScheduleRecord } from '$lib/types/schema';
   import { scheduleColumn } from '$lib/table-schema';
-  import { fade } from 'svelte/transition';
+  import { scale } from 'svelte/transition';
   import { flip } from 'svelte/animate';
+  import { cubicOut } from 'svelte/easing';
+
   export let schedules: ScheduleRecord[];
   export let exclude: (keyof ScheduleRecord)[] = [];
 
@@ -27,8 +29,8 @@
         {#each schedules.toSorted(sortSchedule) as sched, idx (sched.id)}
           <tr class:is-light={idx % 2 == 0} animate:flip>
             {#each column as column, cid (cid)}
-              {#key sched[column.key]}
-                <td class="has-text-right" in:fade|local={{ delay: 100, duration: 500 }}>
+              {#key `${cid}-${sched[column.key]}`}
+                <td class="has-text-right" in:scale|local={{ delay: 100, duration: 500 }}>
                   {@html column.render(sched[column.key] || '-')}
                 </td>
               {/key}
