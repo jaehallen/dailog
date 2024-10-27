@@ -42,6 +42,14 @@
     }
   };
 
+  const maxId = (data: UsersList[] = []) => {
+    return data.length ? Math.max(...data.map((x) => x.id)) : 0;
+  };
+
+  const minId = (data: UsersList[] = []) => {
+    return data.length ? Math.min(...data.map((x) => x.id)) : 0;
+  };
+
   const onUserUpdate = (itemData: UsersList, showType: 'sched' | 'user') => {
     show = showType;
     userUpdate = true;
@@ -89,18 +97,38 @@
   };
 
   const onFilter: SubmitFunction = ({ formData, action, cancel }) => {
-    loading = true
+    loading = true;
     if (!isDirtyFilterInput(formData) && action.search === '?/filter') {
       cancel();
       loading = false;
-    }else {
+    } else if (['?/prev-page', '?/next-page'].includes(action.search)) {
+      formData.set('last_id', String(maxId($usersData)));
     }
+
     return async ({ update, result }) => {
       if (result.type === 'success') {
-        if(result.data){
-          usersData.set(result.data.listOfUsers ?? []);
-          replaceQuery(result.data.queries ?? {})
-          currentFilter = result.data.queries ?? {};
+        if (result.data) {
+          const { listOfUsers, queries: q = {} } = result.data;
+          currentFilter = { ...q };
+          console.log(result.data);
+          if (listOfUsers) {
+            if (action.search === '?/filter') {
+              currentFilter.min_id = minId(listOfUsers);
+              currentFilter.max_id = q.limit > listOfUsers.length ? maxId(listOfUsers) : 0;
+              usersData.set(result.data.listOfUsers);
+            } else {
+              if (!listOfUsers.length) {
+                if (action.search == '?/prev-page') {
+                  currentFilter.min_id = minId($usersData);
+                } else if (action.search == '?/next-page') {
+                  currentFilter.max_id = maxId($usersData);
+                }
+              } else {
+                usersData.set(listOfUsers);
+              }
+            }
+          }
+          replaceQuery(currentFilter);
         }
       } else {
         console.error(result);
@@ -158,7 +186,7 @@
 <main class="container mt-4" class:is-skeleton={loading}>
   <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
-      queries={data.queries ?? {}}
+      queries={currentFilter ?? {}}
       user={data?.user ?? {}}
       regions={data?.defaultOptions?.regions}
       leads={data?.defaultOptions?.leads}
@@ -167,7 +195,11 @@
   </form>
 
   <div class="box">
-    <table class="table is-hoverable is-fullwidth is-striped" class:is-skeleton={loading} {...$tableAttrs}>
+    <table
+      class="table is-hoverable is-fullwidth is-striped"
+      class:is-skeleton={loading}
+      {...$tableAttrs}
+    >
       <thead>
         {#each $headerRows as headerRow (headerRow.id)}
           <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>

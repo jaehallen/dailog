@@ -21,8 +21,10 @@ export const QUERY = {
       args
     };
   },
-
-  USERS_INFO: (args: SearchOptions) => {
+  USERS_INFO: (args: SearchOptions, isPrevPage = false) => {
+    let pagination = isPrevPage
+      ? { direction: '<=', order: 'DESC' }
+      : { direction: '>', order: 'ASC' };
     const where = [];
     const values: Partial<SearchOptions> = {
       limit: args.limit || LIMIT.USERS,
@@ -75,8 +77,8 @@ export const QUERY = {
               ) as schedules
             FROM users
               LEFT JOIN users lead ON users.lead_id = lead.id
-              WHERE users.id > $last_id ${where.length ? `AND ${where.join(' AND ')}` : ''}
-              GROUP BY users.id ORDER BY users.id LIMIT $limit`,
+              WHERE users.id ${pagination.direction} $last_id ${where.length ? `AND ${where.join(' AND ')}` : ''}
+              GROUP BY users.id ORDER BY users.id ${pagination.order} LIMIT $limit`,
       args: values
     };
   },

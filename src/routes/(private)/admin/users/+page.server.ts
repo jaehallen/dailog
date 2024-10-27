@@ -1,8 +1,9 @@
 import { addUserSchedule, listOfUsers, updateUser, userFilters } from '$lib/server/data/admin';
 import { redirect, fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import type { PageServerLoad, Actions, RequestEvent } from './$types';
 import { validateSchedule, validateUser, validateSearch } from '$lib/validation';
 import { isAdmin, isEditor } from '$lib/utility';
+import { TEMPID } from '$lib/defaults';
 
 export const load = (async ({ locals, url }) => {
   if (!locals.user) {
@@ -21,21 +22,18 @@ export const load = (async ({ locals, url }) => {
 }) satisfies PageServerLoad;
 
 export const actions = {
-  filter: async (event) => {
-    const request = event.request;
-    console.log(event.url)
-    console.log(event.params)
+  filter: async ({ locals, request }) => {
     const form = await request.formData();
-    const validFilter = validateSearch.safeParse(Object.fromEntries(form));
-
-    if (!validFilter.success) {
-      return fail(401, { message: 'Invalid Filter' });
-    }
-
-    return {
-      queries: validFilter.data,
-      listOfUsers: await listOfUsers(validFilter.data)
-    };
+    form.set('last_id', isEditor(locals.user?.role) ? String(TEMPID) : '');
+    return await queryData(form);
+  },
+  'prev-page': async ({ request }) => {
+    const form = await request.formData();
+    return await queryData(form, true);
+  },
+  'next-page': async ({ request }) => {
+    const form = await request.formData();
+    return await queryData(form);
   },
   'add-schedule': async ({ request, locals }) => {
     if (!locals.user || !locals.session) {
@@ -85,3 +83,18 @@ export const actions = {
     return null;
   }
 } satisfies Actions;
+
+async function queryData(form: FormData, isPrev = false) {
+  const validFilter = validateSearch.safeParse(Object.fromEntries(form));
+
+  if (!validFilter.success) {
+    return fail(401, { message: 'Invalid Filter' });
+  }
+
+  console.log(validFilter.data);
+
+  return {
+    queries: { ...validFilter.data },
+    listOfUsers: await listOfUsers(validFilter.data, isPrev)
+  };
+}
