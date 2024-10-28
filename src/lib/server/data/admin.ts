@@ -20,7 +20,7 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 };
 
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
-  const defaultSearch = isAdmin(user.role)
+  const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
         username: '',
         active: null,
@@ -28,8 +28,8 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         region: null,
         lead_id: null,
         last_id: 0,
-        min_id: 0,
-        max_id: 0
+        page_total: null,
+        page_index: String(0),
       }
     : {
         username: '',
@@ -38,8 +38,8 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         region: user.region,
         lead_id: user.id,
         last_id: TEMPID,
-        min_id: TEMPID,
-        max_id: 0
+        page_total: null,
+        page_index: String(TEMPID)
       };
 
   if (query.size) {
@@ -50,8 +50,8 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
       region: query.get('region'),
       lead_id: query.get('lead_id'),
       last_id: Number(query.get('last_id')),
-      min_id: Number(query.get('min_id')),
-      max_id: Number(query.get('max_id'))
+      page_total: Number(query.get('page_total')),
+      page_index: query.get('page_index')
     };
 
     const zSearch = validateSearch.safeParse(temp);

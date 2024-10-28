@@ -15,8 +15,9 @@
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
   import { validateSearch, validateUser, type SearchOptions } from '$lib/validation';
-  import { goto } from '$app/navigation';
+  import { goto, pushState, replaceState } from '$app/navigation';
   import { page } from '$app/stores';
+  import ButtonIcon from '$lib/component/ButtonIcon.svelte';
 
   export let data: PageData;
 
@@ -25,7 +26,7 @@
   let loading = false;
   let show: 'sched' | 'user';
   let itemId = 0;
-  let currentFilter: SearchOptions = data?.queries || {};
+  let filterOpt: SearchOptions = data?.queries || {};
 
   const OMIT_SCHED_COLUMN: (keyof ScheduleRecord)[] = [
     'id',
@@ -71,8 +72,33 @@
     const validInput = validateSearch.safeParse(data);
     return (
       validInput.success &&
-      Object.entries(validInput.data).some(([key, val]) => currentFilter[key] !== val)
+      Object.entries(validInput.data).some(([key, val]) => filterOpt[key] !== val)
     );
+  };
+
+  const indexPageList = (data: UsersList[], q: SearchOptions) => {
+    let pages = typeof q.page_index == 'string' ? q.page_index.split('_') : [];
+
+    if (!pages.includes(String(q.last_id))) {
+      pages.push(String(q.last_id));
+    }
+
+    if (q.limit > data.length) {
+      q.page_total = pages.length;
+    }
+
+    q.last_id = maxId(data);
+    q.page_index = pages.join('_');
+    return q;
+  };
+
+  const initDatatable = (data: UsersList[], queries: SearchOptions) => {
+    console.log(queries);
+    filterOpt = { ...queries };
+    filterOpt.last_id = minId(data);
+    filterOpt = indexPageList(data, { ...filterOpt });
+    usersData.set(data);
+    updateQuery(filterOpt);
   };
 
   const scheduleOnSubmit: SubmitFunction = ({ formData, cancel, action }) => {
@@ -109,26 +135,20 @@
       if (result.type === 'success') {
         if (result.data) {
           const { listOfUsers, queries: q = {} } = result.data;
-          currentFilter = { ...q };
-          console.log(result.data);
+          filterOpt = { ...q };
           if (listOfUsers) {
             if (action.search === '?/filter') {
-              currentFilter.min_id = minId(listOfUsers);
-              currentFilter.max_id = q.limit > listOfUsers.length ? maxId(listOfUsers) : 0;
-              usersData.set(result.data.listOfUsers);
+              initDatatable(listOfUsers, q);
             } else {
-              if (!listOfUsers.length) {
-                if (action.search == '?/prev-page') {
-                  currentFilter.min_id = minId($usersData);
-                } else if (action.search == '?/next-page') {
-                  currentFilter.max_id = maxId($usersData);
-                }
-              } else {
+              if (listOfUsers.length) {
+                let temp = filterOpt.page_index?.split('_') || [];
+                temp.push(String(maxId(listOfUsers)));
+                filterOpt.page_index = temp.join('_');
                 usersData.set(listOfUsers);
               }
             }
           }
-          replaceQuery(currentFilter);
+          updateQuery(filterOpt);
         }
       } else {
         console.error(result);
@@ -138,19 +158,15 @@
     };
   };
 
-  const replaceQuery = async (values: SearchOptions) => {
+  const updateQuery = async (values: SearchOptions) => {
     Object.entries(values).forEach(([key, value]) => {
       $page.url.searchParams.set(key, String(value || ''));
     });
-
-    goto($page.url);
+    replaceState($page.url, $page.state);
   };
 
   onMount(() => {
-    usersData.set(data.listOfUsers ?? []);
-    if (data.queries) {
-      replaceQuery(data.queries ?? {});
-    }
+    initDatatable(data.listOfUsers, data.queries);
     window.addEventListener('keydown', closePopup);
     return () => {
       window.removeEventListener('keydown', () => {});
@@ -186,7 +202,7 @@
 <main class="container mt-4" class:is-skeleton={loading}>
   <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
-      queries={currentFilter ?? {}}
+      queries={filterOpt ?? {}}
       user={data?.user ?? {}}
       regions={data?.defaultOptions?.regions}
       leads={data?.defaultOptions?.leads}
@@ -207,13 +223,13 @@
               <th>
                 No.
                 <div>
-                  <button
-                    class={`button is-small  + ${hasFilter ? 'is-danger is-light' : 'is-text'}`}
+                  <ButtonIcon
+                    small
+                    buttonType={hasFilter ? 'is-danger is-light' : 'is-text'}
                     on:click={() => ($filterValues = {})}
-                    ><span class="icon is-small">
-                      <FilterX />
-                    </span></button
                   >
+                    <FilterX />
+                  </ButtonIcon>
                 </div>
               </th>
               {#each headerRow.cells as cell (cell.id)}
@@ -246,23 +262,21 @@
                   <td>
                     <div class="buttons">
                       {#if data.user?.role == 'admin'}
-                        <button
-                          class="button is-small"
-                          on:click={() => onUserUpdate(row.original, 'user')}
+                        <ButtonIcon
+                          small
                           disabled={!row.original.region}
-                          ><span title={`Edit ${row.original.name} Info`} class="icon is-small"
-                            ><UserRoundPen /></span
-                          ></button
+                          on:click={() => onUserUpdate(row.original, 'user')}
                         >
+                          <UserRoundPen />
+                        </ButtonIcon>
                       {/if}
-                      <button
-                        class="button is-small"
-                        on:click={() => onUserUpdate(row.original, 'sched')}
+                      <ButtonIcon
+                        small
                         disabled={!row.original.region}
-                        ><span title={`${row.original.name} Schedule`} class="icon is-small"
-                          ><CalendarCog /></span
-                        ></button
+                        on:click={() => onUserUpdate(row.original, 'sched')}
                       >
+                        <CalendarCog />
+                      </ButtonIcon>
                     </div>
                   </td>
                   {#each row.cells as cell (cell.id)}

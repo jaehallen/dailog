@@ -54,8 +54,6 @@ export const validateUser = z.object({
 
 export const validateSearch = z.object({
   limit: z.coerce.number().gt(0),
-  min_id: z.coerce.number().gte(0),
-  max_id: z.coerce.number().gte(0),
   last_id: z.coerce.number().gte(0),
   lead_id: z
     .string()
@@ -72,7 +70,15 @@ export const validateSearch = z.object({
   region: z.coerce
     .string()
     .transform((v) => (v == '' ? null : v))
-    .nullable()
+    .nullable(),
+  page_index: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .nullable(),
+  page_total: z.coerce
+    .string()
+    .transform((v) => (isNaN(parseInt(v)) ? null : parseInt(v)))
+    .pipe(z.number().nullable()),
 });
 
 export type SearchOptions = z.infer<typeof validateSearch> & {

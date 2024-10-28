@@ -4,6 +4,7 @@
   import { isAdmin } from '$lib/utility';
   import { ChevronRight, ChevronLeft, SlidersHorizontal } from 'lucide-svelte/icons';
   import { usersData } from '$lib/table-users';
+  import ButtonIcon from '../ButtonIcon.svelte';
   export let user: Partial<User>;
   export let regions: string[] = [];
   export let leads: { id: number; name: string; region: string }[] = [];
@@ -13,15 +14,18 @@
   let username = queries.username;
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
-  $: hasPrevPage = queries.min_id && !$usersData.some((user) => user.id == queries?.min_id);
+  let pages = queries.page_index?.split("_").map(id => Number(id)) || []
+  let lastId = queries.last_id || 0;
+  $: console.log(pages)
+  $: hasPrevPage = pages?.length > 1;
   $: hasNextPage = queries.limit > $usersData.length;
   console.log(queries);
 </script>
 
 <div class="is-hidden">
-  <input type="number" name="last_id" value={queries.last_id || 0} class="is-hidden" readonly />
-  <input type="number" name="min_id" value={queries.min_id || 0} class="is-hidden" readonly />
-  <input type="number" name="max_id" value={queries.max_id || 0} class="is-hidden" readonly />
+  <input type="number" name="last_id" value={lastId} readonly />
+  <input type="number" name="page_total" value={queries.page_total || ''} readonly />
+  <input type="text" name="page_index" value={queries.page_index || ''} readonly>
 </div>
 <div class="level">
   <div class="level-left">
@@ -45,15 +49,9 @@
   </div>
   <div class="level-right">
     <div class="level-item has-text-centered">
-      <button
-        type="button"
-        class="button is-small is-rounded"
-        on:click={() => (onFilter = !onFilter)}
-      >
-        <span class="icon is-small">
-          <SlidersHorizontal />
-        </span>
-      </button>
+      <ButtonIcon small round on:click={() => onFilter = !onFilter} buttonType="" type="button">
+        <SlidersHorizontal />
+      </ButtonIcon>
     </div>
     <div class="level-item has-text-centered" class:is-hidden={!onFilter}>
       <div class="field is-horizontal">
@@ -133,7 +131,7 @@
       <button
         class="button is-small is-rounded"
         formaction="?/prev-page"
-        disabled={disabled || Boolean(username) || hasPrevPage}
+        disabled={disabled || Boolean(username) || !hasPrevPage}
       >
         <span class="icon is-small">
           <ChevronLeft />
@@ -144,7 +142,7 @@
       <button
         class="button is-small is-rounded"
         formaction="?/next-page"
-        disabled={disabled || Boolean(username) || hasNextPage}
+        disabled={disabled || Boolean(username) || !hasNextPage}
       >
         <span class="icon is-small">
           <ChevronRight />

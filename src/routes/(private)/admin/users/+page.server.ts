@@ -2,7 +2,7 @@ import { addUserSchedule, listOfUsers, updateUser, userFilters } from '$lib/serv
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions, RequestEvent } from './$types';
 import { validateSchedule, validateUser, validateSearch } from '$lib/validation';
-import { isAdmin, isEditor } from '$lib/utility';
+import { isAdmin, isEditor, isLepo } from '$lib/utility';
 import { TEMPID } from '$lib/defaults';
 
 export const load = (async ({ locals, url }) => {
@@ -15,6 +15,7 @@ export const load = (async ({ locals, url }) => {
   }
 
   const filterOptions = userFilters(locals.user, url.searchParams);
+  console.log(`SERVER: ${new Date().toISOString()}: ${filterOptions}`)
   return {
     queries: filterOptions,
     listOfUsers: await listOfUsers(filterOptions)
@@ -24,7 +25,9 @@ export const load = (async ({ locals, url }) => {
 export const actions = {
   filter: async ({ locals, request }) => {
     const form = await request.formData();
-    form.set('last_id', isEditor(locals.user?.role) ? String(TEMPID) : '');
+    form.set('last_id', isAdmin(locals.user?.role) ? '' : String(TEMPID));
+    form.set('page_total', '');
+    form.set('page_index', '');
     return await queryData(form);
   },
   'prev-page': async ({ request }) => {

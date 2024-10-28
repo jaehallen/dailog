@@ -102,7 +102,6 @@ export class DatabaseController extends DBClient {
 
   public async getManyUsers(params: SearchOptions, isPrev = false): Promise<Row[]> {
     const { sql, args } = QUERY.USERS_INFO(params, isPrev);
-    console.log(sql, args);
     const { rows = [] } = (await super.get(sql, args)) || {};
 
     return rows;

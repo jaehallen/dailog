@@ -205,4 +205,3 @@ export function matchFilter({ filterValue, value }: Record<'filterValue' | 'valu
   if (filterValue === undefined) return true;
   return filterValue === value;
 }
-
