@@ -9,13 +9,13 @@
   import { enhance } from '$app/forms';
   import { fly } from 'svelte/transition';
   import { quintInOut, sineOut } from 'svelte/easing';
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { AdvanceFilter } from '$lib/component/Datatable';
   import { FilterX, UserRoundPen, CalendarCog } from 'lucide-svelte/icons';
   import { Subscribe, Render } from 'svelte-headless-table';
   import { getUsersTable, usersData } from '$lib/table-users';
   import { validateSearch, validateUser, type SearchOptions } from '$lib/validation';
-  import { goto, pushState, replaceState } from '$app/navigation';
+  import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
   import ButtonIcon from '$lib/component/ButtonIcon.svelte';
 
@@ -77,25 +77,23 @@
   };
 
   const indexPageList = (data: UsersList[], q: SearchOptions) => {
-    let pages = typeof q.page_index == 'string' ? q.page_index.split('_') : [];
+    const pages = typeof q.page_index == 'string' ? q.page_index.split('_') : [];
+    const lastIdStr = String(q.last_id);
 
-    if (!pages.includes(String(q.last_id))) {
-      pages.push(String(q.last_id));
+    if (!pages.includes(lastIdStr)) {
+      pages.push(lastIdStr);
+      q.page_index = pages.join('_');
     }
 
     if (q.limit > data.length) {
       q.page_total = pages.length;
     }
 
-    q.last_id = maxId(data);
-    q.page_index = pages.join('_');
     return q;
   };
 
   const initDatatable = (data: UsersList[], queries: SearchOptions) => {
-    console.log(queries);
     filterOpt = { ...queries };
-    filterOpt.last_id = minId(data);
     filterOpt = indexPageList(data, { ...filterOpt });
     usersData.set(data);
     updateQuery(filterOpt);
@@ -127,8 +125,19 @@
     if (!isDirtyFilterInput(formData) && action.search === '?/filter') {
       cancel();
       loading = false;
-    } else if (['?/prev-page', '?/next-page'].includes(action.search)) {
-      formData.set('last_id', String(maxId($usersData)));
+    } else if (action.search == '?/next-page') {
+      formData.set('last_id', encodeURIComponent(maxId($usersData)));
+    } else if (action.search == '?/prev-page') {
+      const pages = filterOpt.page_index?.split('_') || [];
+      if (pages.length) {
+        const page = pages.indexOf(String(filterOpt.last_id));
+        const lastId = pages[page - 1];
+        if (lastId) {
+          formData.set('last_id', encodeURIComponent(lastId));
+        }
+      } else {
+        cancel();
+      }
     }
 
     return async ({ update, result }) => {
@@ -141,10 +150,10 @@
               initDatatable(listOfUsers, q);
             } else {
               if (listOfUsers.length) {
-                let temp = filterOpt.page_index?.split('_') || [];
-                temp.push(String(maxId(listOfUsers)));
-                filterOpt.page_index = temp.join('_');
+                filterOpt = indexPageList(listOfUsers, q);
                 usersData.set(listOfUsers);
+              } else {
+                filterOpt.page_total = (filterOpt.page_index?.split('_') ?? []).length;
               }
             }
           }
@@ -165,12 +174,14 @@
     replaceState($page.url, $page.state);
   };
 
-  onMount(() => {
+  onMount(async () => {
+    await tick();
     initDatatable(data.listOfUsers, data.queries);
     window.addEventListener('keydown', closePopup);
-    return () => {
-      window.removeEventListener('keydown', () => {});
-    };
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('keydown', () => {});
   });
 
   $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;

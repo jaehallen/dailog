@@ -6,8 +6,8 @@ import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
 
-export const listOfUsers = async (options: SearchOptions, isPrev = false): Promise<UsersList[]> => {
-  const usersList = await db.getManyUsers(options, isPrev);
+export const listOfUsers = async (options: SearchOptions): Promise<UsersList[]> => {
+  const usersList = await db.getManyUsers(options);
   return usersList.map(toUsersList);
 };
 
@@ -29,7 +29,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         lead_id: null,
         last_id: 0,
         page_total: null,
-        page_index: String(0),
+        page_index: String(0)
       }
     : {
         username: '',

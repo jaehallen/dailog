@@ -3,7 +3,6 @@
   import type { User } from 'lucia';
   import { isAdmin } from '$lib/utility';
   import { ChevronRight, ChevronLeft, SlidersHorizontal } from 'lucide-svelte/icons';
-  import { usersData } from '$lib/table-users';
   import ButtonIcon from '../ButtonIcon.svelte';
   export let user: Partial<User>;
   export let regions: string[] = [];
@@ -14,18 +13,18 @@
   let username = queries.username;
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
-  let pages = queries.page_index?.split("_").map(id => Number(id)) || []
-  let lastId = queries.last_id || 0;
-  $: console.log(pages)
-  $: hasPrevPage = pages?.length > 1;
-  $: hasNextPage = queries.limit > $usersData.length;
-  console.log(queries);
+
+  $: pages = queries.page_index?.split('_').map((id) => Number(id)) || [];
+  $: currentPage = pages.indexOf(queries.last_id) + 1;
+
+  $: hasPrevPage = pages?.length > 1 && currentPage > 1;
+  $: hasNextPage = queries.page_total !== pages.length || queries.page_total > currentPage;
 </script>
 
 <div class="is-hidden">
-  <input type="number" name="last_id" value={lastId} readonly />
+  <input type="number" name="last_id" value={queries.last_id || 0} readonly />
   <input type="number" name="page_total" value={queries.page_total || ''} readonly />
-  <input type="text" name="page_index" value={queries.page_index || ''} readonly>
+  <input type="text" name="page_index" value={queries.page_index || ''} readonly />
 </div>
 <div class="level">
   <div class="level-left">
@@ -49,7 +48,7 @@
   </div>
   <div class="level-right">
     <div class="level-item has-text-centered">
-      <ButtonIcon small round on:click={() => onFilter = !onFilter} buttonType="" type="button">
+      <ButtonIcon small round on:click={() => (onFilter = !onFilter)} buttonType="" type="button">
         <SlidersHorizontal />
       </ButtonIcon>
     </div>
