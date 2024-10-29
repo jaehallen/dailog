@@ -52,6 +52,13 @@ export const validateUser = z.object({
   lock_password: z.coerce.number().transform(Boolean)
 });
 
+export const validateRegistration = z.object({
+  id: z.coerce.number().gte(100000).lte(999999), 
+  lead_id: z.coerce.number().gte(100000).lte(999999),
+  name: z.coerce.string().min(2),
+  region: z.coerce.string().min(2)
+})
+
 export const validateSearch = z.object({
   limit: z.coerce.number().gt(0),
   last_id: z.coerce.number().gte(0),
@@ -63,7 +70,7 @@ export const validateSearch = z.object({
     .string()
     .transform((v) => (isNaN(parseInt(v)) ? null : parseInt(v)))
     .pipe(z.number().nullable()),
-  username: z.coerce
+  search: z.coerce
     .string()
     .transform((v) => (v == '' ? null : v))
     .nullable(),

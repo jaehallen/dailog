@@ -35,6 +35,7 @@ export class DBClient implements TursoController {
   }
 
   public async set(sql: string, args: {}): Promise<ResultSet | null> {
+    let error = {} 
     try {
       const results = await this.client.execute({
         sql,
@@ -44,6 +45,7 @@ export class DBClient implements TursoController {
     } catch (error) {
       if (error instanceof LibsqlError) {
         logError('set', error as Error);
+        error = error as Error
       }
     }
 
@@ -78,7 +80,7 @@ export function logError(source: string, error: Error) {
   if (error instanceof LibsqlError) {
     console.log(`CODE: ${error.code}`);
   }
-  console.log(error.stack);
+  // console.log(error.stack);
   console.log(error.message);
 }
 

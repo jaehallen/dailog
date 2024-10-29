@@ -1,13 +1,13 @@
 <script lang="ts">
   export let small = false;
   export let disabled = false;
-  export let buttonType = '';
+  export let display = '';
   export let round = false;
-  $: buttonClass = 'button '+buttonType+' '+ ($$props.class || '')
+  $: buttonClass = 'button '+display+' '+ ($$props.class || '')
 </script>
 
 <button class:is-small={small} class:is-rounded={round} {disabled} class={buttonClass} {...$$props} on:click>
-  <span class="icon is-small">
+  <span class="icon" class:is-small={small}>
     <slot />
   </span>
 </button>

@@ -3,10 +3,10 @@
   import { createEventDispatcher } from 'svelte';
   import RoundButton from '$lib/component/RoundButton.svelte';
   import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
-  import LeftButton from '$lib/component/LeftButton.svelte';
-  import ChevronDown from 'lucide-svelte/icons/chevron-down';
+  import {ChevronDown, ChevronLeft} from 'lucide-svelte/icons';
   import ChevronUp from 'lucide-svelte/icons/chevron-up';
   import { timeAction } from '$lib/data-store';
+  import ButtonIcon from './ButtonIcon.svelte';
 
   export let disabled = false;
   let isDropdown = false;
@@ -20,7 +20,9 @@
 
 <ButtonsContainer>
   <div class="field is-grouped  is-justify-content-center" slot="left">
-    <LeftButton on:left />
+    <ButtonIcon display="is-text" on:click={() => dispatch('left')}>
+      <ChevronLeft/>
+    </ButtonIcon>
     <RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
     <RoundButton
       disabled={disabled || $timeAction.lunched}

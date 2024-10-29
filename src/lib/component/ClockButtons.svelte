@@ -4,7 +4,8 @@
   import type { OptActionState } from '$lib/types/schema';
   import RoundButton from '$lib/component/RoundButton.svelte';
   import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
-  import LeftButton from '$lib/component/LeftButton.svelte';
+  import { ChevronLeft } from 'lucide-svelte/icons';
+  import ButtonIcon from './ButtonIcon.svelte';
 
   export let disabled = false;
   const dispatch = createEventDispatcher();
@@ -17,7 +18,9 @@
 
 <ButtonsContainer>
   <div class="field is-grouped" slot="left">
-    <LeftButton on:left disabled={disabled || isClockIn} />
+    <ButtonIcon display="is-text" on:click={() => dispatch('left')}>
+      <ChevronLeft/>
+    </ButtonIcon>
   </div>
   <div class="field is-grouped is-justify-content-center" slot="right">
     {#if isClockIn}

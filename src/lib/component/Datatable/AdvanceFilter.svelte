@@ -2,15 +2,15 @@
   import type { SearchOptions } from '$lib/validation';
   import type { User } from 'lucia';
   import { isAdmin } from '$lib/utility';
-  import { ChevronRight, ChevronLeft, SlidersHorizontal } from 'lucide-svelte/icons';
+  import { ChevronRight, ChevronLeft, UserRoundSearch, SearchX, Filter } from 'lucide-svelte/icons';
   import ButtonIcon from '../ButtonIcon.svelte';
   export let user: Partial<User>;
   export let regions: string[] = [];
   export let leads: { id: number; name: string; region: string }[] = [];
   export let disabled = false;
   export let queries: SearchOptions;
-  let onFilter = false;
-  let username = queries.username;
+  let onUserSearch = false;
+  let searchname = queries.search || '';
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
 
@@ -27,32 +27,9 @@
   <input type="text" name="page_index" value={queries.page_index || ''} readonly />
 </div>
 <div class="level">
-  <div class="level-left">
-    <div class="level-item">
-      <div class="field has-addons">
-        <div class="control">
-          <input
-            type="text"
-            class="input is-small is-rounded"
-            placeholder="Search user..."
-            name="username"
-            bind:value={username}
-            {disabled}
-          />
-        </div>
-        <div class="control">
-          <button class="button is-small is-rounded" {disabled}>Search</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="level-left"></div>
   <div class="level-right">
-    <div class="level-item has-text-centered">
-      <ButtonIcon small round on:click={() => (onFilter = !onFilter)} buttonType="" type="button">
-        <SlidersHorizontal />
-      </ButtonIcon>
-    </div>
-    <div class="level-item has-text-centered" class:is-hidden={!onFilter}>
+    <div class="level-item has-text-centered" class:is-hidden={onUserSearch || queries.search}>
       <div class="field is-horizontal">
         <div class="field-body">
           <div class="field has-addons">
@@ -123,30 +100,71 @@
               </button>
             </div>
           </div>
+          <div class="field">
+            <div class="control">
+              <ButtonIcon
+                formaction="?/prev-page"
+                small
+                round
+                disabled={disabled || Boolean(searchname) || !hasPrevPage}
+              >
+                <ChevronLeft />
+              </ButtonIcon>
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <ButtonIcon
+                small
+                round
+                formaction="?/next-page"
+                disabled={disabled || Boolean(searchname) || !hasNextPage}
+              >
+                <ChevronRight />
+              </ButtonIcon>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="level-item has-text-centered">
-      <button
-        class="button is-small is-rounded"
-        formaction="?/prev-page"
-        disabled={disabled || Boolean(username) || !hasPrevPage}
-      >
-        <span class="icon is-small">
-          <ChevronLeft />
-        </span>
-      </button>
+
+    <div class="level-item has-text-centered" class:is-hidden={!onUserSearch && !queries.search}>
+      <div class="field is-grouped">
+        <div class="control">
+          <input
+            class="input is-small is-rounded"
+            placeholder="Search user..."
+            name="search"
+            bind:value={searchname}
+            {disabled}
+          />
+        </div>
+        {#if queries.search}
+          <div class="control">
+            <ButtonIcon small round display="is-danger is-light" on:click={() => (searchname = '')}>
+              <SearchX />
+            </ButtonIcon>
+          </div>
+        {/if}
+      </div>
     </div>
-    <div class="level-item has-text-centered">
-      <button
-        class="button is-small is-rounded"
-        formaction="?/next-page"
-        disabled={disabled || Boolean(username) || !hasNextPage}
-      >
-        <span class="icon is-small">
-          <ChevronRight />
-        </span>
-      </button>
-    </div>
+    {#if !queries.search}
+      <div class="level-item has-text-centered">
+        <ButtonIcon
+          small
+          round
+          disabled={Boolean(searchname)}
+          on:click={() => (onUserSearch = !onUserSearch)}
+          display="is-link is-light"
+          type="button"
+        >
+          {#if onUserSearch}
+            <Filter />
+          {:else}
+            <UserRoundSearch />
+          {/if}
+        </ButtonIcon>
+      </div>
+    {/if}
   </div>
 </div>

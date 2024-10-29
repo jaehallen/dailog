@@ -5,11 +5,24 @@ import { isAdmin, parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
+import { AppPass } from '../lucia/hash-ish';
+import { env } from '$env/dynamic/private';
 
 export const listOfUsers = async (options: SearchOptions): Promise<UsersList[]> => {
   const usersList = await db.getManyUsers(options);
   return usersList.map(toUsersList);
 };
+
+export const searchUsers = async (options: SearchOptions): Promise<UsersList[]> => {
+  const usersList = await db.searchUsers(options);
+  return usersList.map(toUsersList);
+}
+
+export const insertUser = async(args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>) => {
+  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
+  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
+  return db.createUser({...args, password_hash});
+}
 
 export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
   return db.createUserSchedule(args);
@@ -22,7 +35,7 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
-        username: '',
+        search: '',
         active: null,
         limit: 100,
         region: null,
@@ -32,7 +45,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         page_index: String(0)
       }
     : {
-        username: '',
+        search: '',
         active: 1,
         limit: 100,
         region: user.region,
@@ -44,7 +57,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
 
   if (query.size) {
     const temp = {
-      username: query.get('username'),
+      search: '',
       active: query.get('active'),
       limit: Number(query.get('limit')),
       region: query.get('region'),

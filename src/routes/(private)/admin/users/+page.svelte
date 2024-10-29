@@ -147,7 +147,11 @@
           filterOpt = { ...q };
           if (listOfUsers) {
             if (action.search === '?/filter') {
-              initDatatable(listOfUsers, q);
+              if(q.search && q.search.length){
+                usersData.set(listOfUsers)
+              }else{
+                initDatatable(listOfUsers, q);
+              }
             } else {
               if (listOfUsers.length) {
                 filterOpt = indexPageList(listOfUsers, q);
@@ -211,7 +215,7 @@
   {/key}
 {/if}
 <main class="container mt-4" class:is-skeleton={loading}>
-  <form action="?/filter" class="box" method="POST" use:enhance={onFilter}>
+  <form action="?/filter" class="block" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
       queries={filterOpt ?? {}}
       user={data?.user ?? {}}
@@ -236,7 +240,7 @@
                 <div>
                   <ButtonIcon
                     small
-                    buttonType={hasFilter ? 'is-danger is-light' : 'is-text'}
+                    display={hasFilter ? 'is-danger is-light' : 'is-text'}
                     on:click={() => ($filterValues = {})}
                   >
                     <FilterX />

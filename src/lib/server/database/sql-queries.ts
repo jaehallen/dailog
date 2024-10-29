@@ -79,6 +79,51 @@ export const QUERY = {
       args: values
     };
   },
+  SEARCH_USER: (args: SearchOptions) => {
+    const values: Partial<SearchOptions> = {
+      search: args.search,
+      last_id: args.last_id
+    };
+    if (args.region && args.region.length > 0) {
+      values.region = args.region;
+    }
+
+    return {
+      sql: `SELECT
+              users.id,
+              users.active,
+              users.name,
+              users.lead_id,
+              lead.name teamlead,
+              users.region,
+              users.role,
+              users.lock_password,
+              users.created_at,
+              users.updated_at,
+              (
+                SELECT
+                  JSON_GROUP_ARRAY(JSON_OBJECT(
+                    'id', id,
+                    'effective_date', effective_date,
+                    'utc_offset', utc_offset,
+                    'local_offset', local_offset,
+                    'clock_at', clock_at,
+                    'first_break_at', first_break_at,
+                    'lunch_at', lunch_at,
+                    'second_break_at', second_break_at,
+                    'day_off', day_off,
+                    'clock_dur_min', clock_dur_min,
+                    'lunch_dur_min', lunch_dur_min,
+                    'break_dur_min', break_dur_min
+                  )) FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
+              ) as schedules
+            FROM users
+              LEFT JOIN users lead ON users.lead_id = lead.id
+              JOIN fts_users ON fts_users.rowid = users.id
+              WHERE users.id > $last_id AND fts_users MATCH $search ${values.region ? ` AND users.region = $region` : ''}`,
+      args: values
+    };
+  },
   USER_SCHEDULES: (args: { user_id: number; limit?: number }) => {
     return {
       sql: `SELECT 
@@ -148,6 +193,12 @@ export const WRITE = {
   UPDATE_PASSWORD: (args: { user_id: number; password_hash: string }) => {
     return {
       sql: `UPDATE users SET password_hash = $password_hash WHERE id = $user_id`,
+      args
+    };
+  },
+  INSERT_USER: (args: Pick<UserRecord, 'id' | 'name' | 'region' | 'lead_id' |'password_hash'>) => {
+    return {
+      sql: `INSERT INTO users (id, name, region, lead_id, password_hash) VALUES ($id, $name, $region, $lead_id, $password_hash) RETURNING *`,
       args
     };
   },

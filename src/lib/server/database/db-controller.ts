@@ -107,6 +107,12 @@ export class DatabaseController extends DBClient {
     return rows;
   }
 
+  public async searchUsers(params: SearchOptions): Promise<Row[]> {
+    const { sql, args } = QUERY.SEARCH_USER(params);
+    const { rows = [] } = (await super.get(sql, args)) || {};
+    return rows;
+  }
+
   public async getAdmninInitData(role: OptRole) {
     const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
     return {
@@ -149,6 +155,14 @@ export class DatabaseController extends DBClient {
 
     if (!results) return null;
     return toUserScheddule(results.rows[0]);
+  }
+
+  public async createUser(args: Pick<UserRecord, 'id'|'name'|'lead_id' | 'region'| 'password_hash'>){
+    const q = WRITE.INSERT_USER(args);
+    const results = await super.set(q.sql, q.args)
+
+    if(!results) return null;
+    return toUserRecord(results.rows[0]);;
   }
 
   public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>) {
