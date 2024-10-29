@@ -1,45 +1,50 @@
 <script lang="ts">
-  import FieldH from '$lib/component/FieldH.svelte';
   import type { SubmitFunction } from '@sveltejs/kit';
   import type { PageData } from './$types';
-  import {enhance} from '$app/forms'
+  import FieldH from '$lib/component/FieldH.svelte';
+  import { enhance } from '$app/forms';
+  import { DBERROR } from '$lib/defaults';
 
   export let data: PageData;
   const leads: { id: number; region: string; name: string }[] = data?.defaultOptions?.leads ?? [];
   const reagions: string[] = data?.defaultOptions?.regions ?? [];
-  
+
   let notify = false;
   let failed = false;
   let disabled = false;
-  let message = ''
+  let message = '';
 
   const registerUser: SubmitFunction = () => {
-      disabled = true;
-      return async ({result, update}) => {
-        if(result.type == 'success'){
-          update({reset: true});
-          notify = true
-          failed = false
-          message = ''
-        }else{
-          if(result.type == 'failure'){
-            message = result.data?.message || ''
-            failed = true
-            notify = true
-          }
-
-          update({reset: false, invalidateAll: false})
+    disabled = true;
+    return async ({ result, update }) => {
+      if (result.type == 'success') {
+        const { name } = result.data?.user;
+        message = `Account for user <strong>${name}</strong> created successfully.`;
+        notify = true;
+        failed = false;
+        update({ reset: true });
+      } else {
+        if (result.type == 'failure') {
+          message = DBERROR(result.data?.message) || 'Failed to register';
+          failed = true;
+          notify = true;
         }
-        console.log(result)
-        disabled = false
+        console.error(result);
+        update({ reset: false, invalidateAll: false });
       }
-  }
+      disabled = false;
+    };
+  };
 </script>
 
 <main class="container is-max-tablet">
   <section class="section">
-    <div class={"notification is-light "+ (failed ? 'is-danger' : 'is-success')} class:is-hidden={!notify}>
-      {message}
+    <div
+      class={'notification is-light ' + (failed ? 'is-danger' : 'is-success')}
+      class:is-hidden={!notify}
+    >
+      <button class="delete" on:click={() => (notify = false)}></button>
+      {@html message}
     </div>
     <form class="box" method="POST" use:enhance={registerUser}>
       <FieldH id="id" label="GAID">

@@ -29,24 +29,30 @@ export const actions = {
     if (!validPost.success) {
       fail(400, { message: validPost.error.issues });
     }
-    const { data } = validPost;
+    const { data: param } = validPost;
     const ipAddrss = getClientAddress();
     const userAgent = request.headers.get('user-agent') || '';
 
-    if (data) {
+    if (param) {
+      const { data, error } = await postTime({
+        id: param.id || 0,
+        user_id: locals.user.id,
+        category: param.category,
+        date_at: param.date_at,
+        sched_id: param.sched_id,
+        user_ip: ipAddrss,
+        user_agent: userAgent,
+        timestamp: Math.floor(Date.now() / 1000),
+        timeAction: param.timeAction,
+        remarks: param.remarks
+      });
+
+      if (error) {
+        return fail(400, { message: error.message });
+      }
+
       return {
-        record: await postTime({
-          id: data?.id || 0,
-          user_id: locals.user.id,
-          category: data?.category,
-          date_at: data?.date_at,
-          sched_id: data?.sched_id,
-          user_ip: ipAddrss,
-          user_agent: userAgent,
-          timestamp: Math.floor(Date.now() / 1000),
-          timeAction: data?.timeAction,
-          remarks: data.remarks
-        })
+        record: data
       };
     }
 

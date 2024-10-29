@@ -1,11 +1,12 @@
 import { env } from '$env/dynamic/private';
 import { createClient, LibsqlError } from '@libsql/client';
 import type { Client, InStatement, ResultSet } from '@libsql/client';
+import type { DbSetResult } from '$lib/types/schema';
 
 export class DBClient implements TursoController {
   private client: Client;
   constructor(dbClient: Client) {
-    this.client = dbClient
+    this.client = dbClient;
   }
 
   public async get(sql: string, args: {}): Promise<ResultSet | null> {
@@ -34,22 +35,21 @@ export class DBClient implements TursoController {
     return null;
   }
 
-  public async set(sql: string, args: {}): Promise<ResultSet | null> {
-    let error = {} 
+  public async set(sql: string, args: {}): Promise<DbSetResult<ResultSet>> {
     try {
       const results = await this.client.execute({
         sql,
         args
       });
-      return results;
-    } catch (error) {
+      return { data: results };
+    } catch (err) {
+      const error = err as Error;
       if (error instanceof LibsqlError) {
-        logError('set', error as Error);
-        error = error as Error
+        logError('set', error);
       }
-    }
 
-    return null;
+      return { data: null, error: { message: error.message } };
+    }
   }
 }
 
@@ -67,7 +67,7 @@ export function getClient() {
 interface TursoController {
   get(sql: string, args: Record<string, number | string>): Promise<ResultSet | null>;
   batchGet(queries: InStatement[]): Promise<ResultSet[] | null>;
-  set(sql: string, args: {}): Promise<ResultSet | null>;
+  set(sql: string, args: {}): Promise<DbSetResult<ResultSet>>;
 }
 
 export function log(source: string, message: string | boolean | number): void {
@@ -83,4 +83,3 @@ export function logError(source: string, error: Error) {
   // console.log(error.stack);
   console.log(error.message);
 }
-

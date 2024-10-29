@@ -2,13 +2,11 @@
   import Modal from '$lib/component/Modal.svelte';
   import Field from '$lib/component/Field.svelte';
   import Notify from '$lib/component/Notify.svelte';
-  import { scheduleColumn } from '$lib/table-schema';
   import { enhance } from '$app/forms';
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
   import type { SvelteComponent } from 'svelte';
   import { browser } from '$app/environment';
-  import type { ScheduleRecord } from '$lib/types/schema';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
 
   const RESET_FORM_ID = 'resetform';
@@ -43,10 +41,6 @@
       }
       disabled = false;
     };
-  };
-
-  const sortSchedule = (a: ScheduleRecord, b: ScheduleRecord) => {
-    return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
   };
 </script>
 

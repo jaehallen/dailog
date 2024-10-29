@@ -1,5 +1,5 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
-import { db } from "$lib/server/database/db-controller";
+import { db } from '$lib/server/database/db-controller';
 import type { ScheduleRecord, UserProfile, UserRecord } from '$lib/types/schema';
 import { env } from '$env/dynamic/private';
 
@@ -54,9 +54,15 @@ export async function userPasswordReset(
     };
   }
   const hash = await appPass.hash(newPassword);
-  const success = await db.updatePassword(userId, hash);
+  const { data, error } = await db.updatePassword(userId, hash);
+
+  if (error) {
+    return {
+      success: false
+    };
+  }
 
   return {
-    success: Boolean(success)
+    success: data
   };
 }

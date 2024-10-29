@@ -47,9 +47,9 @@
     return data.length ? Math.max(...data.map((x) => x.id)) : 0;
   };
 
-  const minId = (data: UsersList[] = []) => {
-    return data.length ? Math.min(...data.map((x) => x.id)) : 0;
-  };
+  // const minId = (data: UsersList[] = []) => {
+  //   return data.length ? Math.min(...data.map((x) => x.id)) : 0;
+  // };
 
   const onUserUpdate = (itemData: UsersList, showType: 'sched' | 'user') => {
     show = showType;

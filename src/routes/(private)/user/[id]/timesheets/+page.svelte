@@ -110,7 +110,7 @@
     timeAction.cancel();
   };
 
-  let clientWidth=300;
+  let clientWidth = 300;
 </script>
 
 {#if browser}
@@ -154,7 +154,7 @@
       {/if}
     </section>
     <section class="section">
-      <table class="table is-fullwidth is-striped is-hoverable" bind:clientWidth={clientWidth}>
+      <table class="table is-fullwidth is-striped is-hoverable" bind:clientWidth>
         <thead>
           <tr>
             {#each timesheetColumn as column, cid (cid)}

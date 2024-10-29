@@ -6,6 +6,7 @@ export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
 export type OptActionState = (typeof ACTIONSTATE)[number];
 export type OptWeekdays = (typeof WEEKDAYS)[number];
+export type DbSetResult<T> = { data: T, error?: never } | { data: null, error: { message: string } }
 export interface ZPostTime {
   id: number;
   category: OptCategory;

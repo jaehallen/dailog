@@ -1,5 +1,6 @@
 import type { Client, Row } from '@libsql/client';
 import type {
+  DbSetResult,
   OptRole,
   ScheduleRecord,
   TimeEntryRecord,
@@ -125,52 +126,76 @@ export class DatabaseController extends DBClient {
 
   public async startTime(
     args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
-  ) {
+  ): Promise<DbSetResult<TimeEntryRecord>> {
     const q = WRITE.STARTTIME(args);
-    const results = await super.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
+    const { data, error } = await super.set(q.sql, q.args);
+
+    if (error) {
+      return { data, error };
+    }
+    return { data: toTimeEntryRecord(data.rows[0]) };
   }
 
   public async endTime(
     args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
-  ) {
+  ): Promise<DbSetResult<TimeEntryRecord>> {
     const q = WRITE.ENDTIME(args);
-    const results = await super.set(q.sql, q.args);
-    if (!results) return null;
-    return toTimeEntryRecord(results.rows[0]);
+    const { data, error } = await super.set(q.sql, q.args);
+
+    if (error) {
+      return { data, error };
+    }
+    return { data: toTimeEntryRecord(data.rows[0]) };
   }
 
-  public async updatePassword(userId: number, password: string) {
+  public async updatePassword(userId: number, password: string): Promise<DbSetResult<boolean>> {
     const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
-    const results = await super.set(q.sql, q.args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-    if (!results) return null;
-    return results.rowsAffected > 0;
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: data.rowsAffected > 0 };
   }
 
-  public async createUserSchedule(args: Omit<ScheduleRecord, 'id'>) {
+  public async createUserSchedule(
+    args: Omit<ScheduleRecord, 'id'>
+  ): Promise<DbSetResult<ScheduleRecord>> {
     const q = WRITE.ADD_USER_SCHEDULE(args);
-    const results = await super.set(q.sql, q.args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-    if (!results) return null;
-    return toUserScheddule(results.rows[0]);
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: toUserScheddule(data.rows[0]) };
   }
 
-  public async createUser(args: Pick<UserRecord, 'id'|'name'|'lead_id' | 'region'| 'password_hash'>){
+  public async createUser(
+    args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region' | 'password_hash'>
+  ): Promise<DbSetResult<UserRecord>> {
     const q = WRITE.INSERT_USER(args);
-    const results = await super.set(q.sql, q.args)
+    const { data, error } = await super.set(q.sql, q.args);
 
-    if(!results) return null;
-    return toUserRecord(results.rows[0]);;
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: toUserRecord(data.rows[0]) };
   }
 
-  public async updateUser(user: Omit<UserRecord, 'password_hash' | 'preferences'>) {
+  public async updateUser(
+    user: Omit<UserRecord, 'password_hash' | 'preferences'>
+  ): Promise<DbSetResult<UserRecord>> {
     const q = WRITE.UPDATE_USER(user);
-    const results = await super.set(q.sql, q.args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-    if (!results) return null;
-    return toUserRecord(results.rows[0]);
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: toUserRecord(data.rows[0]) };
   }
 }
 

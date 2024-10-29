@@ -151,3 +151,11 @@ export const CONFIRMCATEGORY: Record<OptCategory, Record<OptActionState, string>
     end: 'Would you like to conclude your <strong>Coaching</strong>?'
   }
 };
+
+export const DBERROR = (msg: string): string | null => {
+  if (/unique constraint/i.test(msg)) {
+    return 'Duplicate not allowed! Record already exists.';
+  }
+
+  return null;
+};

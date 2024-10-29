@@ -1,4 +1,10 @@
-import { addUserSchedule, listOfUsers, searchUsers, updateUser, userFilters } from '$lib/server/data/admin';
+import {
+  addUserSchedule,
+  listOfUsers,
+  searchUsers,
+  updateUser,
+  userFilters
+} from '$lib/server/data/admin';
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { validateSchedule, validateUser, validateSearch } from '$lib/validation';
@@ -31,9 +37,9 @@ export const actions = {
     const form = await request.formData();
     form.set('page_total', '');
     form.set('page_index', '');
-    form.set('last_id', admin ? '0' : TEMPID.toString())
+    form.set('last_id', admin ? '0' : TEMPID.toString());
     if (!admin) {
-      form.set('region', locals.user.region)
+      form.set('region', locals.user.region);
     }
     return await queryData(form);
   },
@@ -44,7 +50,7 @@ export const actions = {
     }
     const form = await request.formData();
     if (isLepo(locals.user.role)) {
-      form.set('region', locals.user.region)
+      form.set('region', locals.user.region);
     }
     return await queryData(form);
   },
@@ -55,7 +61,7 @@ export const actions = {
     }
     const form = await request.formData();
     if (isLepo(locals.user.role)) {
-      form.set('region', locals.user.region)
+      form.set('region', locals.user.region);
     }
     return await queryData(form);
   },
@@ -76,8 +82,14 @@ export const actions = {
       return fail(404, { message: validSched.error });
     }
 
+    const { data, error } = await addUserSchedule(validSched.data);
+
+    if (error) {
+      return fail(404, { message: error.message });
+    }
+
     return {
-      schedule: await addUserSchedule(validSched.data)
+      schedule: data
     };
   },
 
@@ -96,16 +108,18 @@ export const actions = {
     if (!validUser.success) {
       return fail(404, { message: validUser.error });
     }
-    const updates = await updateUser(validUser.data);
 
-    if (updates) {
-      const { password_hash, preferences, ...user } = updates;
-      return {
-        user
-      };
+    const { data, error } = await updateUser(validUser.data);
+
+    if (error) {
+      return fail(404, { message: error.message });
     }
 
-    return null;
+    const { password_hash, preferences, ...user } = data;
+
+    return {
+      user
+    };
   }
 } satisfies Actions;
 
