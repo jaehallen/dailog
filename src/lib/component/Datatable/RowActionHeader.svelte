@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { FilterX } from "lucide-svelte";
-  import ButtonIcon from "../ButtonIcon.svelte";
+  import { FilterX } from 'lucide-svelte';
+  import ButtonIcon from '../ButtonIcon.svelte';
 
-  export let filterValues
-  let hasFilter = false;
+  export let filterValues;
+  $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 </script>
 
 <div>
-
   Action
   <div>
     <ButtonIcon

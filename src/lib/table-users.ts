@@ -10,12 +10,9 @@ import RowAction from './component/Datatable/RowAction.svelte';
 import type { User } from 'lucia';
 
 export const usersData = usersListStore();
-export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0)
+export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0);
 
-export function getUsersTable(
-    userslist: Writable<UsersList[]>, 
-    user: User | null = null, 
-    rowAction: (item: UsersList, showType: 'sched' | 'user') => void) {
+export function getUsersTable(userslist: Writable<UsersList[]>, user: User | null = null) {
   const table = createTable(userslist, {
     filter: addColumnFilters(),
     resize: addResizedColumns()
@@ -24,12 +21,15 @@ export function getUsersTable(
   const columns = table.createColumns([
     table.display({
       id: 'rowAction',
-      header: (_, { pluginStates: { filter: { filterValues } } }) =>
-        createRender(RowActionHeader, { filterValues }),
-      cell: ({ row }) => createRender(RowAction, { row, user })
-        .on('user', () => console.log('user'))
-        .on('sched', () => console.log('sched'))
-      ,
+      header: (
+        _,
+        {
+          pluginStates: {
+            filter: { filterValues }
+          }
+        }
+      ) => createRender(RowActionHeader, { filterValues }),
+      cell: ({ row }) => createRender(RowAction, { data: row.isData() ? row.original : {}, user })
     }),
     table.column({
       header: 'Active',
@@ -114,7 +114,7 @@ export function getUsersTable(
     table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' })
   ]);
 
-  return table.createViewModel(columns, {rowDataId: (user) => String(user.id)});
+  return table.createViewModel(columns, { rowDataId: (user) => String(user.id) });
 }
 
 function usersListStore() {
@@ -132,8 +132,11 @@ function usersListStore() {
           lists[idx].schedules = [...scheds];
         } else {
           lists[idx].schedules = [schedule, ...scheds]
-            .toSorted((a: ScheduleRecord, b: ScheduleRecord) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime())
-            .slice(0, 5)
+            .toSorted(
+              (a: ScheduleRecord, b: ScheduleRecord) =>
+                new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
+            )
+            .slice(0, 5);
         }
       }
       return lists;
@@ -155,7 +158,13 @@ function usersListStore() {
           lead_id = updatedLead ? updates.lead_id : lead_id;
         }
 
-        lists[idx] = { ...lists[idx], ...updates, lead_id, teamlead, updated_at: new Date().toISOString() };
+        lists[idx] = {
+          ...lists[idx],
+          ...updates,
+          lead_id,
+          teamlead,
+          updated_at: new Date().toISOString()
+        };
       }
       return lists;
     });
