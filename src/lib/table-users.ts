@@ -5,17 +5,32 @@ import { createRender, createTable } from 'svelte-headless-table';
 import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
 import { textFilter, matchFilter } from './utility';
+import RowActionHeader from './component/Datatable/RowActionHeader.svelte';
+import RowAction from './component/Datatable/RowAction.svelte';
+import type { User } from 'lucia';
 
 export const usersData = usersListStore();
 export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0)
 
-export function getUsersTable(userslist: Writable<UsersList[]>) {
+export function getUsersTable(
+    userslist: Writable<UsersList[]>, 
+    user: User | null = null, 
+    rowAction: (item: UsersList, showType: 'sched' | 'user') => void) {
   const table = createTable(userslist, {
     filter: addColumnFilters(),
     resize: addResizedColumns()
   });
 
   const columns = table.createColumns([
+    table.display({
+      id: 'rowAction',
+      header: (_, { pluginStates: { filter: { filterValues } } }) =>
+        createRender(RowActionHeader, { filterValues }),
+      cell: ({ row }) => createRender(RowAction, { row, user })
+        .on('user', () => console.log('user'))
+        .on('sched', () => console.log('sched'))
+      ,
+    }),
     table.column({
       header: 'Active',
       accessor: 'active',
@@ -99,7 +114,7 @@ export function getUsersTable(userslist: Writable<UsersList[]>) {
     table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' })
   ]);
 
-  return table.createViewModel(columns);
+  return table.createViewModel(columns, {rowDataId: (user) => String(user.id)});
 }
 
 function usersListStore() {

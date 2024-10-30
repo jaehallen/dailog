@@ -1,11 +1,13 @@
 <script lang="ts">
-  import type { ScheduleRecord, UsersList } from '$lib/types/schema';
-  import type { PageData } from './$types';
-  import type { SubmitFunction } from '@sveltejs/kit';
   import AsideContainer from '$lib/component/AsideContainer.svelte';
   import UserInputs from '$lib/component/UserInputs.svelte';
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
+  import ButtonIcon from '$lib/component/ButtonIcon.svelte';
+  import Toasts from '$lib/component/Toasts.svelte';
+  import type { ScheduleRecord, UsersList } from '$lib/types/schema';
+  import type { PageData } from './$types';
+  import type { SubmitFunction } from '@sveltejs/kit';
   import { enhance } from '$app/forms';
   import { fly } from 'svelte/transition';
   import { quintInOut, sineOut } from 'svelte/easing';
@@ -17,7 +19,7 @@
   import { validateSearch, validateUser, type SearchOptions } from '$lib/validation';
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
-  import ButtonIcon from '$lib/component/ButtonIcon.svelte';
+  import { toasts } from '$lib/data-store';
 
   export let data: PageData;
 
@@ -34,7 +36,17 @@
     'break_dur_min',
     'lunch_dur_min'
   ];
-  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(usersData);
+  const onUserUpdate = (itemData: UsersList, showType: 'sched' | 'user') => {
+    show = showType;
+    userUpdate = true;
+    itemId = itemData.id;
+  };
+
+  const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } = getUsersTable(
+    usersData,
+    data?.user,
+    onUserUpdate
+  );
   const { filterValues } = pluginStates.filter;
 
   const closePopup = (e: KeyboardEvent) => {
@@ -50,12 +62,6 @@
   // const minId = (data: UsersList[] = []) => {
   //   return data.length ? Math.min(...data.map((x) => x.id)) : 0;
   // };
-
-  const onUserUpdate = (itemData: UsersList, showType: 'sched' | 'user') => {
-    show = showType;
-    userUpdate = true;
-    itemId = itemData.id;
-  };
 
   const isDirtyUserInput = (formData: FormData) => {
     const data = Object.fromEntries(formData);
@@ -109,10 +115,15 @@
       if (result.type === 'success') {
         if (result.data?.schedule) {
           usersData.addUserSched(result.data.schedule);
+          toasts.add({ message: 'Schedule updated successfully' });
         } else if (result.data?.user) {
           usersData.updateUser(result.data.user, data?.defaultOptions?.leads ?? []);
+          toasts.add({ message: 'User updated successfully' });
+        } else {
+          toasts.add({ message: 'Success' });
         }
       } else {
+        toasts.add({ message: 'Something went wrong', type: 'error', timeout: 0 });
         console.error(result);
       }
       await update({ invalidateAll: false, reset: false });
@@ -147,11 +158,12 @@
           filterOpt = { ...q };
           if (listOfUsers) {
             if (action.search === '?/filter') {
-              if(q.search && q.search.length){
-                usersData.set(listOfUsers)
-              }else{
+              if (q.search && q.search.length) {
+                usersData.set(listOfUsers);
+              } else {
                 initDatatable(listOfUsers, q);
               }
+              $filterValues = {};
             } else {
               if (listOfUsers.length) {
                 filterOpt = indexPageList(listOfUsers, q);
@@ -214,6 +226,8 @@
     </AsideContainer>
   {/key}
 {/if}
+
+<Toasts />
 <main class="container mt-4" class:is-skeleton={loading}>
   <form action="?/filter" class="block" method="POST" use:enhance={onFilter}>
     <AdvanceFilter
@@ -266,51 +280,48 @@
       <tbody {...$tableBodyAttrs}>
         {#each $rows as row (row.id)}
           <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-            {#if row.isData()}
-              {#key row.original.updated_at}
-                <tr
-                  {...rowAttrs}
-                  class:is-selected={itemId === row.original.id}
-                  in:fly={{ delay: 100, duration: 200, easing: quintInOut, y: '-1rem' }}
-                  out:fly={{ duration: 100, easing: sineOut, y: '1rem' }}
-                >
-                  <td>
-                    <div class="buttons">
-                      {#if data.user?.role == 'admin'}
-                        <ButtonIcon
-                          small
-                          disabled={!row.original.region}
-                          on:click={() => onUserUpdate(row.original, 'user')}
-                        >
-                          <UserRoundPen />
-                        </ButtonIcon>
-                      {/if}
+            {#key row.isData() && row.original.updated_at}
+              <tr
+                {...rowAttrs}
+                class:is-selected={itemId === (row.isData() && parseInt(row.dataId))}
+                in:fly={{ delay: 100, duration: 200, easing: quintInOut, y: '-1rem' }}
+                out:fly={{ duration: 100, easing: sineOut, y: '1rem' }}
+              >
+                <td>
+                  <div class="buttons">
+                    {#if data.user?.role == 'admin'}
                       <ButtonIcon
                         small
                         disabled={!row.original.region}
-                        on:click={() => onUserUpdate(row.original, 'sched')}
+                        on:click={() => onUserUpdate(row.original, 'user')}
                       >
-                        <CalendarCog />
+                        <UserRoundPen />
                       </ButtonIcon>
-                    </div>
-                  </td>
-                  {#each row.cells as cell (cell.id)}
-                    <Subscribe attrs={cell.attrs()} let:attrs>
+                    {/if}
+                    <ButtonIcon
+                      small
+                      disabled={!row.original.region}
+                      on:click={() => onUserUpdate(row.original, 'sched')}
+                    >
+                      <CalendarCog />
+                    </ButtonIcon>
+                  </div>
+                </td>
+                {#each row.cells as cell (cell.id)}
+                  <Subscribe attrs={cell.attrs()} let:attrs>
+                    <td {...attrs} class={row.isData() && !row.original.active ? 'has-text-danger is-italic' : ''}>
                       {#if cell.isData()}
-                        <td
-                          {...attrs}
-                          class={!row.original.active ? 'has-text-danger is-italic' : ''}
-                        >
-                          <Render
-                            of={cell.value != null && cell.value != undefined ? cell.render() : '-'}
-                          />
-                        </td>
+                        <Render
+                          of={cell.value == undefined || cell.value == null ? '-' : cell.render()}
+                        />
+                      {:else}
+                        <Render of={cell.render() || '-'} />
                       {/if}
-                    </Subscribe>
-                  {/each}
-                </tr>
-              {/key}
-            {/if}
+                    </td>
+                  </Subscribe>
+                {/each}
+              </tr>
+            {/key}
           </Subscribe>
         {/each}
       </tbody>

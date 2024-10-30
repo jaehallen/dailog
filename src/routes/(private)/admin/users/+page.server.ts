@@ -1,6 +1,7 @@
 import {
   addUserSchedule,
   listOfUsers,
+  reDefaultPassword,
   searchUsers,
   updateUser,
   userFilters
@@ -120,7 +121,33 @@ export const actions = {
     return {
       user
     };
+  },
+  'password-reset': async ({ request, locals }) => {
+    if (!locals.user || !locals.session) {
+      return fail(404, { message: 'User not found' });
+    }
+
+    if (!isAdmin(locals.user.role)) {
+      return fail(401, { message: 'User not authorized' });
+    }
+
+    const form = await request.formData();
+    const validUser = validateUser.safeParse(Object.fromEntries(form));
+
+    if (!validUser.success) {
+      return fail(404, { message: validUser.error });
+    }
+
+    const {data, error} = await reDefaultPassword(validUser.data);
+    if(error){
+      return fail(404, { message: error.message });
+    }
+
+    return {
+      success: data
+    }
   }
+
 } satisfies Actions;
 
 async function queryData(form: FormData) {

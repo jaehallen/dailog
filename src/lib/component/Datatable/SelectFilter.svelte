@@ -5,8 +5,6 @@
 </script>
 
 <script lang="ts">
-  import { boolean } from 'zod';
-
   export let filterValue;
   export let preFilteredValues;
   $: uniqueValues = getDistinct($preFilteredValues);

@@ -1,8 +1,6 @@
 import { derived, writable } from 'svelte/store';
 import type {
-  UsersList,
   OptCategory,
-  ScheduleRecord,
   TimeEntryRecord,
   TimesheetStateInfo,
   UserSchedule
@@ -13,8 +11,7 @@ import { browser } from '$app/environment';
 
 export const timeAction = userTimeAction(STORAGENAME.action);
 export const timesheet = timesheetStore(STORAGENAME.timesheet);
-
-
+export const toasts = toastsStore();
 
 export const timeLog = derived(timesheet, ($timesheet) => {
   if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };
@@ -188,4 +185,37 @@ function userTimeAction(key = 'user-action') {
       });
     }
   };
+}
+
+function toastsStore() {
+  const { set, update, subscribe } = writable<{ id: number, message: string, type: 'success' | 'error' | 'info', timeout?: number }[]>([]);
+  const dismiss = (id: number) => {
+    update((toast) => {
+      return toast.filter((t) => t.id !== id)
+    })
+  }
+  const add = (param: { message?: string, type?: 'success' | 'error' | 'info', timeout?: number }) => {
+    const id = Math.floor(Math.random() * 10000)
+    const newToast = {
+      id,
+      message: param.message ?? 'Success',
+      type: param.type ?? 'success',
+      timeout: param.timeout ?? 3000
+    }
+    if (newToast.timeout) {
+      setTimeout(() => {
+        dismiss(id)
+      }, newToast.timeout);
+    }
+
+    update((toast) => {
+      return [newToast, ...toast]
+    })
+  }
+  return {
+    subscribe,
+    set,
+    add,
+    dismiss,
+  }
 }

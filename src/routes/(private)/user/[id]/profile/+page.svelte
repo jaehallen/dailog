@@ -1,19 +1,17 @@
 <script lang="ts">
   import Modal from '$lib/component/Modal.svelte';
   import Field from '$lib/component/Field.svelte';
-  import Notify from '$lib/component/Notify.svelte';
-  import { enhance } from '$app/forms';
+  import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
+  import Toasts from '$lib/component/Toasts.svelte';
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
   import type { SvelteComponent } from 'svelte';
+  import { enhance } from '$app/forms';
   import { browser } from '$app/environment';
-  import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
+  import {toasts} from '$lib/data-store'
 
   const RESET_FORM_ID = 'resetform';
   export let data: PageData;
-  export let notify: SvelteComponent<{
-    notify?: ((msg: string, isDanger?: boolean) => void) | undefined;
-  }>;
   let isActive = false;
   let disabled = false;
   let newPassword = '';
@@ -34,7 +32,7 @@
       if (result.type === 'success') {
         update();
         isActive = false;
-        notify.notify('Password Reset Successful');
+        toasts.add({message: "Password reset successful"})
       } else if (result.type === 'failure') {
         invalidPassword = result.data?.incorrect;
         update({ reset: false });
@@ -44,8 +42,8 @@
   };
 </script>
 
+<Toasts/>
 <main class="container is-fullhd">
-  <Notify bind:this={notify} />
   <Modal {isActive}>
     <form slot="message" method="post" id={RESET_FORM_ID} use:enhance={handleEnhance}>
       <Field label="Old Password" name="old">

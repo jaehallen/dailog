@@ -24,9 +24,16 @@ export const insertUser = async(args: Pick<UserRecord, 'id' | 'name' | 'lead_id'
   return db.createUser({...args, password_hash});
 }
 
+export const reDefaultPassword = async(args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
+  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
+  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
+  return db.updatePassword(args.id, password_hash)
+} 
+
 export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
   return db.createUserSchedule(args);
 };
+
 
 export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
   return db.updateUser(user);
