@@ -1,5 +1,7 @@
 import { writable, type Writable } from 'svelte/store';
 import { getContext, setContext } from 'svelte';
+import type { UsersList } from './types/schema';
+import { UserPlus } from 'lucide-svelte';
 
 /*
  * Users Page Context for Side Popup of UserUpdate and ScheduleUpdate
@@ -7,21 +9,38 @@ import { getContext, setContext } from 'svelte';
 interface UserUpdate {
   updateId: number;
   showType: 'sched' | 'user';
-  itemId: number;
+  data: UsersList | null;
+  schedules: UsersList['schedules'];
+  id: number;
   onUpdate: boolean;
 }
 
 export function setContextUpdate() {
-  let updateInfo = writable<UserUpdate>({
-    updateId: Math.floor(Math.random() * 10000),
+  let info: UserUpdate = {
+    updateId: 0,
+    data: null,
+    schedules: [],
     showType: 'user',
-    itemId: 0,
+    id: 0,
     onUpdate: false
-  });
+  };
 
-  setContext('updateInfo', updateInfo);
+  const {set, update, subscribe} = writable<UserUpdate>({...info})
+  const reset = () => set({...info})
+  setContext('editUser', { set, update, subscribe, reset });
 }
+
 
 export function getContextUpdate() {
-  return getContext<Writable<UserUpdate>>('updateInfo');
+  return getContext<Writable<UserUpdate>>('editUser');
 }
+
+export function setContextSchedBatch() {
+  const isBatchSched = writable(false)
+  setContext('isBatchSched', isBatchSched)
+}
+
+export function getContextSchedBatch() {
+  return getContext<Writable<boolean>>('isBatchSched')
+}
+

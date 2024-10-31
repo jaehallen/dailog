@@ -2,7 +2,7 @@ import type { UsersList, ScheduleRecord, UserRecord } from './types/schema';
 import type { Writable } from 'svelte/store';
 import { derived, writable } from 'svelte/store';
 import { createRender, createTable } from 'svelte-headless-table';
-import { addColumnFilters, addResizedColumns } from 'svelte-headless-table/plugins';
+import { addColumnFilters, addResizedColumns, addSelectedRows } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
 import { textFilter, matchFilter } from './utility';
 import RowActionHeader from './component/Datatable/RowActionHeader.svelte';
@@ -15,7 +15,8 @@ export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0)
 export function getUsersTable(userslist: Writable<UsersList[]>, user: User | null = null) {
   const table = createTable(userslist, {
     filter: addColumnFilters(),
-    resize: addResizedColumns()
+    resize: addResizedColumns(),
+    select: addSelectedRows(),
   });
 
   const columns = table.createColumns([
@@ -25,11 +26,22 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
         _,
         {
           pluginStates: {
-            filter: { filterValues }
+            filter: { filterValues },
+            select,
           }
         }
-      ) => createRender(RowActionHeader, { filterValues }),
-      cell: ({ row }) => createRender(RowAction, { data: row.isData() ? row.original : {}, user })
+      ) => createRender(RowActionHeader, { filterValues, select }),
+      cell: ({ row }, { pluginStates }) => {
+        if (row.isData()) {
+          const {allRowsSelected ,getRowState} = pluginStates.select
+          const {isSelected} = getRowState(row);
+          return createRender(RowAction, { data: row.original, user, isSelected, allRowsSelected })
+        }
+        return "-"
+      },
+      plugins: {
+        resize: { initialWidth: 100, minWidth: 100 }
+      }
     }),
     table.column({
       header: 'Active',

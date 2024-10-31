@@ -2,14 +2,22 @@
   import ButtonIcon from '../ButtonIcon.svelte';
   import type { User } from 'lucia';
   import { CalendarCog, UserRoundPen } from 'lucide-svelte';
-  import { getContextUpdate } from '$lib/context';
+  import { getContextUpdate, getContextSchedBatch } from '$lib/context';
   import type { UsersList } from '$lib/types/schema';
-  import RowActionHeader from './RowActionHeader.svelte';
+  import {  fly} from 'svelte/transition';
+  import type { Writable } from 'svelte/store';
 
   export let user: User | null;
   export let data: UsersList;
+  export let isSelected: Writable<boolean>;
+  export let allRowsSelected: Writable<boolean>;
   const updateInfo = getContextUpdate();
-  const randomId = () => Math.floor(Math.random() * 10000)
+  const isBatchSched = getContextSchedBatch();
+  const randomId = () => Math.floor(Math.random() * 10000);
+  const selectItem = () => {
+    $allRowsSelected = false
+    $isSelected = true;
+  }
 
   function userUpdate() {
     $updateInfo = {
@@ -18,24 +26,46 @@
       itemId: data.id,
       onUpdate: true
     };
+    selectItem();
   }
+
   function schedUpdate() {
     $updateInfo = {
       updateId: randomId(),
       showType: 'sched',
       itemId: data.id,
       onUpdate: true
+      
     };
+    selectItem();
   }
 </script>
 
-<div class="buttons">
-  {#if user?.role == 'admin'}
-    <ButtonIcon small disabled={!data.region} on:click={userUpdate}>
-      <UserRoundPen />
-    </ButtonIcon>
+<div class="field wh-fixed is-grouped is-grouped-centered">
+  {#if !$isBatchSched}
+    <div class="control" in:fly={{delay: 200, duration: 200, x: '1rem'}}>
+      <div class="buttons">
+        {#if user?.role == 'admin'}
+          <ButtonIcon small disabled={!data.region} on:click={userUpdate}>
+            <UserRoundPen />
+          </ButtonIcon>
+        {/if}
+        <ButtonIcon small disabled={!data.region} on:click={schedUpdate}>
+          <CalendarCog />
+        </ButtonIcon>
+      </div>
+    </div>
+  {:else}
+    <div class="control" in:fly={{delay: 200, duration: 200, x: '1rem'}}>
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={$isSelected}/>
+      </label>
+    </div>
   {/if}
-  <ButtonIcon small disabled={!data.region} on:click={schedUpdate}>
-    <CalendarCog />
-  </ButtonIcon>
 </div>
+
+<style>
+  .wh-fixed {
+    min-height: 30px;
+  }
+</style>

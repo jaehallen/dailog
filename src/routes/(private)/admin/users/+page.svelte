@@ -3,6 +3,7 @@
   import UserInputs from '$lib/component/UserInputs.svelte';
   import ScheduleInputs from '$lib/component/ScheduleInputs.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
+  import Switch from '$lib/component/Switch.svelte';
   import Toasts from '$lib/component/Toasts.svelte';
   import type { ScheduleRecord, UsersList } from '$lib/types/schema';
   import type { PageData } from './$types';
@@ -18,11 +19,18 @@
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
   import { toasts } from '$lib/data-store';
-  import { getContextUpdate, setContextUpdate } from '$lib/context';
+  import {
+    getContextSchedBatch,
+    getContextUpdate,
+    setContextSchedBatch,
+    setContextUpdate
+  } from '$lib/context';
 
   export let data: PageData;
   setContextUpdate();
+  setContextSchedBatch();
   const editUser = getContextUpdate();
+  const isBatchSched = getContextSchedBatch();
   let disabled = false;
   let loading = false;
   let filterOpt: SearchOptions = data?.queries || {};
@@ -39,6 +47,12 @@
     data?.user
   );
   const { filterValues } = pluginStates.filter;
+
+  const closePopup = (e: KeyboardEvent) => {
+    if (e.key == 'Escape') {
+      editUser.reset()
+    }
+  };
 
   const maxId = (data: UsersList[] = []) => {
     return data.length ? Math.max(...data.map((x) => x.id)) : 0;
@@ -178,12 +192,7 @@
   onMount(async () => {
     await tick();
     initDatatable(data.listOfUsers, data.queries);
-    window.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key == 'Escape') {
-        $editUser.onUpdate = false;
-        $editUser.itemId = 0;
-      }
-    });
+    window.addEventListener('keydown', closePopup);
   });
 
   onDestroy(() => {
@@ -223,8 +232,19 @@
 <Toasts />
 <main class="container mt-4" class:is-skeleton={loading}>
   <div class="columns mb-0">
-    <div class="column is-2">
-      <button class="button is-rounded is-ghost is-small">Batch Schedule</button>
+    <div class="column is-3 is-flex is-align-items-center">
+      <div class="level">
+        <div class="level-left">
+          <div class="level-item">
+            <Switch bind:checked={$isBatchSched} label="Batch Schedule" />
+          </div>
+          {#if $isBatchSched}
+            <div class="level-item" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
+              <button class="button is-small is-rounded">Set Schedule</button>
+            </div>
+          {/if}
+        </div>
+      </div>
     </div>
     <div class="column">
       <form action="?/filter" class="block" method="POST" use:enhance={onFilter}>
@@ -266,11 +286,11 @@
       </thead>
       <tbody {...$tableBodyAttrs}>
         {#each $rows as row (row.id)}
-          <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+          <Subscribe rowAttrs={row.attrs()} rowProps={row.props()} let:rowAttrs let:rowProps>
             {#key row.isData() && row.original.updated_at}
               <tr
                 {...rowAttrs}
-                class:is-selected={$editUser.itemId === (row.isData() && parseInt(row.dataId))}
+                class:is-selected={rowProps.select.selected}
                 in:fly={{ delay: 100, duration: 200, easing: quintInOut, y: '-1rem' }}
                 out:fly={{ duration: 100, easing: sineOut, y: '1rem' }}
               >
