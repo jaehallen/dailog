@@ -19,18 +19,11 @@
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
   import { toasts } from '$lib/data-store';
-  import {
-    getContextSchedBatch,
-    getContextUpdate,
-    setContextSchedBatch,
-    setContextUpdate
-  } from '$lib/context';
+  import { getContextUpdate, setContextUpdate } from '$lib/context';
 
   export let data: PageData;
   setContextUpdate();
-  setContextSchedBatch();
-  const editUser = getContextUpdate();
-  const isBatchSched = getContextSchedBatch();
+  const { editUser, selectedUser, userSchedules, isBatchSched } = getContextUpdate();
   let disabled = false;
   let loading = false;
   let filterOpt: SearchOptions = data?.queries || {};
@@ -50,7 +43,7 @@
 
   const closePopup = (e: KeyboardEvent) => {
     if (e.key == 'Escape') {
-      editUser.reset()
+      editUser.reset();
     }
   };
 
@@ -58,17 +51,13 @@
     return data.length ? Math.max(...data.map((x) => x.id)) : 0;
   };
 
-  // const minId = (data: UsersList[] = []) => {
-  //   return data.length ? Math.min(...data.map((x) => x.id)) : 0;
-  // };
-
   const isDirtyUserInput = (formData: FormData) => {
     const data = Object.fromEntries(formData);
     const valid = validateUser.safeParse(data);
     return (
-      selectedUser &&
+      $selectedUser &&
       valid.success &&
-      Object.entries(valid.data).some(([key, val]) => selectedUser[key] !== val)
+      Object.entries(valid.data).some(([key, val]) => $selectedUser[key] !== val)
     );
   };
 
@@ -198,29 +187,26 @@
   onDestroy(() => {
     window.removeEventListener('keydown', () => {});
   });
-
-  $: selectedUser = $usersData.find((user) => user.id === $editUser.itemId) || null;
-  $: selectedUserSchedules = selectedUser?.schedules || [];
 </script>
 
-{#if $editUser.onUpdate && selectedUser}
+{#if $editUser.onUpdate && $selectedUser}
   {#key $editUser.updateId}
     <AsideContainer on:exit={() => ($editUser.onUpdate = false)}>
       {#if $editUser.showType == 'user'}
         <form action="?/update-user" method="POST" use:enhance={scheduleOnSubmit}>
           <UserInputs
-            user={selectedUser}
+            user={$selectedUser}
             leads={data?.defaultOptions?.leads}
             regions={data?.defaultOptions?.regions}
             {disabled}
           />
         </form>
       {:else}
-        <UserScheduleTable schedules={selectedUserSchedules} exclude={OMIT_SCHED_COLUMN} />
+        <UserScheduleTable schedules={$userSchedules} exclude={OMIT_SCHED_COLUMN} />
         <form action="?/add-schedule" method="POST" use:enhance={scheduleOnSubmit}>
           <ScheduleInputs
-            schedule={selectedUserSchedules.at(0)}
-            user_id={$editUser.itemId}
+            schedule={$userSchedules.at(0)}
+            user_id={$editUser.selectedId}
             {disabled}
           />
         </form>

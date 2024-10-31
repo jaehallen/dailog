@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FilterX } from 'lucide-svelte';
   import ButtonIcon from '../ButtonIcon.svelte';
-  import { getContextSchedBatch } from '$lib/context';
+  import { getContextUpdate } from '$lib/context';
   import { fly } from 'svelte/transition';
   import type { SelectedRowsState } from 'svelte-headless-table/plugins';
   import type { Writable } from 'svelte/store';
@@ -12,7 +12,7 @@
   };
   export let filterValues;
   export let select: SelectedRowsState<SelectedRows>;
-  const isBatchSched = getContextSchedBatch();
+  const { isBatchSched } = getContextUpdate();
   const { allRowsSelected, someRowsSelected } = select;
   $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 </script>

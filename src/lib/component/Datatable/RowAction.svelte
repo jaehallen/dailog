@@ -2,63 +2,49 @@
   import ButtonIcon from '../ButtonIcon.svelte';
   import type { User } from 'lucia';
   import { CalendarCog, UserRoundPen } from 'lucide-svelte';
-  import { getContextUpdate, getContextSchedBatch } from '$lib/context';
+  import { getContextUpdate } from '$lib/context';
   import type { UsersList } from '$lib/types/schema';
-  import {  fly} from 'svelte/transition';
+  import { fly } from 'svelte/transition';
   import type { Writable } from 'svelte/store';
 
   export let user: User | null;
   export let data: UsersList;
   export let isSelected: Writable<boolean>;
   export let allRowsSelected: Writable<boolean>;
-  const updateInfo = getContextUpdate();
-  const isBatchSched = getContextSchedBatch();
+  const { editUser, isBatchSched } = getContextUpdate();
   const randomId = () => Math.floor(Math.random() * 10000);
-  const selectItem = () => {
-    $allRowsSelected = false
+
+  const onUpdate = (type: 'sched' | 'user') => {
+    $editUser = {
+      updateId: randomId(),
+      showType: type,
+      selectedId: data.id,
+      onUpdate: true
+    };
+
+    $allRowsSelected = false;
     $isSelected = true;
-  }
-
-  function userUpdate() {
-    $updateInfo = {
-      updateId: randomId(),
-      showType: 'user',
-      itemId: data.id,
-      onUpdate: true
-    };
-    selectItem();
-  }
-
-  function schedUpdate() {
-    $updateInfo = {
-      updateId: randomId(),
-      showType: 'sched',
-      itemId: data.id,
-      onUpdate: true
-      
-    };
-    selectItem();
-  }
+  };
 </script>
 
 <div class="field wh-fixed is-grouped is-grouped-centered">
   {#if !$isBatchSched}
-    <div class="control" in:fly={{delay: 200, duration: 200, x: '1rem'}}>
+    <div class="control" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
       <div class="buttons">
         {#if user?.role == 'admin'}
-          <ButtonIcon small disabled={!data.region} on:click={userUpdate}>
+          <ButtonIcon small disabled={!data.region} on:click={() => onUpdate('user')}>
             <UserRoundPen />
           </ButtonIcon>
         {/if}
-        <ButtonIcon small disabled={!data.region} on:click={schedUpdate}>
+        <ButtonIcon small disabled={!data.region} on:click={() => onUpdate('sched')}>
           <CalendarCog />
         </ButtonIcon>
       </div>
     </div>
   {:else}
-    <div class="control" in:fly={{delay: 200, duration: 200, x: '1rem'}}>
+    <div class="control" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
       <label class="checkbox">
-        <input type="checkbox" bind:checked={$isSelected}/>
+        <input type="checkbox" bind:checked={$isSelected} />
       </label>
     </div>
   {/if}

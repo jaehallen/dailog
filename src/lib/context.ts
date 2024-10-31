@@ -1,7 +1,6 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, derived, type Writable } from 'svelte/store';
 import { getContext, setContext } from 'svelte';
-import type { UsersList } from './types/schema';
-import { UserPlus } from 'lucide-svelte';
+import { usersData } from './table-users';
 
 /*
  * Users Page Context for Side Popup of UserUpdate and ScheduleUpdate
@@ -9,38 +8,44 @@ import { UserPlus } from 'lucide-svelte';
 interface UserUpdate {
   updateId: number;
   showType: 'sched' | 'user';
-  data: UsersList | null;
-  schedules: UsersList['schedules'];
-  id: number;
+  selectedId: number;
   onUpdate: boolean;
 }
 
+type UserUpdateStore = ReturnType<typeof getStoreUserUpdate>;
+
+const editUserStore = getStoreUserUpdate();
+const selectedUser = derived([editUserStore, usersData], ([$editUserStore, $usersData]) => {
+  return $usersData.find((user) => user.id == $editUserStore.selectedId) ?? null;
+});
+
+const userSchedules = derived(selectedUser, ($selectedUser) => {
+  return $selectedUser?.schedules || [];
+});
+
 export function setContextUpdate() {
+  setContext<UserUpdateStore>('editUser', editUserStore);
+  setContext<Writable<Boolean>>('isBatchSched', writable(false));
+}
+
+export function getContextUpdate() {
+  return {
+    selectedUser,
+    userSchedules,
+    editUser: getContext<UserUpdateStore>('editUser'),
+    isBatchSched: getContext<Writable<boolean>>('isBatchSched')
+  };
+}
+
+function getStoreUserUpdate() {
   let info: UserUpdate = {
     updateId: 0,
-    data: null,
-    schedules: [],
     showType: 'user',
-    id: 0,
+    selectedId: 0,
     onUpdate: false
   };
 
-  const {set, update, subscribe} = writable<UserUpdate>({...info})
-  const reset = () => set({...info})
-  setContext('editUser', { set, update, subscribe, reset });
+  const { set, update, subscribe } = writable<UserUpdate>({ ...info });
+  const reset = () => set({ ...info });
+  return { subscribe, set, update, reset };
 }
-
-
-export function getContextUpdate() {
-  return getContext<Writable<UserUpdate>>('editUser');
-}
-
-export function setContextSchedBatch() {
-  const isBatchSched = writable(false)
-  setContext('isBatchSched', isBatchSched)
-}
-
-export function getContextSchedBatch() {
-  return getContext<Writable<boolean>>('isBatchSched')
-}
-
