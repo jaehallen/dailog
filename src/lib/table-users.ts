@@ -4,13 +4,12 @@ import { derived, writable } from 'svelte/store';
 import { createRender, createTable } from 'svelte-headless-table';
 import { addColumnFilters, addResizedColumns, addSelectedRows } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
-import { textFilter, matchFilter } from './utility';
+import { textFilter, matchFilter, formatDateOrTime } from './utility';
 import RowActionHeader from './component/Datatable/RowActionHeader.svelte';
 import RowAction from './component/Datatable/RowAction.svelte';
 import type { User } from 'lucia';
 
 export const usersData = usersListStore();
-export const dataLastId = derived(usersData, ($users) => $users.at(-1)?.id ?? 0);
 
 export function getUsersTable(userslist: Writable<UsersList[]>, user: User | null = null) {
   const table = createTable(userslist, {
@@ -33,8 +32,8 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
       ) => createRender(RowActionHeader, { filterValues, select }),
       cell: ({ row }, { pluginStates }) => {
         if (row.isData()) {
-          const {allRowsSelected ,getRowState} = pluginStates.select
-          const {isSelected} = getRowState(row);
+          const { allRowsSelected, getRowState } = pluginStates.select
+          const { isSelected } = getRowState(row);
           return createRender(RowAction, { data: row.original, user, isSelected, allRowsSelected })
         }
         return "-"
@@ -112,7 +111,7 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
       }
     }),
     table.column({
-      header: 'Lock Password',
+      header: 'Lock',
       accessor: 'lock_password',
       cell: ({ value }) => createRender(BooleanRender, { value }),
       plugins: {
@@ -123,7 +122,10 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
         }
       }
     }),
-    table.column({ header: 'Latest Schedule', accessor: 'latest_schedule' })
+    table.column({
+      header: 'Latest Schedule', accessor: 'latest_schedule',
+      cell: ({ value }) => formatDateOrTime(value)
+    })
   ]);
 
   return table.createViewModel(columns, { rowDataId: (user) => String(user.id) });
@@ -150,6 +152,9 @@ function usersListStore() {
             )
             .slice(0, 5);
         }
+
+        lists[idx].latest_schedule = formatDateOrTime(lists[idx].schedules[0].effective_date)
+        lists[idx].updated_at = new Date().toISOString()
       }
       return lists;
     });

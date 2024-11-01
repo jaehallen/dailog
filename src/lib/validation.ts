@@ -27,7 +27,7 @@ export const validatePasswordReset: ZodType<{ oldPassword: string; newPassword: 
     newPassword: z.coerce.string().min(6)
   });
 
-export const validateSchedule: ZodType<Omit<ScheduleRecord, 'id'>> = z.object({
+export const validateSchedule = z.object({
   user_id: z.coerce.number().gte(100000).lte(999999),
   effective_date: z.coerce.string().date(),
   utc_offset: z.coerce.number().gte(-12).lte(14),
@@ -42,6 +42,15 @@ export const validateSchedule: ZodType<Omit<ScheduleRecord, 'id'>> = z.object({
   day_off: z.coerce.string()
 });
 
+export const validateManySched = validateSchedule
+  .omit({ user_id: true })
+  .extend({
+    ids_list: z
+      .string()
+      .transform(v => v.split("_").map(x => parseInt(x)))
+      .pipe(z.number().gte(100000).lt(999999).array())
+  }).strip()
+
 export const validateUser = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
   name: z.coerce.string(),
@@ -53,7 +62,7 @@ export const validateUser = z.object({
 });
 
 export const validateRegistration = z.object({
-  id: z.coerce.number().gte(100000).lte(999999), 
+  id: z.coerce.number().gte(100000).lte(999999),
   lead_id: z.coerce.number().gte(100000).lte(999999),
   name: z.coerce.string().min(2),
   region: z.coerce.string().min(2)

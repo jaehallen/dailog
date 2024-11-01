@@ -1,37 +1,26 @@
-import { writable, derived, type Writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 import { getContext, setContext } from 'svelte';
-import { usersData } from './table-users';
 
 /*
  * Users Page Context for Side Popup of UserUpdate and ScheduleUpdate
  **/
 interface UserUpdate {
   updateId: number;
-  showType: 'sched' | 'user';
+  showType: 'sched' | 'user' | 'manysched';
   selectedId: number;
-  onUpdate: boolean;
+  isEdit: boolean;
 }
 
 type UserUpdateStore = ReturnType<typeof getStoreUserUpdate>;
 
-const editUserStore = getStoreUserUpdate();
-const selectedUser = derived([editUserStore, usersData], ([$editUserStore, $usersData]) => {
-  return $usersData.find((user) => user.id == $editUserStore.selectedId) ?? null;
-});
-
-const userSchedules = derived(selectedUser, ($selectedUser) => {
-  return $selectedUser?.schedules || [];
-});
-
 export function setContextUpdate() {
+  const editUserStore = getStoreUserUpdate();
   setContext<UserUpdateStore>('editUser', editUserStore);
   setContext<Writable<Boolean>>('isBatchSched', writable(false));
 }
 
 export function getContextUpdate() {
   return {
-    selectedUser,
-    userSchedules,
     editUser: getContext<UserUpdateStore>('editUser'),
     isBatchSched: getContext<Writable<boolean>>('isBatchSched')
   };
@@ -42,7 +31,7 @@ function getStoreUserUpdate() {
     updateId: 0,
     showType: 'user',
     selectedId: 0,
-    onUpdate: false
+    isEdit: false
   };
 
   const { set, update, subscribe } = writable<UserUpdate>({ ...info });

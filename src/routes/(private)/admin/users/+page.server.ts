@@ -1,4 +1,5 @@
 import {
+  addManySchedule,
   addUserSchedule,
   listOfUsers,
   reDefaultPassword,
@@ -8,7 +9,7 @@ import {
 } from '$lib/server/data/admin';
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { validateSchedule, validateUser, validateSearch } from '$lib/validation';
+import { validateSchedule, validateUser, validateSearch, validateManySched } from '$lib/validation';
 import { isAdmin, isEditor, isLepo } from '$lib/utility';
 import { TEMPID } from '$lib/defaults';
 
@@ -94,6 +95,28 @@ export const actions = {
     };
   },
 
+  'add-many-schedule': async ({ request, locals }) => {
+    if (!locals.user || !locals.session) {
+      return fail(404, { message: 'User not found' });
+    }
+
+    if (!isEditor(locals.user.role)) {
+      return fail(401, { message: 'User not authorized' });
+    }
+    const form = await request.formData();
+    const validSched = validateManySched.safeParse(Object.fromEntries(form));
+    console.log(validSched)
+
+    if (!validSched.success) {
+      return fail(404, { message: validSched.error });
+    }
+    await addManySchedule(validSched.data);
+
+    return {
+      schedules: 'success'
+    }
+
+  },
   'update-user': async ({ request, locals }) => {
     if (!locals.user || !locals.session) {
       return fail(404, { message: 'User not found' });
@@ -138,8 +161,8 @@ export const actions = {
       return fail(404, { message: validUser.error });
     }
 
-    const {data, error} = await reDefaultPassword(validUser.data);
-    if(error){
+    const { data, error } = await reDefaultPassword(validUser.data);
+    if (error) {
       return fail(404, { message: error.message });
     }
 

@@ -23,10 +23,12 @@
 
   export let data: PageData;
   setContextUpdate();
-  const { editUser, selectedUser, userSchedules, isBatchSched } = getContextUpdate();
+  const { editUser, isBatchSched } = getContextUpdate();
   let disabled = false;
   let loading = false;
   let filterOpt: SearchOptions = data?.queries || {};
+  $: selectedUser = $usersData.find((user) => user.id == $editUser.selectedId) ?? null;
+  $: userSchedules = selectedUser?.schedules ?? [];
 
   const OMIT_SCHED_COLUMN: (keyof ScheduleRecord)[] = [
     'id',
@@ -40,12 +42,7 @@
     data?.user
   );
   const { filterValues } = pluginStates.filter;
-
-  const closePopup = (e: KeyboardEvent) => {
-    if (e.key == 'Escape') {
-      editUser.reset();
-    }
-  };
+  const { selectedDataIds } = pluginStates.select;
 
   const maxId = (data: UsersList[] = []) => {
     return data.length ? Math.max(...data.map((x) => x.id)) : 0;
@@ -55,9 +52,9 @@
     const data = Object.fromEntries(formData);
     const valid = validateUser.safeParse(data);
     return (
-      $selectedUser &&
+      selectedUser &&
       valid.success &&
-      Object.entries(valid.data).some(([key, val]) => $selectedUser[key] !== val)
+      Object.entries(valid.data).some(([key, val]) => selectedUser[key] !== val)
     );
   };
 
@@ -99,6 +96,8 @@
     } else {
       disabled = true;
     }
+
+    console.log(Object.fromEntries(formData));
     return async ({ update, result }) => {
       if (result.type === 'success') {
         if (result.data?.schedule) {
@@ -144,14 +143,16 @@
         if (result.data) {
           const { listOfUsers, queries: q = {} } = result.data;
           filterOpt = { ...q };
+
           if (listOfUsers) {
             if (action.search === '?/filter') {
+              $filterValues = {};
+
               if (q.search && q.search.length) {
                 usersData.set(listOfUsers);
               } else {
                 initDatatable(listOfUsers, q);
               }
-              $filterValues = {};
             } else {
               if (listOfUsers.length) {
                 filterOpt = indexPageList(listOfUsers, q);
@@ -181,34 +182,49 @@
   onMount(async () => {
     await tick();
     initDatatable(data.listOfUsers, data.queries);
-    window.addEventListener('keydown', closePopup);
+    window.addEventListener('keydown', (e) => {
+      if (e.key == 'Escape') {
+        editUser.reset();
+      }
+    });
   });
 
   onDestroy(() => {
     window.removeEventListener('keydown', () => {});
   });
+
+  $: if ($isBatchSched) {
+    $editUser.showType = 'manysched';
+  } else {
+    editUser.reset();
+  }
 </script>
 
-{#if $editUser.onUpdate && $selectedUser}
+{#if $editUser.isEdit}
   {#key $editUser.updateId}
-    <AsideContainer on:exit={() => ($editUser.onUpdate = false)}>
-      {#if $editUser.showType == 'user'}
+    <AsideContainer on:exit={() => editUser.reset()}>
+      {#if $editUser.showType == 'user' && selectedUser}
         <form action="?/update-user" method="POST" use:enhance={scheduleOnSubmit}>
           <UserInputs
-            user={$selectedUser}
+            user={selectedUser}
             leads={data?.defaultOptions?.leads}
             regions={data?.defaultOptions?.regions}
             {disabled}
           />
         </form>
-      {:else}
-        <UserScheduleTable schedules={$userSchedules} exclude={OMIT_SCHED_COLUMN} />
+      {:else if $editUser.showType == 'sched'}
+        <UserScheduleTable schedules={userSchedules} exclude={OMIT_SCHED_COLUMN} />
         <form action="?/add-schedule" method="POST" use:enhance={scheduleOnSubmit}>
           <ScheduleInputs
-            schedule={$userSchedules.at(0)}
+            schedule={userSchedules.at(0)}
             user_id={$editUser.selectedId}
             {disabled}
           />
+        </form>
+      {:else if $editUser.showType == 'manysched'}
+        <form action="?/add-many-schedule" method="POST" use:enhance={scheduleOnSubmit}>
+          <input type="text" name="ids_list" class="input" required readonly value={Object.keys($selectedDataIds).join('_')} />
+          <ScheduleInputs schedule={userSchedules.at(0)} user_id={0} {disabled} cols={2} />
         </form>
       {/if}
     </AsideContainer>
@@ -226,7 +242,9 @@
           </div>
           {#if $isBatchSched}
             <div class="level-item" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
-              <button class="button is-small is-rounded">Set Schedule</button>
+              <button class="button is-small is-rounded" on:click={() => ($editUser.isEdit = true)}
+                >Set Schedule</button
+              >
             </div>
           {/if}
         </div>

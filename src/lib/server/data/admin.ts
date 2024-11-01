@@ -18,21 +18,27 @@ export const searchUsers = async (options: SearchOptions): Promise<UsersList[]> 
   return usersList.map(toUsersList);
 }
 
-export const insertUser = async(args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>) => {
+export const insertUser = async (args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>) => {
   const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
   const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
-  return db.createUser({...args, password_hash});
+  return db.createUser({ ...args, password_hash });
 }
 
-export const reDefaultPassword = async(args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
+export const reDefaultPassword = async (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
   const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
   const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
   return db.updatePassword(args.id, password_hash)
-} 
+}
 
 export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
   return db.createUserSchedule(args);
 };
+
+export const addManySchedule = async (args: Omit<ScheduleRecord, 'id' |'user_id'> & { ids_list: number[] }) => {
+  const {ids_list, ...scheds} = args;
+  const values = ids_list.map(user_id => Object.assign({...scheds, user_id}))
+  return db.createManySchedule(values);
+}
 
 
 export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
@@ -42,25 +48,25 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
-        search: '',
-        active: null,
-        limit: 100,
-        region: null,
-        lead_id: null,
-        last_id: 0,
-        page_total: null,
-        page_index: String(0)
-      }
+      search: '',
+      active: null,
+      limit: 100,
+      region: null,
+      lead_id: null,
+      last_id: 0,
+      page_total: null,
+      page_index: String(0)
+    }
     : {
-        search: '',
-        active: 1,
-        limit: 100,
-        region: user.region,
-        lead_id: user.id,
-        last_id: TEMPID,
-        page_total: null,
-        page_index: String(TEMPID)
-      };
+      search: '',
+      active: 1,
+      limit: 100,
+      region: user.region,
+      lead_id: user.id,
+      last_id: TEMPID,
+      page_total: null,
+      page_index: String(TEMPID)
+    };
 
   if (query.size) {
     const temp = {

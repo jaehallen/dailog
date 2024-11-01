@@ -1,4 +1,4 @@
-import type { Client, Row } from '@libsql/client';
+import type { Client, ResultSet, Row } from '@libsql/client';
 import type {
   DbSetResult,
   OptRole,
@@ -170,6 +170,13 @@ export class DatabaseController extends DBClient {
     }
 
     return { data: toUserScheddule(data.rows[0]) };
+  }
+
+  public async createManySchedule(args: Omit<ScheduleRecord, 'id'>[]): Promise<ResultSet[] | null>{
+    const results = await super.batchGet(args.map(sched => WRITE.ADD_USER_SCHEDULE(sched)))
+
+    console.log(results)
+    return results
   }
 
   public async createUser(

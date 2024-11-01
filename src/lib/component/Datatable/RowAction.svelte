@@ -19,7 +19,7 @@
       updateId: randomId(),
       showType: type,
       selectedId: data.id,
-      onUpdate: true
+      isEdit: true
     };
 
     $allRowsSelected = false;

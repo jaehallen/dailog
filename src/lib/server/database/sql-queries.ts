@@ -196,7 +196,7 @@ export const WRITE = {
       args
     };
   },
-  INSERT_USER: (args: Pick<UserRecord, 'id' | 'name' | 'region' | 'lead_id' |'password_hash'>) => {
+  INSERT_USER: (args: Pick<UserRecord, 'id' | 'name' | 'region' | 'lead_id' | 'password_hash'>) => {
     return {
       sql: `INSERT INTO users (id, name, region, lead_id, password_hash) VALUES ($id, $name, $region, $lead_id, $password_hash) RETURNING *`,
       args
@@ -247,5 +247,23 @@ export const WRITE = {
         day_off
       }
     };
-  }
-};
+  },
+  ADD_MANY_SCHEDULE: (args: (Omit<ScheduleRecord, 'id'> & { [key: string]: number | string })[]) => {
+    const arr = ["user_id", "effective_date", "utc_offset", "clock_at", "first_break_at", "lunch_at", "second_break_at", "day_off"]
+    const values = args.map(arg => arr.map((h) => arg[h]))
+    return {
+      sql: `INSERT INTO schedules (user_id, effective_date, utc_offset, clock_at, first_break_at, lunch_at, second_break_at, day_off)
+              VALUES ?
+              ON CONFLICT (user_id, effective_date)
+              DO UPDATE SET 
+                utc_offset = excluded.utc_offset,
+                clock_at = excluded.clock_at,
+                first_break_at = excluded.first_break_at,
+                lunch_at = excluded.lunch_at,
+                second_break_at = excluded.second_break_at,
+                day_off = excluded.day_off
+              RETURNING *`,
+      args: values,
+    };
+  },
+}

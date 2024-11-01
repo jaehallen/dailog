@@ -6,6 +6,7 @@
   export let schedule: ScheduleRecord | null = null;
   export let user_id: number;
   export let disabled = false;
+  export let cols = 4;
   const DAYS = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
   const SHORTDAYS = DAYS.map((day) => day.toLowerCase().substring(0, 3));
   const UTCMAP = new Map(UTCOFFSET);
@@ -39,7 +40,7 @@
       pattern="^[0-9]{'{'}6{'}'}$"
       placeholder="123456"
       name="user_id"
-      value={user_id}
+      value={user_id || 999999}
       required
       readonly
     />
@@ -64,7 +65,7 @@
       readonly
     />
   </div>
-  <div class="fixed-grid has-4-cols">
+  <div class={`fixed-grid has-${cols}-cols`}>
     <div class="grid">
       <Field>
         <input
@@ -85,7 +86,7 @@
         <div class="field-body">
           <div class="field has-addons has-addons-right">
             <div class="control">
-              <DropdownButton label="Day" dropup={true}>
+              <DropdownButton label="Day" dropup={false}>
                 {#each DAYS as day, i (i)}
                   <p>
                     <label class="label">
@@ -169,7 +170,7 @@
   </div>
   <div class="field is-grouped is-grouped-right">
     <div class="control">
-      <button formaction="?/add-schedule" class="button is-primary" {disabled}>Add Schedule</button>
+      <button class="button is-primary" {disabled}>Add Schedule</button>
     </div>
   </div>
 </fieldset>
