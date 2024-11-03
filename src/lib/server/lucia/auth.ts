@@ -1,53 +1,53 @@
-import { Lucia } from 'lucia';
+import { Lucia, TimeSpan } from 'lucia';
 import { TursoClient } from './sqlite';
 import { getClient } from '../database/turso';
 import { dev } from '$app/environment';
-import type { RouteProfile, UserRecord } from '$lib/schema';
-import { ROUTES } from '$lib/schema';
+import type { RouteProfile, UserRecord } from '$lib/types/schema';
+import { ROUTES } from '$lib/defaults';
+import { env } from '$env/dynamic/private';
+import { isAdmin } from '$lib/utility';
 
 const adapter = new TursoClient(getClient());
+const max = parseInt(env.MIN_WORKDATE_DIFF ?? '') || 10;
 export const lucia = new Lucia(adapter, {
-	sessionCookie: {
-		attributes: {
-			secure: !dev
-		}
-	},
-	getUserAttributes: (attributes) => {
-		return attributes;
-	}
+  sessionExpiresIn: new TimeSpan(max, 'h'),
+  sessionCookie: {
+    attributes: {
+      secure: !dev
+    }
+  },
+  getUserAttributes: (attributes) => {
+    return attributes;
+  }
 });
 
 declare module 'lucia' {
-	interface Register {
-		Lucia: typeof lucia;
-		UserId: number;
-		DatabaseUserAttributes: Omit<UserRecord, 'id'>;
-	}
+  interface Register {
+    Lucia: typeof lucia;
+    UserId: number;
+    DatabaseUserAttributes: Omit<UserRecord, 'id' | 'password_hash'>;
+  }
 }
 
-export function routeProfile(user: Pick<UserRecord, 'id' | 'role'>): RouteProfile[] {
-	return ROUTES.reduce((arr: RouteProfile[], route: RouteProfile) => {
-		if (route.role.includes(user.role)) {
-			arr.push({ ...route, path: route.path.replace('[id]', String(user.id)) });
-		}
+export function routeProfile(user: Pick<UserRecord, 'id' | 'role' | 'region'>): RouteProfile[] {
+  return ROUTES.reduce((arr: RouteProfile[], route: RouteProfile) => {
+    if (!isAdmin(user.role) && route.region && !route.region.includes(user.region)) {
+      return arr;
+    }
 
-		return arr;
-	}, []);
+    if (!route.role.includes(user.role)) {
+      return arr;
+    }
+
+    arr.push({ ...route, path: route.path.replace('[id]', String(user.id)) });
+    return arr;
+  }, []);
 }
 
 export function isProtectedRoute(pathname: string): boolean {
-	return ['/user', '/admin'].some((str) => pathname.startsWith(str));
+  return ['/user', '/admin'].some((str) => pathname.startsWith(str));
 }
 
 export function isPublicRoute(url: URL) {
-	return ['/login', '/', '/api/logout'].includes(url.pathname);
+  return ['/login', '/', '/api/logout'].includes(url.pathname);
 }
-// Use when schedule is included
-// type UserAttributes = Omit<UserRecord, 'id'> & {
-// 	sched_id: number;
-// 	date_at: string;
-// 	effective_date: string;
-// 	utc_offset: number;
-// 	local_offset: number;
-// 	clock_at: string;
-// };

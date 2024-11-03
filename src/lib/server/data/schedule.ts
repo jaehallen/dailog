@@ -1,92 +1,111 @@
-import type { ScheduleRecord, TimeEntryRecord } from '$lib/schema';
-import { DEFAULT_GRACE_HOUR, DEFAULT_MIN_WORKDATE } from '$lib/schema';
-import { db } from '../database/db-controller';
+import type { ScheduleRecord, TimeEntryRecord } from '$lib/types/schema';
+import { DEFAULT_GRACE_HOUR, DEFAULT_MIN_WORKDATE } from '$lib/defaults';
+import { db } from '$lib/server/database/db-controller';
 import { env } from '$env/dynamic/private';
-import { dateAtOffsetStr, timeDiffSec } from '$lib/utility';
+import { dateAtOffsetStr } from '$lib/utility';
 
 export const getUserSchedule = async (
-	userId: number
+  userId: number
 ): Promise<({ startOfDuty: boolean; date_at: string } & ScheduleRecord) | null> => {
-	const { schedules, timeEntries } = await db.getUserEntryAndSched(userId, true, 10);
+  const { schedules, timeEntries } = await db.getUserEntryAndSched(userId, true, 10);
 
-	if (!schedules.length) {
-		return null;
-	}
+  if (!schedules.length) {
+    return null;
+  }
 
-	return getSchedule(schedules, timeEntries);
+  return getSchedule(schedules, timeEntries);
 };
 
 export function getSchedule(schedules: ScheduleRecord[], timeEntries: TimeEntryRecord[]) {
-	const clockEntry = timeEntries.find((entry) => entry.category === 'clock');
-	const latestSchedule = getCurrentSchedule(schedules);
-	const date_at = dateAtOffsetStr(new Date(), latestSchedule.utc_offset);
+  const clockEntry = timeEntries.find((entry) => entry.category === 'clock');
+  const latestSchedule = getCurrentSchedule(schedules);
+  const date_at = dateAtOffsetStr(new Date(), latestSchedule.utc_offset);
 
-	if (!clockEntry) {
-		return {
-			startOfDuty: true,
-			date_at,
-			...latestSchedule
-		};
-	}
+  if (!clockEntry) {
+    return {
+      startOfDuty: true,
+      date_at,
+      ...latestSchedule
+    };
+  }
 
-	const entrySchedule = scheduleByEntry(schedules, clockEntry) ?? latestSchedule;
-	const startOfDuty = isStartOfDuty(clockEntry, entrySchedule, latestSchedule);
+  const entrySchedule = scheduleByEntry(schedules, clockEntry) ?? latestSchedule;
+  const startOfDuty = isStartOfDuty(clockEntry, entrySchedule, latestSchedule);
 
-	if (!startOfDuty && clockEntry) {
-		return {
-			startOfDuty,
-			date_at: clockEntry?.date_at,
-			...entrySchedule
-		};
-	}
+  if (!startOfDuty && clockEntry) {
+    return {
+      startOfDuty,
+      date_at: clockEntry?.date_at,
+      ...entrySchedule
+    };
+  }
 
-	return {
-		startOfDuty,
-		date_at,
-		...latestSchedule
-	};
+  return {
+    startOfDuty,
+    date_at,
+    ...latestSchedule
+  };
+}
+
+function getFloatHour(offset: number, time?: string) {
+  let d = time ? new Date(`2000-01-01T${time}Z`) : new Date();
+  d.setHours(d.getHours() + offset);
+  return d.getHours() + d.getMinutes() / 60;
+}
+
+/*
+ * This is so useless for users that has flexible time and some users can have it on demand
+ * */
+function withinGraceHour(latestSchedule: ScheduleRecord, workDur: number): boolean {
+  const halfWorkhour = Math.round(workDur / 120);
+  const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
+  const currentHour = getFloatHour(latestSchedule.local_offset);
+  const minHour = getFloatHour(-1 * graceHour, latestSchedule.clock_at);
+  const maxHour = getFloatHour(halfWorkhour, latestSchedule.clock_at);
+
+  if (maxHour > minHour) {
+    return currentHour >= minHour && currentHour <= maxHour;
+  }
+
+  return currentHour >= minHour || currentHour <= maxHour;
 }
 
 export function isStartOfDuty(
-	clockEntry: TimeEntryRecord,
-	entrySchedule: ScheduleRecord,
-	latestSchedule: ScheduleRecord
+  clockEntry: TimeEntryRecord,
+  entrySchedule: ScheduleRecord,
+  latestSchedule: ScheduleRecord
 ): boolean {
-	const today = new Date();
-	const clockStart = new Date((clockEntry.start_at + entrySchedule.utc_offset * 3600) * 1000);
-	const localTime = getLocalTime(latestSchedule.local_offset);
-	const timeDiffHour = timeDiffSec(localTime, latestSchedule.clock_at) / 3600;
-	const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
-	today.setHours(today.getHours() + entrySchedule.utc_offset);
+  const today = new Date();
+  const clockStart = new Date((clockEntry.start_at + entrySchedule.utc_offset * 3600) * 1000);
+  today.setHours(today.getHours() + entrySchedule.utc_offset);
 
-	const minDiff = (today.getTime() - clockStart.getTime()) / 60000;
-	const workDur =
-		latestSchedule.clock_dur_min ??
-		((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2;
+  const minDiff = (today.getTime() - clockStart.getTime()) / 60000; //diff in minute
+  const workDur =
+    latestSchedule.clock_dur_min ??
+    ((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2; //work duration in minute
 
-	if (today.getDate() !== clockStart.getDate() && minDiff >= workDur && (graceHour >= timeDiffHour || timeDiffHour > workDur/60))
-		return true;
+  // BRUH... there are users that has flexible time and CAN HAVE FLEXIBLE TIME ON DEMAND
+  // if (
+  //   today.getDate() !== clockStart.getDate() &&
+  //   minDiff >= workDur &&
+  //   withinGraceHour(latestSchedule, workDur)
+  // )
+  //   return true;
 
-	return false;
+  if (today.getDate() !== clockStart.getDate() && minDiff >= workDur) return true;
+
+  return false;
 }
 
 export function getCurrentSchedule(schedules: ScheduleRecord[] = []): ScheduleRecord {
-	schedules.sort(
-		(a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
-	);
+  schedules.sort(
+    (a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
+  );
 
-	return schedules[0] ?? null;
+  return schedules[0] ?? null;
 }
 
 export function scheduleByEntry(schedules: ScheduleRecord[], clockEntry: TimeEntryRecord) {
-	const sched = schedules.find((sched) => sched.id === clockEntry.sched_id);
-	return sched ?? null;
-}
-
-export function getLocalTime(local_offset: number) {
-	const d = new Date();
-	d.setHours(d.getHours() + local_offset);
-	const [hh, mm] = d.toISOString().split('T')[1].split(':');
-
-	return `${hh}:${mm}`;
+  const sched = schedules.find((sched) => sched.id === clockEntry.sched_id);
+  return sched ?? null;
 }

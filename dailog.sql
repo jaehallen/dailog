@@ -28,11 +28,12 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL CHECK (length(password_hash) >= 6),
   lead_id INTEGER REFERENCES users(id),
   lock_password INTEGER NOT NULL DEFAULT 0 CHECK(lock_password BETWEEN 0 AND 1),
+  preferences TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_leadrole ON users(lead_id, role, region);
+CREATE INDEX IF NOT EXISTS idx_users ON users(region, role, lead_id);
 
 CREATE TRIGGER IF NOT EXISTS users_updated 
 AFTER UPDATE ON users WHEN old.updated_at <> CURRENT_TIMESTAMP
@@ -79,7 +80,7 @@ CREATE TABLE IF NOT EXISTS schedules (
   UNIQUE(user_id, effective_date)
 );
 
-CREATE INDEX IF NOT EXISTS schedules_idx ON schedules(user_id, effective_date);
+CREATE INDEX IF NOT EXISTS schedules_idx ON schedules(effective_date, user_id);
 
 -- time_entries
 CREATE TABLE IF NOT EXISTS time_entries (
@@ -105,8 +106,6 @@ BEGIN
  UPDATE time_entries SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
 END;
 
--- 
-
 -- VIEW USERS
 CREATE VIEW IF NOT EXISTS view_users AS
 SELECT
@@ -117,11 +116,13 @@ SELECT
   user.role,
   user.lead_id,
   lead.name as teamlead,
-  user.password_hash,
-  user.lock_password
+  user.lock_password,
+  user.preferences,
+  user.updated_at,
+  user.created_at
 FROM
   users user
-  LEFT JOIN users lead ON lead.id = user.lead_id
+  LEFT JOIN users lead ON lead.id = user.lead_id;
 
 -- VIEW SCHEDULES
 CREATE VIEW IF NOT EXISTS view_schedules AS
@@ -139,7 +140,7 @@ SELECT
   lunch_dur_min,
   break_dur_min,
   day_off
-FROM schedules
+FROM schedules;
 
 -- expensive make sure to query with user_id
 CREATE VIEW current_schedules AS
@@ -151,24 +152,108 @@ FROM
 WHERE
   effective_date <= date_at
 ORDER BY
-  effective_date desc
+  effective_date desc;
 
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS
 SELECT
-  id,
-  user_id,
+  time_entries.id,
+  time_entries.user_id,
   sched_id,
   category,
   date_at,
   start_at,
   end_at,
-  remarks
-  FROM time_entries
+  remarks,
+  schedules.utc_offset,
+  schedules.local_offset,
+  schedules.clock_at,
+  schedules.effective_date
+FROM time_entries
+LEFT JOIN schedules ON time_entries.sched_id = schedules.id
+
+-- VIEW USER & SCHEDULES ADMIN DASHBOARD
+CREATE VIEW users_schedules AS
+SELECT
+  users.id,
+  users.active,
+  users.name,
+  users.region,
+  users.role,
+  users.lead_id,
+  schedules.id as sched_id,
+  schedules.effective_date,
+  schedules.utc_offset,
+  schedules.local_offset,
+  schedules.clock_at,
+  schedules.first_break_at,
+  schedules.lunch_at,
+  schedules.second_break_at,
+  schedules.day_off,
+  schedules.clock_dur_min,
+  schedules.break_dur_min,
+  schedules.lunch_dur_min
+FROM
+  users
+  LEFT JOIN schedules ON user.id = schedules.user_id;
+  
+-- ADMIN DASHBOARD QUERY
+CREATE VIEW IF NOT EXISTS users_info AS SELECT
+  users.id,
+  users.active,
+  users.name,
+  users.lead_id,
+  lead.name teamlead,
+  users.region,
+  users.role,
+  users.lock_password,
+  (
+    SELECT
+      JSON_GROUP_ARRAY(JSON_OBJECT(
+    'id', id,
+    'effective_date', effective_date,
+    'utc_offset', utc_offset,
+    'local_offset', local_offset,
+    'clock_at', clock_at,
+    'first_break_at', first_break_at,
+    'lunch_at', lunch_at,
+    'second_break_at', second_break_at,
+    'day_off', day_off,
+    'clock_dur_min', clock_dur_min,
+    'lunch_dur_min', lunch_dur_min,
+    'break_dur_min', break_dur_min
+  ))
+    FROM (SELECT * FROM schedules WHERE schedules.user_id = users.id ORDER BY effective_date DESC LIMIT 5 )
+  ) as schedules
+FROM users
+  LEFT JOIN users lead ON users.lead_id = lead.id
+  GROUP BY users.id
+  ORDER BY users.id;
+
+-- Create a table. And an external content fts5 table to index it.
+CREATE VIRTUAL TABLE fts_users USING fts5(name, tokenize='trigram', content='users', content_rowid='id' );
+
+-- Triggers to keep the FTS index up to date.
+CREATE TRIGGER fts_user_insert AFTER INSERT ON users BEGIN
+  INSERT INTO fts_users(rowid, name) VALUES (new.id, new.name);
+END;
+
+CREATE TRIGGER fts_user_delete AFTER DELETE ON users BEGIN
+  INSERT INTO fts_users(fts_users, rowid, name) VALUES('delete', old.id, old.name);
+END;
+
+CREATE TRIGGER fts_user_update AFTER UPDATE ON users WHEN old.name <> new.name
+BEGIN 
+  INSERT INTO fts_users(fts_users, rowid, name) VALUES('delete', old.id, old.name);
+  INSERT INTO fts_users(rowid, name) VALUES (new.id, new.name);
+END;
+
+INSERT INTO fts_users(fts_users) VALUES('rebuild');
+
 
 -- INSERT DEFAULT USER
 INSERT INTO users ("id","name","region","role","password_hash","lead_id","lock_password")
 VALUES
 (100000, "Admin",null,"admin","c1af01ec84c4ea44cacf0774e51e9e01:666bc8196e924bdd60161ff14b33623b957c164c729797c272d4e306d366bac8",null,1), -- admin@hopkins
-(200000, "Lead of Hopkins","APAC","lead","a8eff657adbb271dcd36cd22e5848dae:b1fe08ccf5652b823a2fa6e48be02d6d33496435c46ec2793c62f92e3b8ede91",100000,1), -- lead@hopkins
-(200001, "POC of Hopkins","APAC","poc","91ac3f14d8f75922628a92b34309effb:1e431a6da47a1037254b7ac7ab1c001d3a1984382b38766d3bc98971325f1faf",200000,1); -- poc@hopkins
+(100001, "Lead of Hopkins","APAC","lead","a8eff657adbb271dcd36cd22e5848dae:b1fe08ccf5652b823a2fa6e48be02d6d33496435c46ec2793c62f92e3b8ede91",100000,1), -- lead@hopkins
+(100002, "POC of Hopkins","APAC","poc","91ac3f14d8f75922628a92b34309effb:1e431a6da47a1037254b7ac7ab1c001d3a1984382b38766d3bc98971325f1faf",200000,1); -- poc@hopkins

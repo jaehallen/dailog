@@ -1,274 +1,326 @@
-import type { Client, InStatement, ResultSet } from '@libsql/client';
+import type { Client } from '@libsql/client';
 import type {
-	ScheduleRecord,
-	TimeEntryRecord,
-	UserInfo,
-	UserProfile,
-	UserRecord
-} from '$lib/schema';
-import { LibsqlError } from '@libsql/client';
+  DbResponse,
+  OptRole,
+  ScheduleRecord,
+  TimeEntryRecord,
+  TimeEntryReport,
+  UserInfo,
+  UserProfile,
+  UserRecord
+} from '$lib/types/schema';
 import { QUERY, WRITE } from './sql-queries';
-import { getClient } from './turso';
+import { DBClient, getClient } from './turso';
+import { parseJSON } from '$lib/utility';
+import type { SearchOptions } from '$lib/validation';
 
-export class DatabaseController {
-	private client: Client;
-	constructor(dbClient: Client) {
-		this.client = dbClient;
-	}
+export class DatabaseController extends DBClient {
+  constructor(dbClient: Client) {
+    super(dbClient);
+  }
 
-	private async get(sql: string, args: {}): Promise<ResultSet | null> {
-		try {
-			const results = await this.client.execute({
-				sql,
-				args
-			});
-			return results;
-		} catch (error) {
-			if (error instanceof LibsqlError) {
-				logError('get', error as Error);
-			}
-		}
+  public async getUser(id: number): Promise<DbResponse<UserRecord>> {
+    const { sql, args } = QUERY.USER({ user_id: id });
+    const { data, error } = await super.get(sql, args);
+    if (error) {
+      return { data, error };
+    }
 
-		return null;
-	}
+    return { data: toUserRecord(data.rows[0]) };
+  }
 
-	private async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
-		try {
-			const results = await this.client.batch(querries, 'read');
-			return results;
-		} catch (error: unknown) {
-			logError('batchGet', error as Error);
-		}
+  public async getUserValidation(
+    userId: number
+  ): Promise<DbResponse<UserRecord & { sched_id: number }>> {
+    const { data, error } = await super.get(
+      `SELECT users.id, users.active, users.password_hash, sched.id as sched_id
+            FROM users LEFT JOIN schedules sched ON users.id = sched.user_id
+            WHERE users.id = $userId LIMIT 1`,
+      { userId }
+    );
 
-		return null;
-	}
+    if (error) {
+      return { data: null, error };
+    }
 
-	private async set(sql: string, args: {}): Promise<ResultSet | null> {
-		try {
-			const results = await this.client.execute({
-				sql,
-				args
-			});
+    return {
+      data: {
+        sched_id: data.rows[0].sched_id as number,
+        ...toUserRecord(data.rows[0])
+      }
+    };
+  }
 
-			return results;
-		} catch (error) {
-			if (error instanceof LibsqlError) {
-				logError('set', error as Error);
-			}
-		}
+  public async getUserEntryAndSched(
+    userId: number,
+    clockOnly: boolean = false,
+    schedLimit: number = 10
+  ): Promise<Omit<UserInfo, 'user'>> {
+    const results = await super.batchGet([
+      QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
+      !clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
+    ]);
 
-		return null;
-	}
+    const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
 
-	public async getUser(id: number): Promise<UserRecord | null> {
-		const { sql, args } = QUERY.USER({ user_id: id });
-		const { rows = [] } = (await this.get(sql, args)) || {};
+    return {
+      schedules: userSched ? userSched.map(toUserScheddule) : [],
+      timeEntries: timeData ? timeData.map(toTimeEntryRecord) : []
+    };
+  }
 
-		if (!rows.length) {
-			return null;
-		}
+  public async getUserProfile(
+    userId: number,
+    schedule_count: number = 10
+  ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
+    const results = await super.batchGet([
+      QUERY.USER_PROFILE({ user_id: userId }),
+      QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
+    ]);
 
-		return toUserRecord(rows[0]);
-	}
+    const [{ rows: userData = [] } = {}, { rows: userSchedules = [] } = {}] = results || [];
 
-	public async getUserValidation(
-		userId: number
-	): Promise<(UserRecord & { sched_id: number }) | null> {
-		const { rows = [] } =
-			(await this.get(
-				`SELECT users.id, users.active, users.password_hash, sched.id as sched_id
-				FROM users LEFT JOIN current_schedules sched ON users.id = sched.user_id
-				WHERE users.id = $userId LIMIT 1`,
-				{ userId }
-			)) || {};
+    return {
+      user: userData.length ? toUserProfile(userData[0]) : null,
+      schedules: userSchedules ? userSchedules.map(toUserScheddule) : []
+    };
+  }
 
-		if (!rows.length) {
-			return null;
-		}
+  public async getTimeEntries(
+    userId: number,
+    dateRange: { dateStart: string; dateEnd: string }
+  ): Promise<DbResponse<TimeEntryReport[]>> {
+    const { args, sql } = QUERY.USER_ENTRIES({ user_id: userId, ...dateRange });
+    const { data, error } = await super.get(sql, args);
 
-		return {
-			sched_id: rows[0].sched_id as number,
-			...toUserRecord(rows[0])
-		};
-	}
+    if (error) {
+      return { data: null, error };
+    }
 
-	public async getUserEntryAndSched(
-		userId: number,
-		clockOnly: boolean = false,
-		schedLimit: number = 10
-	): Promise<Omit<UserInfo, 'user'>> {
-		const results = await this.batchGet([
-			QUERY.USER_SCHEDULES({ user_id: userId, limit: schedLimit }),
-			!clockOnly ? QUERY.LAST_ENTRY({ user_id: userId }) : QUERY.LAST_CLOCKED({ user_id: userId })
-		]);
+    return {
+      data: data.rows.map((row) => {
+        return {
+          ...toTimeEntryRecord(row),
+          utc_offset: row.utc_offset as number,
+          local_offset: row.local_offset as number,
+          clock_at: row.clock_at as string,
+          effective_date: row.effective_date as string
+        };
+      })
+    };
+  }
 
-		const [{ rows: userSched = [] } = {}, { rows: timeData = [] } = {}] = results || [];
+  public async getManyUsers(params: SearchOptions) {
+    const { sql, args } = QUERY.USERS_INFO(params);
+    return await super.get(sql, args);
+  }
 
-		return {
-			schedules: userSched ? userSched.map(toUserScheddule) : [],
-			timeEntries: timeData ? timeData.map(toTimeEntryRecord) : []
-		};
-	}
+  public async searchUsers(params: SearchOptions) {
+    const { sql, args } = QUERY.SEARCH_USER(params);
+    return await super.get(sql, args);
+  }
 
-	public async getUserProfile(
-		userId: number,
-		schedule_count: number = 10
-	): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
-		const results = await this.batchGet([
-			QUERY.USER({ user_id: userId }),
-			QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
-		]);
+  public async getAdmninInitData(role: OptRole) {
+    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
+    return {
+      regions: regions?.rows.map((r) => String(r.region)) || [],
+      leads: leads?.rows
+        .map((l) => {
+          return { id: Number(l.id), name: String(l.name), region: String(l.region) };
+        })
+        .toSorted((a, b) => b.id - a.id)
+    };
+  }
 
-		const [{ rows: userData = [] } = {}, { rows: userSchedules = [] } = {}] = results || [];
+  public async startTime(
+    args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
+  ): Promise<DbResponse<TimeEntryRecord>> {
+    const q = WRITE.STARTTIME(args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-		return {
-			user: userData.length ? toUserProfile(userData[0]) : null,
-			schedules: userSchedules ? userSchedules.map(toUserScheddule) : []
-		};
-	}
+    if (error) {
+      return { data, error };
+    }
+    return { data: toTimeEntryRecord(data.rows[0]) };
+  }
 
-	public async clockIn(args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>) {
-		const q = WRITE.CLOCKIN(args);
-		const results = await this.set(q.sql, q.args);
-		if (!results) return null;
-		return toTimeEntryRecord(results.rows[0]);
-	}
+  public async endTime(
+    args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
+  ): Promise<DbResponse<TimeEntryRecord>> {
+    const q = WRITE.ENDTIME(args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-	public async clockOut(args: Pick<TimeEntryRecord, 'id' | 'end_at'>) {
-		const q = WRITE.CLOCKOUT(args);
-		const results = await this.set(q.sql, q.args);
-		if (!results) return null;
-		return toTimeEntryRecord(results.rows[0]);
-	}
+    if (error) {
+      return { data, error };
+    }
+    return { data: toTimeEntryRecord(data.rows[0]) };
+  }
 
-	public async startTime(
-		args: Omit<
-			TimeEntryRecord,
-			'id' | 'end_at' | 'elapse_sec' | 'user_ip' | 'user_agent' | 'total_sec'
-		>
-	) {
-		const q = WRITE.BREAK_START(args);
-		const results = await this.set(q.sql, q.args);
-		if (!results) return null;
-		return toTimeEntryRecord(results.rows[0]);
-	}
+  public async updatePassword(userId: number, password: string): Promise<DbResponse<boolean>> {
+    const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
+    const { data, error } = await super.set(q.sql, q.args);
 
-	public async endTime(args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent'>) {
-		const q = WRITE.BREAK_END(args);
-		const results = await this.set(q.sql, q.args);
-		if (!results) return null;
-		return toTimeEntryRecord(results.rows[0]);
-	}
+    if (error) {
+      return { data, error };
+    }
 
-	public async updatePassword(userId: number, password: string) {
-		const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
-		const results = await this.set(q.sql, q.args);
+    return { data: data.rowsAffected > 0 };
+  }
 
-		if (!results) return null;
-		return results.rowsAffected > 0;
-	}
+  public async createUserSchedule(
+    args: Omit<ScheduleRecord, 'id'>
+  ): Promise<DbResponse<ScheduleRecord>> {
+    const q = WRITE.ADD_USER_SCHEDULE(args);
+    const { data, error } = await super.set(q.sql, q.args);
 
-	public async getTimEntries(
-		userId: number,
-		dateRange: { dateStart: string; dateEnd: string }
-	): Promise<Omit<UserInfo, 'user'>> {
-		const [schedules, timeEntries] =
-			(await this.batchGet([
-				QUERY.SCHEDULES({ user_id: userId, limit: 10 }),
-				QUERY.USER_ENTRIES({ user_id: userId, ...dateRange })
-			])) || [];
+    if (error) {
+      return { data, error };
+    }
 
-		return {
-			schedules: schedules.rows.map(toUserScheddule),
-			timeEntries: timeEntries.rows.map(toTimeEntryRecord)
-		};
-	}
+    return { data: toUserScheddule(data.rows[0]) };
+  }
+
+  public async createManySchedule(
+    args: Omit<ScheduleRecord, 'id'>[]
+  ): Promise<DbResponse<ScheduleRecord[]>> {
+    const { data, error } = await super.batchSet(
+      args.map((sched) => WRITE.ADD_USER_SCHEDULE(sched))
+    );
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: data.map((sched) => toUserScheddule(sched.rows[0])) };
+  }
+
+  public async createUser(
+    args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region' | 'password_hash'>
+  ): Promise<DbResponse<UserRecord>> {
+    const q = WRITE.INSERT_USER(args);
+    const { data, error } = await super.set(q.sql, q.args);
+
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: toUserRecord(data.rows[0]) };
+  }
+
+  public async updateUser(
+    user: Omit<UserRecord, 'password_hash' | 'preferences'>
+  ): Promise<DbResponse<UserRecord>> {
+    const q = WRITE.UPDATE_USER(user);
+    const { data, error } = await super.set(q.sql, q.args);
+
+    if (error) {
+      return { data, error };
+    }
+
+    return { data: toUserRecord(data.rows[0]) };
+  }
+
+  public async updateUserPreference(
+    id: number,
+    values: { avatar_src?: string | null; background_src?: string | null; theme?: string | null }
+  ) {
+    const q = WRITE.UPDATE_PREFERENCE({ id, ...values });
+    const { data, error } = await super.set(q.sql, q.args);
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: parseJSON(data.rows[0]) };
+  }
 }
-function toUserRecord(record: Record<string, any>): UserRecord {
-	const { id, active, name, region, role, password_hash, lead_id, lock_password } = record;
 
-	return {
-		id,
-		name,
-		region,
-		role,
-		password_hash,
-		lead_id,
-		active: Boolean(active),
-		lock_password: Boolean(lock_password)
-	};
+export function toUserRecord(record: Record<string, any>): UserRecord {
+  const {
+    id,
+    active,
+    name,
+    region,
+    role,
+    password_hash,
+    lead_id,
+    lock_password,
+    preferences,
+    created_at,
+    updated_at
+  } = record;
+
+  return {
+    id,
+    name,
+    region,
+    role,
+    password_hash,
+    lead_id,
+    active: Boolean(active),
+    lock_password: Boolean(lock_password),
+    created_at,
+    updated_at,
+    preferences: parseJSON(preferences)
+  };
 }
 
 function toUserProfile(record: Record<string, any>): UserProfile {
-	const { teamlead, ...user } = record;
-	return { ...toUserRecord(user), teamlead };
+  const { teamlead, ...user } = record;
+  return { ...toUserRecord(user), teamlead };
 }
 
-function toUserScheddule(record: Record<string, any>) {
-	const {
-		id,
-		sched_id,
-		user_id,
-		effective_date,
-		utc_offset,
-		local_offset,
-		clock_dur_min,
-		lunch_dur_min,
-		break_dur_min,
-		clock_at,
-		first_break_at,
-		lunch_at,
-		second_break_at,
-		day_off,
-		created_at
-	} = record;
+function toUserScheddule(record: Record<string, any>): ScheduleRecord {
+  const {
+    id,
+    sched_id,
+    user_id,
+    effective_date,
+    utc_offset,
+    local_offset,
+    clock_dur_min,
+    lunch_dur_min,
+    break_dur_min,
+    clock_at,
+    first_break_at,
+    lunch_at,
+    second_break_at,
+    day_off,
+    created_at
+  } = record;
 
-	return {
-		id: id ? id : sched_id,
-		user_id,
-		effective_date,
-		utc_offset,
-		local_offset,
-		clock_dur_min,
-		lunch_dur_min,
-		break_dur_min,
-		clock_at,
-		first_break_at,
-		lunch_at,
-		second_break_at,
-		day_off,
-		created_at
-	};
+  return {
+    id: id ? id : sched_id,
+    user_id,
+    effective_date,
+    utc_offset,
+    local_offset,
+    clock_dur_min,
+    lunch_dur_min,
+    break_dur_min,
+    clock_at,
+    first_break_at,
+    lunch_at,
+    second_break_at,
+    day_off,
+    created_at
+  };
 }
 
 function toTimeEntryRecord(record: Record<string, any>) {
-	const { id, user_id, sched_id, category, date_at, start_at, end_at, remarks } = record || {};
+  const { id, user_id, sched_id, category, date_at, start_at, end_at, remarks } = record || {};
 
-	return {
-		id,
-		user_id,
-		sched_id,
-		category,
-		date_at,
-		start_at,
-		end_at,
-		remarks,
-		elapse_sec: Math.floor(Date.now() / 1000) - start_at,
-		total_sec: end_at > 0 ? Number(end_at) - Number(start_at) : null
-	};
+  return {
+    id,
+    user_id,
+    sched_id,
+    category,
+    date_at,
+    start_at,
+    end_at,
+    remarks,
+    elapse_sec: Math.floor(Date.now() / 1000) - start_at,
+    total_sec: end_at > 0 ? Number(end_at) - Number(start_at) : null
+  };
 }
 
-export function log(source: string, message: string | boolean | number): void {
-	console.log(`\n==================${source}====================`);
-	console.log(message);
-}
-
-export function logError(source: string, error: Error) {
-	console.log(`\n==================${source}====================`);
-	if (error instanceof LibsqlError) {
-		console.log(`CODE: ${error.code}`);
-	}
-	console.log(error.stack);
-	console.log(error.message);
-}
 export const db = new DatabaseController(getClient());
