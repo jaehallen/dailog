@@ -1,5 +1,5 @@
 import { z, type ZodType } from 'zod';
-import type { ZPostTime, ScheduleRecord } from './types/schema';
+import type { ZPostTime } from './types/schema';
 import { CATEGORY, ACTIONSTATE } from './defaults';
 
 const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -7,6 +7,21 @@ const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 export const validateSignIn: ZodType<{ id: number; password: string }> = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
   password: z.coerce.string().min(6)
+});
+
+export const validatePreference = z.object({
+  avatar_src: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .pipe(z.string().url().nullish()),
+  background_src: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .pipe(z.string().url().nullish()),
+  theme: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .nullish()
 });
 
 export const validatePostTime: ZodType<ZPostTime> = z.object({
@@ -47,9 +62,10 @@ export const validateManySched = validateSchedule
   .extend({
     ids_list: z
       .string()
-      .transform(v => v.split("_").map(x => parseInt(x)))
+      .transform((v) => v.split('_').map((x) => parseInt(x)))
       .pipe(z.number().gte(100000).lt(999999).array())
-  }).strip()
+  })
+  .strip();
 
 export const validateUser = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
@@ -66,7 +82,7 @@ export const validateRegistration = z.object({
   lead_id: z.coerce.number().gte(100000).lte(999999),
   name: z.coerce.string().min(2),
   region: z.coerce.string().min(2)
-})
+});
 
 export const validateSearch = z.object({
   limit: z.coerce.number().gt(0),
@@ -94,10 +110,9 @@ export const validateSearch = z.object({
   page_total: z.coerce
     .string()
     .transform((v) => (isNaN(parseInt(v)) ? null : parseInt(v)))
-    .pipe(z.number().nullable()),
+    .pipe(z.number().nullable())
 });
 
 export type SearchOptions = z.infer<typeof validateSearch> & {
   [key: string]: string | number | null;
 };
-

@@ -7,7 +7,7 @@
   import { enhance } from '$app/forms';
   import { DateInput } from 'date-picker-svelte';
   import CalendarSearch from 'lucide-svelte/icons/calendar-search';
-  import type { OptCategory } from '$lib/types/schema';
+  import { flip } from 'svelte/animate';
 
   export let data: PageData;
   let date = new Date();
@@ -25,8 +25,10 @@
   };
 
   onMount(() => {
-    if (data.userTimeData) {
-      timeReports.updateReports(data.userTimeData.timeEntries, data.userTimeData.schedules);
+    if (data.error) {
+      console.error(data.error);
+    } else {
+      timeReports.updateReports(data?.userTimesheet ?? []);
     }
   });
 
@@ -44,12 +46,13 @@
 
     return async ({ result, update }) => {
       if (result.type === 'success') {
-        disabled = false;
-        const { timeEntries, schedules } = result.data || {};
-        if (timeEntries && schedules) {
-          timeReports.updateReports(timeEntries, schedules);
+        if (result.data?.userTimesheet) {
+          timeReports.updateReports(result.data.userTimesheet);
         }
+      } else {
+        console.error(result);
       }
+      disabled = false;
       await update({ invalidateAll: false, reset: false });
     };
   };
@@ -81,7 +84,7 @@
       <tbody>
         {#if $timeReports.length}
           {#each $timeReports as entry (entry.id)}
-            <tr class:is-dark={entry.category === 'clock'}>
+            <tr class:is-dark={entry.category === 'clock'} animate:flip>
               {#each reportColumn as column, cid (cid)}
                 <td class:is-light={entry.category !== 'clock' && column.key == 'date_at'}>
                   {@html column.render(entry[column.key] || '-', entry)}

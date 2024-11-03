@@ -3,7 +3,6 @@
   import { scheduleColumn } from '$lib/table-schema';
   import { scale } from 'svelte/transition';
   import { flip } from 'svelte/animate';
-  import { cubicOut } from 'svelte/easing';
 
   export let schedules: ScheduleRecord[];
   export let exclude: (keyof ScheduleRecord)[] = [];
@@ -16,9 +15,9 @@
 </script>
 
 <div class="content">
-  <table class="table is-fullwidth is-hoverable">
+  <table class="table is-fullwidth is-hoverable is-striped">
     <thead>
-      <tr class="is-primary">
+      <tr>
         {#each column as column, cid (cid)}
           <th class="has-text-right"> {column.title} </th>
         {/each}
@@ -26,8 +25,8 @@
     </thead>
     <tbody>
       {#if schedules.length}
-        {#each schedules.toSorted(sortSchedule) as sched, idx (sched.id)}
-          <tr class:is-light={idx % 2 == 0} animate:flip>
+        {#each schedules.toSorted(sortSchedule) as sched (sched.id)}
+          <tr animate:flip>
             {#each column as column, cid (cid)}
               {#key `${cid}-${sched[column.key]}`}
                 <td class="has-text-right" in:scale|local={{ delay: 100, duration: 500 }}>

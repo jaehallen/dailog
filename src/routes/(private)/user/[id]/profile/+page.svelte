@@ -3,12 +3,14 @@
   import Field from '$lib/component/Field.svelte';
   import UserScheduleTable from '$lib/component/UserScheduleTable.svelte';
   import Toasts from '$lib/component/Toasts.svelte';
+  import AsideContainer from '$lib/component/AsideContainer.svelte';
+  import ConfigInputs from '$lib/component/ConfigInputs.svelte';
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
-  import type { SvelteComponent } from 'svelte';
   import { enhance } from '$app/forms';
   import { browser } from '$app/environment';
-  import {toasts} from '$lib/data-store'
+  import { toasts } from '$lib/data-store';
+  import { isPreference } from '$lib/data-store';
 
   const RESET_FORM_ID = 'resetform';
   export let data: PageData;
@@ -30,9 +32,9 @@
     disabled = true;
     return async ({ update, result }) => {
       if (result.type === 'success') {
-        update();
+        update({ invalidateAll: true });
         isActive = false;
-        toasts.add({message: "Password reset successful"})
+        toasts.add({ message: 'Password reset successful' });
       } else if (result.type === 'failure') {
         invalidPassword = result.data?.incorrect;
         update({ reset: false });
@@ -40,12 +42,42 @@
       disabled = false;
     };
   };
+
+  const onPreference: SubmitFunction = () => {
+    disabled = true;
+    return async ({ update, result }) => {
+      if (result.type == 'success') {
+        toasts.add({ message: 'Success', type: 'success', timeout: 3000 });
+        update();
+        $isPreference = false;
+      } else {
+        console.error(result);
+        toasts.add({ message: 'Something went wrong', type: 'error', timeout: 0 });
+        update({ reset: false, invalidateAll: false });
+      }
+
+      disabled = false;
+    };
+  };
 </script>
 
-<Toasts/>
+<Toasts />
+{#if $isPreference}
+  <AsideContainer on:exit={() => ($isPreference = false)}>
+    <form method="POST" action="?/update-preferences" use:enhance={onPreference}>
+      <ConfigInputs user={data?.user ?? null} {disabled} />
+    </form>
+  </AsideContainer>
+{/if}
 <main class="container is-fullhd">
   <Modal {isActive}>
-    <form slot="message" method="post" id={RESET_FORM_ID} use:enhance={handleEnhance}>
+    <form
+      action="?/password-reset"
+      slot="message"
+      method="post"
+      id={RESET_FORM_ID}
+      use:enhance={handleEnhance}
+    >
       <Field label="Old Password" name="old">
         <input
           type="password"

@@ -1,16 +1,22 @@
 import type { PageServerLoad, Actions } from './$types';
+import type { TimeEntryRecord, ZPostTime } from '$lib/types/schema';
 import { fail, redirect } from '@sveltejs/kit';
 import { validatePostTime } from '$lib/validation';
-import { userCurrentEntries, postTime } from '$lib/server/data/time';
-import type { TimeEntryRecord } from '$lib/types/schema';
+import { db } from '$lib/server/database/db-controller';
+import { getSchedule } from '$lib/server/data/schedule';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals.session) {
+  if (!locals.session || !locals.user) {
     redirect(302, '/login');
   }
 
+  const { schedules, timeEntries } = await db.getUserEntryAndSched(locals.user.id);
+
   return {
-    userTimsheet: await userCurrentEntries(locals.session)
+    userTimsheet: {
+      timeEntries,
+      schedule: getSchedule(schedules, timeEntries)
+    }
   };
 };
 
@@ -29,22 +35,15 @@ export const actions = {
     if (!validPost.success) {
       fail(400, { message: validPost.error.issues });
     }
-    const { data: param } = validPost;
+
     const ipAddrss = getClientAddress();
     const userAgent = request.headers.get('user-agent') || '';
 
-    if (param) {
-      const { data, error } = await postTime({
-        id: param.id || 0,
-        user_id: locals.user.id,
-        category: param.category,
-        date_at: param.date_at,
-        sched_id: param.sched_id,
+    if (validPost.data) {
+      const { data, error } = await postTime(locals.user.id, {
+        ...validPost.data,
         user_ip: ipAddrss,
-        user_agent: userAgent,
-        timestamp: Math.floor(Date.now() / 1000),
-        timeAction: param.timeAction,
-        remarks: param.remarks
+        user_agent: userAgent
       });
 
       if (error) {
@@ -59,3 +58,27 @@ export const actions = {
     return { record: null };
   }
 } satisfies Actions;
+
+async function postTime(id: number, data: ZPostTime & { user_ip: string; user_agent: string }) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  if (data.timeAction == 'start') {
+    return await db.startTime({
+      user_id: id,
+      category: data.category,
+      date_at: data.date_at,
+      sched_id: data.sched_id,
+      start_at: timestamp,
+      user_ip: data.user_ip,
+      user_agent: data.user_agent,
+      remarks: data.remarks
+    });
+  } else {
+    return await db.endTime({
+      id: data.id,
+      end_at: timestamp,
+      user_ip: data.user_ip,
+      user_agent: data.user_agent,
+      remarks: data.remarks
+    });
+  }
+}

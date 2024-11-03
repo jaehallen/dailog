@@ -97,7 +97,6 @@
       disabled = true;
     }
 
-    console.log(Object.fromEntries(formData));
     return async ({ update, result }) => {
       if (result.type === 'success') {
         if (result.data?.schedule) {
@@ -106,6 +105,9 @@
         } else if (result.data?.user) {
           usersData.updateUser(result.data.user, data?.defaultOptions?.leads ?? []);
           toasts.add({ message: 'User updated successfully' });
+        } else if (result.data?.listOfSchedules) {
+          usersData.batchSched(result.data.listOfSchedules);
+          toasts.add({ message: 'Users schedules updated successfully' });
         } else {
           toasts.add({ message: 'Success' });
         }
@@ -181,6 +183,10 @@
 
   onMount(async () => {
     await tick();
+    if (data.error) {
+      console.error(data?.error);
+      toasts.add({ message: data.error.message, type: 'error', timeout: 0 });
+    }
     initDatatable(data.listOfUsers, data.queries);
     window.addEventListener('keydown', (e) => {
       if (e.key == 'Escape') {
@@ -223,7 +229,14 @@
         </form>
       {:else if $editUser.showType == 'manysched'}
         <form action="?/add-many-schedule" method="POST" use:enhance={scheduleOnSubmit}>
-          <input type="text" name="ids_list" class="input" required readonly value={Object.keys($selectedDataIds).join('_')} />
+          <input
+            type="text"
+            name="ids_list"
+            class="input"
+            required
+            readonly
+            value={Object.keys($selectedDataIds).join('_')}
+          />
           <ScheduleInputs schedule={userSchedules.at(0)} user_id={0} {disabled} cols={2} />
         </form>
       {/if}

@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { createClient, LibsqlError } from '@libsql/client';
 import type { Client, InStatement, ResultSet } from '@libsql/client';
-import type { DbSetResult } from '$lib/types/schema';
+import type { DbResponse } from '$lib/types/schema';
 
 export class DBClient implements TursoController {
   private client: Client;
@@ -9,20 +9,20 @@ export class DBClient implements TursoController {
     this.client = dbClient;
   }
 
-  public async get(sql: string, args: {}): Promise<ResultSet | null> {
+  public async get(sql: string, args: {}): Promise<DbResponse<ResultSet>> {
     try {
       const results = await this.client.execute({
         sql,
         args
       });
-      return results;
-    } catch (error) {
+      return { data: results };
+    } catch (e) {
+      const error = e as Error;
       if (error instanceof LibsqlError) {
         logError('get', error as Error);
       }
+      return { data: null, error: { message: error.message } };
     }
-
-    return null;
   }
 
   public async batchGet(querries: InStatement[]): Promise<ResultSet[] | null> {
@@ -35,7 +35,21 @@ export class DBClient implements TursoController {
     return null;
   }
 
-  public async set(sql: string, args: {}): Promise<DbSetResult<ResultSet>> {
+  public async batchSet(querries: InStatement[]): Promise<DbResponse<ResultSet[]>> {
+    try {
+      const results = await this.client.batch(querries, 'write');
+      return { data: results };
+    } catch (e) {
+      const error = e as Error;
+      if (error instanceof LibsqlError) {
+        logError('batchWrite', error);
+      }
+
+      return { data: null, error: { message: error.message } };
+    }
+  }
+
+  public async set(sql: string, args: {}): Promise<DbResponse<ResultSet>> {
     try {
       const results = await this.client.execute({
         sql,
@@ -65,9 +79,10 @@ export function getClient() {
 }
 
 interface TursoController {
-  get(sql: string, args: Record<string, number | string>): Promise<ResultSet | null>;
+  get(sql: string, args: Record<string, number | string>): Promise<DbResponse<ResultSet>>;
   batchGet(queries: InStatement[]): Promise<ResultSet[] | null>;
-  set(sql: string, args: {}): Promise<DbSetResult<ResultSet>>;
+  batchSet(querries: InStatement[]): Promise<DbResponse<ResultSet[]>>;
+  set(sql: string, args: {}): Promise<DbResponse<ResultSet>>;
 }
 
 export function log(source: string, message: string | boolean | number): void {

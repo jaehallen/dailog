@@ -1,13 +1,16 @@
 <script lang="ts">
+  import type { RouteProfile } from '$lib/types/schema';
+  import type { User } from 'lucia';
   import Sun from 'lucide-svelte/icons/sun';
   import Moon from 'lucide-svelte/icons/moon';
   import { setTheme, theme } from 'mode-watcher';
-  import type { RouteProfile, UserRecord } from '$lib/types/schema';
   import { AVATAR_SRC } from '$lib/defaults';
   import { onMount } from 'svelte';
+  import { isPreference } from '$lib/data-store';
+
   export let routeList: RouteProfile[] = [];
   export let curPath = '/';
-  export let user: Partial<UserRecord> | undefined;
+  export let user: User | null;
 
   let url = new URL(AVATAR_SRC);
   url.searchParams.set('seed', user?.name ?? 'dailog');
@@ -33,19 +36,22 @@
   };
 
   onMount(() => {
-    try {
-      if (user?.preferences?.avatar_src) {
-        url = new URL(user.preferences.avatar_src);
-      }
-    } catch (err) {
-      console.error('Invalid Avatar url');
+    if (user?.preferences?.avatar_src) {
+      url = new URL(user.preferences.avatar_src);
     }
   });
+
+  const onConfig = () => {
+    // bruh.... bias much. so what about it?
+    if (curPath.endsWith('profile') && (user?.region == 'APAC' || !user?.region)) {
+      $isPreference = !$isPreference;
+    }
+  };
 </script>
 
 <nav class="navbar" aria-label="main navigation">
   <div class="navbar-brand">
-    <button class="button is-ghost py-0 pr-0">
+    <button class="button is-ghost py-0 pr-0" on:click={onConfig}>
       <figure class="image is-48x48">
         <img class="is-rounded" src={url.href} alt="avatar" />
       </figure>

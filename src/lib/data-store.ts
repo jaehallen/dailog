@@ -12,6 +12,7 @@ import { browser } from '$app/environment';
 export const timeAction = userTimeAction(STORAGENAME.action);
 export const timesheet = timesheetStore(STORAGENAME.timesheet);
 export const toasts = toastsStore();
+export const isPreference = writable<boolean>(false);
 
 export const timeLog = derived(timesheet, ($timesheet) => {
   if (!$timesheet.length) return { clocked: null, lunch: null, lastBreak: null, endOfDay: false };

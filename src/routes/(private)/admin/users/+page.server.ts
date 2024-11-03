@@ -1,6 +1,4 @@
 import {
-  addManySchedule,
-  addUserSchedule,
   listOfUsers,
   reDefaultPassword,
   searchUsers,
@@ -12,6 +10,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { validateSchedule, validateUser, validateSearch, validateManySched } from '$lib/validation';
 import { isAdmin, isEditor, isLepo } from '$lib/utility';
 import { TEMPID } from '$lib/defaults';
+import { db } from '$lib/server/database/db-controller';
 
 export const load = (async ({ locals, url }) => {
   if (!locals.user) {
@@ -23,10 +22,12 @@ export const load = (async ({ locals, url }) => {
   }
 
   const filterOptions = userFilters(locals.user, url.searchParams);
+  const { data, error } = await listOfUsers(filterOptions);
 
   return {
     queries: filterOptions,
-    listOfUsers: await listOfUsers(filterOptions)
+    listOfUsers: data ?? [],
+    error
   };
 }) satisfies PageServerLoad;
 
@@ -84,7 +85,7 @@ export const actions = {
       return fail(404, { message: validSched.error });
     }
 
-    const { data, error } = await addUserSchedule(validSched.data);
+    const { data, error } = await db.createUserSchedule(validSched.data);
 
     if (error) {
       return fail(404, { message: error.message });
@@ -105,17 +106,22 @@ export const actions = {
     }
     const form = await request.formData();
     const validSched = validateManySched.safeParse(Object.fromEntries(form));
-    console.log(validSched)
 
     if (!validSched.success) {
       return fail(404, { message: validSched.error });
     }
-    await addManySchedule(validSched.data);
 
-    return {
-      schedules: 'success'
+    const { ids_list, ...scheds } = validSched.data;
+    const values = ids_list.map((user_id) => Object.assign({ ...scheds, user_id }));
+    const { data, error } = await db.createManySchedule(values);
+
+    if (error) {
+      return fail(404, { message: error.message });
     }
 
+    return {
+      listOfSchedules: data
+    };
   },
   'update-user': async ({ request, locals }) => {
     if (!locals.user || !locals.session) {
@@ -168,9 +174,8 @@ export const actions = {
 
     return {
       success: data
-    }
+    };
   }
-
 } satisfies Actions;
 
 async function queryData(form: FormData) {
@@ -181,14 +186,19 @@ async function queryData(form: FormData) {
   }
 
   if (validFilter.data.search) {
+    const { data, error } = await searchUsers(validFilter.data);
     return {
       queries: { ...validFilter.data },
-      listOfUsers: await searchUsers(validFilter.data)
+      listOfUsers: data,
+      error
     };
   }
 
+  const { data, error } = await listOfUsers(validFilter.data);
+
   return {
     queries: { ...validFilter.data },
-    listOfUsers: await listOfUsers(validFilter.data)
+    listOfUsers: data,
+    error
   };
 }

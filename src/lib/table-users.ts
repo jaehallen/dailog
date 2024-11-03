@@ -1,8 +1,12 @@
 import type { UsersList, ScheduleRecord, UserRecord } from './types/schema';
 import type { Writable } from 'svelte/store';
-import { derived, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { createRender, createTable } from 'svelte-headless-table';
-import { addColumnFilters, addResizedColumns, addSelectedRows } from 'svelte-headless-table/plugins';
+import {
+  addColumnFilters,
+  addResizedColumns,
+  addSelectedRows
+} from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
 import { textFilter, matchFilter, formatDateOrTime } from './utility';
 import RowActionHeader from './component/Datatable/RowActionHeader.svelte';
@@ -15,7 +19,7 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
   const table = createTable(userslist, {
     filter: addColumnFilters(),
     resize: addResizedColumns(),
-    select: addSelectedRows(),
+    select: addSelectedRows()
   });
 
   const columns = table.createColumns([
@@ -26,17 +30,17 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
         {
           pluginStates: {
             filter: { filterValues },
-            select,
+            select
           }
         }
       ) => createRender(RowActionHeader, { filterValues, select }),
       cell: ({ row }, { pluginStates }) => {
         if (row.isData()) {
-          const { allRowsSelected, getRowState } = pluginStates.select
+          const { allRowsSelected, getRowState } = pluginStates.select;
           const { isSelected } = getRowState(row);
-          return createRender(RowAction, { data: row.original, user, isSelected, allRowsSelected })
+          return createRender(RowAction, { data: row.original, user, isSelected, allRowsSelected });
         }
-        return "-"
+        return '-';
       },
       plugins: {
         resize: { initialWidth: 100, minWidth: 100 }
@@ -123,7 +127,8 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
       }
     }),
     table.column({
-      header: 'Latest Schedule', accessor: 'latest_schedule',
+      header: 'Latest Schedule',
+      accessor: 'latest_schedule',
       cell: ({ value }) => formatDateOrTime(value)
     })
   ]);
@@ -133,29 +138,45 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
 
 function usersListStore() {
   const { set, update, subscribe } = writable<UsersList[]>([]);
+  const updateSched = (scheds: ScheduleRecord[], schedule: ScheduleRecord) => {
+    const idx = scheds.findIndex((s) => Number(s.id) === Number(schedule.id));
+    if (idx >= 0) {
+      scheds[idx] = { ...schedule };
+    } else {
+      scheds = [schedule, ...scheds]
+        .toSorted(
+          (a: ScheduleRecord, b: ScheduleRecord) =>
+            new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
+        )
+        .slice(0, 5);
+    }
+
+    return scheds;
+  };
+
   const addUserSched = (schedule: ScheduleRecord) => {
     update((lists) => {
       const idx = lists.findIndex((u) => u.id == schedule.user_id);
 
       if (idx >= 0) {
-        const scheds = [...lists[idx].schedules];
-        const schedIdx = scheds.findIndex((s) => Number(s.id) === Number(schedule.id));
-
-        if (schedIdx >= 0) {
-          scheds[schedIdx] = { ...schedule };
-          lists[idx].schedules = [...scheds];
-        } else {
-          lists[idx].schedules = [schedule, ...scheds]
-            .toSorted(
-              (a: ScheduleRecord, b: ScheduleRecord) =>
-                new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()
-            )
-            .slice(0, 5);
-        }
-
-        lists[idx].latest_schedule = formatDateOrTime(lists[idx].schedules[0].effective_date)
-        lists[idx].updated_at = new Date().toISOString()
+        lists[idx].schedules = updateSched([...lists[idx].schedules], schedule);
+        lists[idx].latest_schedule = formatDateOrTime(lists[idx].schedules[0].effective_date);
+        lists[idx].updated_at = new Date().toISOString();
       }
+      return lists;
+    });
+  };
+
+  const batchSched = (schedules: ScheduleRecord[]) => {
+    update((lists) => {
+      schedules.forEach((schedule) => {
+        const idx = lists.findIndex((u) => u.id == schedule.user_id);
+        if (idx >= 0) {
+          lists[idx].schedules = updateSched([...lists[idx].schedules], schedule);
+          lists[idx].latest_schedule = formatDateOrTime(lists[idx].schedules[0].effective_date);
+          lists[idx].updated_at = new Date().toISOString();
+        }
+      });
       return lists;
     });
   };
@@ -186,5 +207,5 @@ function usersListStore() {
       return lists;
     });
   };
-  return { set, update, subscribe, addUserSched, updateUser };
+  return { set, update, subscribe, addUserSched, updateUser, batchSched };
 }

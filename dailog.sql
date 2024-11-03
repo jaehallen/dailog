@@ -116,8 +116,10 @@ SELECT
   user.role,
   user.lead_id,
   lead.name as teamlead,
-  user.password_hash,
-  user.lock_password
+  user.lock_password,
+  user.preferences,
+  user.updated_at,
+  user.created_at
 FROM
   users user
   LEFT JOIN users lead ON lead.id = user.lead_id;
@@ -155,15 +157,20 @@ ORDER BY
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS
 SELECT
-  id,
-  user_id,
+  time_entries.id,
+  time_entries.user_id,
   sched_id,
   category,
   date_at,
   start_at,
   end_at,
-  remarks
-  FROM time_entries;
+  remarks,
+  schedules.utc_offset,
+  schedules.local_offset,
+  schedules.clock_at,
+  schedules.effective_date
+FROM time_entries
+LEFT JOIN schedules ON time_entries.sched_id = schedules.id
 
 -- VIEW USER & SCHEDULES ADMIN DASHBOARD
 CREATE VIEW users_schedules AS

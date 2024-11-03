@@ -17,7 +17,13 @@ export const QUERY = {
   },
   USER: (args: { user_id: number }) => {
     return {
-      sql: 'SELECT * FROM view_users WHERE id = $user_id',
+      sql: 'SELECT * FROM users WHERE id = $user_id',
+      args
+    };
+  },
+  USER_PROFILE: (args: { user_id: number }) => {
+    return {
+      sql: `SELECT * FROM view_users WHERE id = $user_id`,
       args
     };
   },
@@ -213,6 +219,36 @@ export const WRITE = {
       }
     };
   },
+  UPDATE_PREFERENCE: (args: {
+    id: number;
+    avatar_src?: string | null;
+    background_src?: string | null;
+    theme?: string | null;
+  }) => {
+    return {
+      sql: `UPDATE users 
+              SET preferences = 
+                  IFNULL(
+                    json_set(preferences, 
+                      '$.avatar_src',$avatar_src, 
+                      '$.background_src', $background_src, 
+                      '$.theme',$theme
+                    ),
+                    json_object(
+                      'avatar_src',$avatar_src, 
+                      'background_src', $background_src, 
+                      'theme',$theme
+                    )
+                  )
+              WHERE id = $id RETURNING preferences`,
+      args: {
+        id: args.id,
+        avatar_src: args.avatar_src ?? null,
+        background_src: args.background_src ?? null,
+        theme: args.theme ?? null
+      }
+    };
+  },
   ADD_USER_SCHEDULE: (args: Omit<ScheduleRecord, 'id'>) => {
     const {
       user_id,
@@ -248,9 +284,20 @@ export const WRITE = {
       }
     };
   },
-  ADD_MANY_SCHEDULE: (args: (Omit<ScheduleRecord, 'id'> & { [key: string]: number | string })[]) => {
-    const arr = ["user_id", "effective_date", "utc_offset", "clock_at", "first_break_at", "lunch_at", "second_break_at", "day_off"]
-    const values = args.map(arg => arr.map((h) => arg[h]))
+  ADD_MANY_SCHEDULE: (
+    args: (Omit<ScheduleRecord, 'id'> & { [key: string]: number | string })[]
+  ) => {
+    const arr = [
+      'user_id',
+      'effective_date',
+      'utc_offset',
+      'clock_at',
+      'first_break_at',
+      'lunch_at',
+      'second_break_at',
+      'day_off'
+    ];
+    const values = args.map((arg) => arr.map((h) => arg[h]));
     return {
       sql: `INSERT INTO schedules (user_id, effective_date, utc_offset, clock_at, first_break_at, lunch_at, second_break_at, day_off)
               VALUES ?
@@ -263,7 +310,7 @@ export const WRITE = {
                 second_break_at = excluded.second_break_at,
                 day_off = excluded.day_off
               RETURNING *`,
-      args: values,
+      args: values
     };
-  },
-}
+  }
+};

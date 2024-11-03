@@ -1,43 +1,47 @@
 import { AppPass } from '$lib/server/lucia/hash-ish';
 import { db } from '$lib/server/database/db-controller';
-import type { ScheduleRecord, UserProfile, UserRecord } from '$lib/types/schema';
+import type { DbResponse, ScheduleRecord, UserProfile, UserRecord } from '$lib/types/schema';
 import { env } from '$env/dynamic/private';
 
-export const validateUser = async ({
+const validateUser = async ({
   id,
   password
 }: {
   id: number;
   password: string;
-}): Promise<(UserRecord & { sched_id: number }) | null> => {
+}): Promise<DbResponse<(UserRecord & { sched_id: number }) | null>> => {
   const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  const user = await db.getUserValidation(id);
+  const { data, error } = await db.getUserValidation(id);
 
-  if (!user || !user.active) {
-    return null;
+  if (error) {
+    return { data: null, error };
   }
 
-  if (!(await appPass.verify(user.password_hash, password))) {
-    return null;
+  if (!data || !data.active) {
+    return { data: null };
   }
 
-  return user;
+  if (!(await appPass.verify(data.password_hash, password))) {
+    return { data: null };
+  }
+
+  return { data };
 };
 
-export async function getUserProfile(
+async function getUserProfile(
   userId: number,
   schedule_count: number
 ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
   return db.getUserProfile(userId, schedule_count);
 }
 
-export async function userPasswordReset(
+async function userPasswordReset(
   userId: number,
   { oldPassword, newPassword }: { oldPassword: string; newPassword: string }
 ): Promise<{ incorrect?: boolean; locked?: boolean; success?: boolean } | null> {
-  const user = await db.getUser(userId);
+  const { data: user, error: err } = await db.getUser(userId);
 
-  if (!user) {
+  if (!user || err) {
     return null;
   }
 

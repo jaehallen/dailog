@@ -53,6 +53,9 @@ function getFloatHour(offset: number, time?: string) {
   return d.getHours() + d.getMinutes() / 60;
 }
 
+/*
+ * This is so useless for users that has flexible time and some users can have it on demand
+ * */
 function withinGraceHour(latestSchedule: ScheduleRecord, workDur: number): boolean {
   const halfWorkhour = Math.round(workDur / 120);
   const graceHour = parseInt(env.GRACE_HOUR) || DEFAULT_GRACE_HOUR;
@@ -81,12 +84,15 @@ export function isStartOfDuty(
     latestSchedule.clock_dur_min ??
     ((parseInt(env.MIN_WORKDATE_DIFF) || DEFAULT_MIN_WORKDATE) * 60) / 2; //work duration in minute
 
-  if (
-    today.getDate() !== clockStart.getDate() &&
-    minDiff >= workDur &&
-    withinGraceHour(latestSchedule, workDur)
-  )
-    return true;
+  // BRUH... there are users that has flexible time and CAN HAVE FLEXIBLE TIME ON DEMAND
+  // if (
+  //   today.getDate() !== clockStart.getDate() &&
+  //   minDiff >= workDur &&
+  //   withinGraceHour(latestSchedule, workDur)
+  // )
+  //   return true;
+
+  if (today.getDate() !== clockStart.getDate() && minDiff >= workDur) return true;
 
   return false;
 }

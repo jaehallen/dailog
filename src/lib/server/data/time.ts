@@ -9,7 +9,7 @@ interface UserLatestTimedata {
   timeEntries: TimeEntryRecord[];
 }
 
-export const postTime = async (
+const tostTime = async (
   data: Omit<TimeEntryRecord, 'start_at' | 'end_at' | 'elapse_sec' | 'total_sec'> & {
     timestamp: number;
     timeAction: OptActionState;
@@ -37,7 +37,7 @@ export const postTime = async (
   }
 };
 
-export const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
+const userCurrentEntries = async (session: Session): Promise<UserLatestTimedata | null> => {
   const { schedules, timeEntries } = await db.getUserEntryAndSched(session.userId);
   const schedule = getSchedule(schedules, timeEntries);
   return {
@@ -46,9 +46,6 @@ export const userCurrentEntries = async (session: Session): Promise<UserLatestTi
   };
 };
 
-export const userReports = async (
-  userId: number,
-  date: string
-): Promise<Omit<UserInfo, 'user'>> => {
+const userReports = async (userId: number, date: string): Promise<Omit<UserInfo, 'user'>> => {
   return await db.getTimEntries(userId, getWeekRange(date));
 };

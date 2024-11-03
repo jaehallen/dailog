@@ -1,6 +1,6 @@
 import type { User } from 'lucia';
 import { db } from '$lib/server/database/db-controller';
-import type { ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
+import type { DbResponse, ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
 import { isAdmin, parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
@@ -8,38 +8,48 @@ import { TEMPID } from '$lib/defaults';
 import { AppPass } from '../lucia/hash-ish';
 import { env } from '$env/dynamic/private';
 
-export const listOfUsers = async (options: SearchOptions): Promise<UsersList[]> => {
-  const usersList = await db.getManyUsers(options);
-  return usersList.map(toUsersList);
+export const listOfUsers = async (options: SearchOptions): Promise<DbResponse<UsersList[]>> => {
+  const { data, error } = await db.getManyUsers(options);
+  if (error) {
+    return { data: null, error };
+  }
+  return { data: data.rows.map(toUsersList) };
 };
 
-export const searchUsers = async (options: SearchOptions): Promise<UsersList[]> => {
-  const usersList = await db.searchUsers(options);
-  return usersList.map(toUsersList);
-}
+export const searchUsers = async (options: SearchOptions): Promise<DbResponse<UsersList[]>> => {
+  const { data, error } = await db.searchUsers(options);
+  if (error) {
+    return { data: null, error };
+  }
+
+  return { data: data.rows.map(toUsersList) };
+};
 
 export const insertUser = async (args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>) => {
   const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
+  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`);
   return db.createUser({ ...args, password_hash });
-}
+};
 
-export const reDefaultPassword = async (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
+export const reDefaultPassword = async (
+  args: Omit<UserRecord, 'password_hash' | 'preferences'>
+) => {
   const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`)
-  return db.updatePassword(args.id, password_hash)
-}
+  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`);
+  return db.updatePassword(args.id, password_hash);
+};
 
 export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
   return db.createUserSchedule(args);
 };
 
-export const addManySchedule = async (args: Omit<ScheduleRecord, 'id' |'user_id'> & { ids_list: number[] }) => {
-  const {ids_list, ...scheds} = args;
-  const values = ids_list.map(user_id => Object.assign({...scheds, user_id}))
+export const addManySchedule = async (
+  args: Omit<ScheduleRecord, 'id' | 'user_id'> & { ids_list: number[] }
+) => {
+  const { ids_list, ...scheds } = args;
+  const values = ids_list.map((user_id) => Object.assign({ ...scheds, user_id }));
   return db.createManySchedule(values);
-}
-
+};
 
 export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
   return db.updateUser(user);
@@ -48,25 +58,25 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
-      search: '',
-      active: null,
-      limit: 100,
-      region: null,
-      lead_id: null,
-      last_id: 0,
-      page_total: null,
-      page_index: String(0)
-    }
+        search: '',
+        active: null,
+        limit: 100,
+        region: null,
+        lead_id: null,
+        last_id: 0,
+        page_total: null,
+        page_index: String(0)
+      }
     : {
-      search: '',
-      active: 1,
-      limit: 100,
-      region: user.region,
-      lead_id: user.id,
-      last_id: TEMPID,
-      page_total: null,
-      page_index: String(TEMPID)
-    };
+        search: '',
+        active: 1,
+        limit: 100,
+        region: user.region,
+        lead_id: user.id,
+        last_id: TEMPID,
+        page_total: null,
+        page_index: String(TEMPID)
+      };
 
   if (query.size) {
     const temp = {

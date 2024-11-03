@@ -19,6 +19,14 @@ export function setContextUpdate() {
   setContext<Writable<Boolean>>('isBatchSched', writable(false));
 }
 
+export function setContextProfile() {
+  setContext<Writable<Boolean>>('isPreference', writable(false));
+}
+
+export function getContextProfile() {
+  return getContext<Writable<boolean>>('isPreference');
+}
+
 export function getContextUpdate() {
   return {
     editUser: getContext<UserUpdateStore>('editUser'),

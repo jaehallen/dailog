@@ -128,15 +128,11 @@
       {#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
         <div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
           {#if !$timeAction.isBreak}
-            <div
-              in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}
-            >
+            <div in:fly={{ delay: 150, duration: 300, y: '-2rem', opacity: 0.5, easing: quintOut }}>
               <StartButtons on:start={startTime} on:left={leftToggle} {disabled} />
             </div>
           {:else}
-            <div
-              in:fly={{ delay: 150, duration: 300, x: 0, y: -20, opacity: 0.5, easing: quintOut }}
-            >
+            <div in:fly={{ delay: 150, duration: 300, y: '-2rem', opacity: 0.5, easing: quintOut }}>
               <EndButtons
                 timestamp={$timeAction.timestamp}
                 on:conclude={concludeBreak}

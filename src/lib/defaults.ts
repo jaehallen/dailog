@@ -1,3 +1,6 @@
+/*
+ * TODO: A configuration page for the defaults;
+ */
 import type { OptActionState, OptCategory, RouteProfile, TimesheetStateInfo } from './types/schema';
 
 export const TEMPID = 100020;
@@ -78,7 +81,8 @@ export const ROUTES: RouteProfile[] = [
   {
     name: 'Reports',
     path: '/user/[id]/reports',
-    role: ['admin', 'lead', 'poc', 'user']
+    role: ['admin', 'lead', 'poc', 'user'],
+    region: ['APAC']
   },
   // {
   //   name: 'Dashboard',

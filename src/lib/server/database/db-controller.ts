@@ -1,9 +1,10 @@
-import type { Client, ResultSet, Row } from '@libsql/client';
+import type { Client } from '@libsql/client';
 import type {
-  DbSetResult,
+  DbResponse,
   OptRole,
   ScheduleRecord,
   TimeEntryRecord,
+  TimeEntryReport,
   UserInfo,
   UserProfile,
   UserRecord
@@ -18,35 +19,35 @@ export class DatabaseController extends DBClient {
     super(dbClient);
   }
 
-  public async getUser(id: number): Promise<UserRecord | null> {
+  public async getUser(id: number): Promise<DbResponse<UserRecord>> {
     const { sql, args } = QUERY.USER({ user_id: id });
-    const { rows = [] } = (await super.get(sql, args)) || {};
-
-    if (!rows.length) {
-      return null;
+    const { data, error } = await super.get(sql, args);
+    if (error) {
+      return { data, error };
     }
 
-    return toUserRecord(rows[0]);
+    return { data: toUserRecord(data.rows[0]) };
   }
 
   public async getUserValidation(
     userId: number
-  ): Promise<(UserRecord & { sched_id: number }) | null> {
-    const { rows = [] } =
-      (await this.get(
-        `SELECT users.id, users.active, users.password_hash, sched.id as sched_id
+  ): Promise<DbResponse<UserRecord & { sched_id: number }>> {
+    const { data, error } = await super.get(
+      `SELECT users.id, users.active, users.password_hash, sched.id as sched_id
             FROM users LEFT JOIN schedules sched ON users.id = sched.user_id
             WHERE users.id = $userId LIMIT 1`,
-        { userId }
-      )) || {};
+      { userId }
+    );
 
-    if (!rows.length) {
-      return null;
+    if (error) {
+      return { data: null, error };
     }
 
     return {
-      sched_id: rows[0].sched_id as number,
-      ...toUserRecord(rows[0])
+      data: {
+        sched_id: data.rows[0].sched_id as number,
+        ...toUserRecord(data.rows[0])
+      }
     };
   }
 
@@ -73,7 +74,7 @@ export class DatabaseController extends DBClient {
     schedule_count: number = 10
   ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
     const results = await super.batchGet([
-      QUERY.USER({ user_id: userId }),
+      QUERY.USER_PROFILE({ user_id: userId }),
       QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
     ]);
 
@@ -85,48 +86,55 @@ export class DatabaseController extends DBClient {
     };
   }
 
-  public async getTimEntries(
+  public async getTimeEntries(
     userId: number,
     dateRange: { dateStart: string; dateEnd: string }
-  ): Promise<Omit<UserInfo, 'user'>> {
-    const [schedules, timeEntries] =
-      (await super.batchGet([
-        QUERY.SCHEDULES({ user_id: userId, limit: 10 }),
-        QUERY.USER_ENTRIES({ user_id: userId, ...dateRange })
-      ])) || [];
+  ): Promise<DbResponse<TimeEntryReport[]>> {
+    const { args, sql } = QUERY.USER_ENTRIES({ user_id: userId, ...dateRange });
+    const { data, error } = await super.get(sql, args);
+
+    if (error) {
+      return { data: null, error };
+    }
 
     return {
-      schedules: schedules.rows.map(toUserScheddule),
-      timeEntries: timeEntries.rows.map(toTimeEntryRecord)
+      data: data.rows.map((row) => {
+        return {
+          ...toTimeEntryRecord(row),
+          utc_offset: row.utc_offset as number,
+          local_offset: row.local_offset as number,
+          clock_at: row.clock_at as string,
+          effective_date: row.effective_date as string
+        };
+      })
     };
   }
 
-  public async getManyUsers(params: SearchOptions): Promise<Row[]> {
+  public async getManyUsers(params: SearchOptions) {
     const { sql, args } = QUERY.USERS_INFO(params);
-    const { rows = [] } = (await super.get(sql, args)) || {};
-
-    return rows;
+    return await super.get(sql, args);
   }
 
-  public async searchUsers(params: SearchOptions): Promise<Row[]> {
+  public async searchUsers(params: SearchOptions) {
     const { sql, args } = QUERY.SEARCH_USER(params);
-    const { rows = [] } = (await super.get(sql, args)) || {};
-    return rows;
+    return await super.get(sql, args);
   }
 
   public async getAdmninInitData(role: OptRole) {
     const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
     return {
       regions: regions?.rows.map((r) => String(r.region)) || [],
-      leads: leads?.rows.map((l) => {
-        return { id: Number(l.id), name: String(l.name), region: String(l.region) };
-      })
+      leads: leads?.rows
+        .map((l) => {
+          return { id: Number(l.id), name: String(l.name), region: String(l.region) };
+        })
+        .toSorted((a, b) => b.id - a.id)
     };
   }
 
   public async startTime(
     args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
-  ): Promise<DbSetResult<TimeEntryRecord>> {
+  ): Promise<DbResponse<TimeEntryRecord>> {
     const q = WRITE.STARTTIME(args);
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -138,7 +146,7 @@ export class DatabaseController extends DBClient {
 
   public async endTime(
     args: Pick<TimeEntryRecord, 'id' | 'end_at' | 'user_ip' | 'user_agent' | 'remarks'>
-  ): Promise<DbSetResult<TimeEntryRecord>> {
+  ): Promise<DbResponse<TimeEntryRecord>> {
     const q = WRITE.ENDTIME(args);
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -148,7 +156,7 @@ export class DatabaseController extends DBClient {
     return { data: toTimeEntryRecord(data.rows[0]) };
   }
 
-  public async updatePassword(userId: number, password: string): Promise<DbSetResult<boolean>> {
+  public async updatePassword(userId: number, password: string): Promise<DbResponse<boolean>> {
     const q = WRITE.UPDATE_PASSWORD({ user_id: userId, password_hash: password });
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -161,7 +169,7 @@ export class DatabaseController extends DBClient {
 
   public async createUserSchedule(
     args: Omit<ScheduleRecord, 'id'>
-  ): Promise<DbSetResult<ScheduleRecord>> {
+  ): Promise<DbResponse<ScheduleRecord>> {
     const q = WRITE.ADD_USER_SCHEDULE(args);
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -172,16 +180,23 @@ export class DatabaseController extends DBClient {
     return { data: toUserScheddule(data.rows[0]) };
   }
 
-  public async createManySchedule(args: Omit<ScheduleRecord, 'id'>[]): Promise<ResultSet[] | null>{
-    const results = await super.batchGet(args.map(sched => WRITE.ADD_USER_SCHEDULE(sched)))
+  public async createManySchedule(
+    args: Omit<ScheduleRecord, 'id'>[]
+  ): Promise<DbResponse<ScheduleRecord[]>> {
+    const { data, error } = await super.batchSet(
+      args.map((sched) => WRITE.ADD_USER_SCHEDULE(sched))
+    );
 
-    console.log(results)
-    return results
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: data.map((sched) => toUserScheddule(sched.rows[0])) };
   }
 
   public async createUser(
     args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region' | 'password_hash'>
-  ): Promise<DbSetResult<UserRecord>> {
+  ): Promise<DbResponse<UserRecord>> {
     const q = WRITE.INSERT_USER(args);
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -194,7 +209,7 @@ export class DatabaseController extends DBClient {
 
   public async updateUser(
     user: Omit<UserRecord, 'password_hash' | 'preferences'>
-  ): Promise<DbSetResult<UserRecord>> {
+  ): Promise<DbResponse<UserRecord>> {
     const q = WRITE.UPDATE_USER(user);
     const { data, error } = await super.set(q.sql, q.args);
 
@@ -203,6 +218,19 @@ export class DatabaseController extends DBClient {
     }
 
     return { data: toUserRecord(data.rows[0]) };
+  }
+
+  public async updateUserPreference(
+    id: number,
+    values: { avatar_src?: string | null; background_src?: string | null; theme?: string | null }
+  ) {
+    const q = WRITE.UPDATE_PREFERENCE({ id, ...values });
+    const { data, error } = await super.set(q.sql, q.args);
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: parseJSON(data.rows[0]) };
   }
 }
 
@@ -241,7 +269,7 @@ function toUserProfile(record: Record<string, any>): UserProfile {
   return { ...toUserRecord(user), teamlead };
 }
 
-function toUserScheddule(record: Record<string, any>) {
+function toUserScheddule(record: Record<string, any>): ScheduleRecord {
   const {
     id,
     sched_id,

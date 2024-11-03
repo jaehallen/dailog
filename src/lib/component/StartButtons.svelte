@@ -3,7 +3,7 @@
   import { createEventDispatcher } from 'svelte';
   import RoundButton from '$lib/component/RoundButton.svelte';
   import ButtonsContainer from '$lib/component/ButtonsContainer.svelte';
-  import {ChevronDown, ChevronLeft} from 'lucide-svelte/icons';
+  import { ChevronDown, ChevronLeft } from 'lucide-svelte/icons';
   import ChevronUp from 'lucide-svelte/icons/chevron-up';
   import { timeAction } from '$lib/data-store';
   import ButtonIcon from './ButtonIcon.svelte';
@@ -19,9 +19,9 @@
 </script>
 
 <ButtonsContainer>
-  <div class="field is-grouped  is-justify-content-center" slot="left">
+  <div class="field is-grouped is-grouped-left" slot="left">
     <ButtonIcon display="is-text" on:click={() => dispatch('left')}>
-      <ChevronLeft/>
+      <ChevronLeft />
     </ButtonIcon>
     <RoundButton {disabled} class="is-primary" name="Break" on:click={() => startTime('break')} />
     <RoundButton
@@ -31,7 +31,7 @@
       on:click={() => startTime('lunch')}
     />
   </div>
-  <div class="field is-grouped  is-justify-content-center" slot="right">
+  <div class="field is-grouped is-grouped-centered" slot="right">
     <RoundButton {disabled} class="is-link is-light" name="Bio" on:click={() => startTime('bio')} />
 
     <div class="dropdown" class:is-active={isDropdown}>

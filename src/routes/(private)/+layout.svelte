@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { ModeWatcher } from 'mode-watcher';
   import type { LayoutData } from './$types';
   import LayoutHeader from '$lib/component/LayoutHeader.svelte';
+  import { ModeWatcher } from 'mode-watcher';
   import { page } from '$app/stores';
   export let data: LayoutData;
-  // const src = 'https://wallpapercave.com/wp/wp3439114.jpg';
-  const src = '';
+  const src = data?.user?.preferences?.background_src || '';
 </script>
 
 <svelte:head>
@@ -14,7 +13,11 @@
 
 <div>
   <ModeWatcher />
-  <LayoutHeader user={data.user} routeList={data.routeList || []} curPath={$page.url.pathname} />
+  <LayoutHeader
+    user={data?.user ?? null}
+    routeList={data.routeList || []}
+    curPath={$page.url.pathname}
+  />
   <main
     class="hero is-fullheight-with-navbar"
     class:hero-section={Boolean(src)}

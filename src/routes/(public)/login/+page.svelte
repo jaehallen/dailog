@@ -12,6 +12,8 @@
       if (result.type == 'failure') {
         if (result.data?.noSchedule) {
           notifySchedule = true;
+        } else if (result.data?.message) {
+          console.error(result.data.message);
         } else {
           isInvalid = true;
         }
