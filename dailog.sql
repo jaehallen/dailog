@@ -157,8 +157,8 @@ ORDER BY
 -- VIEW TIME ENTRIES
 CREATE VIEW IF NOT EXISTS view_time_entries AS
 SELECT
-  time_entries.id,
-  time_entries.user_id,
+  time_entries.id id,
+  time_entries.user_id user_id,
   sched_id,
   category,
   date_at,

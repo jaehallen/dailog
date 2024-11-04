@@ -72,7 +72,7 @@ export class DatabaseController extends DBClient {
   public async getUserProfile(
     userId: number,
     schedule_count: number = 10
-  ): Promise<{ user: UserProfile | null; schedules: ScheduleRecord[] }> {
+  ): Promise<{ profile: UserProfile | null; schedules: ScheduleRecord[] }> {
     const results = await super.batchGet([
       QUERY.USER_PROFILE({ user_id: userId }),
       QUERY.SCHEDULES({ user_id: userId, limit: schedule_count })
@@ -81,7 +81,7 @@ export class DatabaseController extends DBClient {
     const [{ rows: userData = [] } = {}, { rows: userSchedules = [] } = {}] = results || [];
 
     return {
-      user: userData.length ? toUserProfile(userData[0]) : null,
+      profile: userData.length ? toUserProfile(userData[0]) : null,
       schedules: userSchedules ? userSchedules.map(toUserScheddule) : []
     };
   }

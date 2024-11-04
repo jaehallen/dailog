@@ -17,7 +17,7 @@
   $: ss = $time - hh * 3600 - mm * 60;
 </script>
 
-<span>
+<span class:has-skeleton={$time < 0}>
   <span>{f(hh)}</span>:
   <span>{f(mm)}</span>:
   <span>{f(ss)}</span>
