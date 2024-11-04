@@ -117,12 +117,12 @@
   <main class="container">
     <TimesheetModal formId={FORM_ID} isActive={$timeAction.confirm} on:no={cancel} bind:remarks />
     <form class="is-hidden" id={FORM_ID} method="POST" use:enhance={handleEnhance}>
-      <input type="number" id="id" name="id" value={$timeAction.id} readonly />
-      <input type="text" id="category" name="category" value={$timeAction.category} readonly />
-      <input type="text" id="time-action" name="timeAction" value={$timeAction.state} readonly />
-      <input type="date" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
-      <input type="number" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
-      <input type="textarea" id="remarks" name="remarks" value={remarks} />
+      <input type="hidden" id="id" name="id" value={$timeAction.id} readonly />
+      <input type="hidden" id="category" name="category" value={$timeAction.category} readonly />
+      <input type="hidden" id="time-action" name="timeAction" value={$timeAction.state} readonly />
+      <input type="hidden" id="date-at" name="date_at" value={$timeAction.date_at} readonly />;
+      <input type="hidden" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
+      <input type="hidden" id="remarks" name="remarks" value={remarks} />
     </form>
     <section class="mt-6">
       {#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}

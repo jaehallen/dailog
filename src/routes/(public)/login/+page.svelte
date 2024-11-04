@@ -41,12 +41,13 @@
           <div class="control">
             <input
               class="input"
-              type="alphanumeric"
+              type="text"
               pattern="^[0-9]{'{'}6{'}'}$"
               placeholder="123456"
               name="id"
               id="id"
               required
+              autocomplete="username"
               {disabled}
               on:focus={() => (isInvalid = false)}
             />
@@ -64,12 +65,12 @@
               id="password"
               minlength="6"
               required
+              autocomplete="current-password"
               {disabled}
               on:focus={() => (isInvalid = false)}
             />
           </div>
         </div>
-
         <button class="button is-primary" {disabled}>Sign in</button>
       </form>
     </div>

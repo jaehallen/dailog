@@ -12,8 +12,8 @@
   import { toasts } from '$lib/data-store';
   import { isPreference } from '$lib/data-store';
 
-  const RESET_FORM_ID = 'resetform';
   export let data: PageData;
+  const RESET_FORM_ID = 'resetform';
   let isActive = false;
   let disabled = false;
   let newPassword = '';
@@ -21,7 +21,7 @@
   let invalidPassword = false;
 
   const handleEnhance: SubmitFunction = ({ cancel }) => {
-    if (data.user?.lock_password) {
+    if (data.profile?.lock_password) {
       confirm(
         'This account password is locked, please contact your team lead to reset your password.'
       );
@@ -62,7 +62,7 @@
 </script>
 
 <Toasts />
-{#if $isPreference}
+{#if $isPreference && browser}
   <AsideContainer on:exit={() => ($isPreference = false)}>
     <form method="POST" action="?/update-preferences" use:enhance={onPreference}>
       <ConfigInputs user={data?.user ?? null} {disabled} />
@@ -78,6 +78,7 @@
       id={RESET_FORM_ID}
       use:enhance={handleEnhance}
     >
+      <input hidden type="text" autocomplete="username" value={data.profile?.id} />
       <Field label="Old Password" name="old">
         <input
           type="password"
@@ -88,6 +89,7 @@
           required
           minlength="6"
           on:focus={() => (invalidPassword = false)}
+          autocomplete="current-password"
         />
         <div class:is-hidden={!invalidPassword} class="help is-danger">Invalid Password</div>
       </Field>
@@ -101,6 +103,7 @@
           bind:value={newPassword}
           required
           minlength="6"
+          autocomplete="new-password"
         />
       </Field>
       <Field>
@@ -111,6 +114,7 @@
           bind:value={retypePassword}
           required
           minlength="6"
+          autocomplete="new-password"
         />
       </Field>
     </form>
@@ -129,10 +133,10 @@
       <div class="fixed-grid has-2-cols">
         <div class="grid">
           <div class="cell">
-            <h2 class="title is-4">{data.user?.name || 'No User'}</h2>
+            <h2 class="title is-4">{data.profile?.name || 'No User'}</h2>
             <p class="subtitle is-6">
-              {data.user?.id || 'No ID'}
-              {#if !data.user?.lock_password}
+              {data.profile?.id || 'No ID'}
+              {#if !data.profile?.lock_password}
                 <br />
                 <button class="button is-ghost p-0 m-0" on:click={() => (isActive = true)}
                   >Reset Password</button
@@ -145,13 +149,13 @@
               <div class="level-item">
                 <p class="heading">Team Lead:&emsp;</p>
                 <p class="title is-5">
-                  {data.user?.teamlead || '-'}
+                  {data.profile?.teamlead || '-'}
                 </p>
               </div>
               <div class="level-item">
                 <p class="heading">Region:&emsp;</p>
                 <p class="title is-5">
-                  {data.user?.region || '-'}
+                  {data.profile?.region || '-'}
                 </p>
               </div>
             </div>

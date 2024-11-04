@@ -4,22 +4,36 @@
   export let user: User | null;
   export let disabled;
 
-  let avatar_src = user?.preferences?.avatar_src || '';
-  let background_src = user?.preferences?.background_src || '';
-  let avatarSrc = avatar_src;
-  let bgSrc = background_src;
+  let { avatar_src = '', background_src = '' } = user?.preferences || {};
+  let isDirty = false;
 
-  $: isDirty = avatar_src !== avatarSrc || background_src !== bgSrc;
+  const onInput = () => {
+    isDirty = true;
+  };
 </script>
 
 <fieldset class="box">
   <legend>Preferences</legend>
   <FieldH id="avatar_src" label="Avatar">
-    <input class="input" type="url" name="avatar_src" bind:value={avatarSrc} />
+    <input
+      class="input"
+      type="url"
+      id="avatar_src"
+      name="avatar_src"
+      value={avatar_src}
+      on:input={onInput}
+    />
     <p class="help">URL of your Avatar</p>
   </FieldH>
   <FieldH id="background_src" label="BG">
-    <input type="url" class="input" name="background_src" bind:value={bgSrc} />
+    <input
+      type="url"
+      class="input"
+      id="background_src"
+      name="background_src"
+      value={background_src}
+      on:input={onInput}
+    />
     <p class="help">URL of your Background</p>
   </FieldH>
   <div class="field is-grouped is-grouped-right">
