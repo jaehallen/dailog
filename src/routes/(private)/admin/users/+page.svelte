@@ -20,10 +20,12 @@
   import { page } from '$app/stores';
   import { toasts } from '$lib/data-store';
   import { getContextUpdate, setContextUpdate } from '$lib/context';
+  import UserBatchInputs from '$lib/component/UserBatchInputs.svelte';
+  import { isAdmin } from '$lib/utility';
 
   export let data: PageData;
   setContextUpdate();
-  const { editUser, isBatchSched } = getContextUpdate();
+  const { editUser, isBatchUpdate } = getContextUpdate();
   let disabled = false;
   let loading = false;
   let filterOpt: SearchOptions = data?.queries || {};
@@ -90,7 +92,7 @@
     updateQuery(filterOpt);
   };
 
-  const scheduleOnSubmit: SubmitFunction = ({ formData, cancel, action }) => {
+  const onDataUpdate: SubmitFunction = ({ formData, cancel, action }) => {
     if (!isDirtyUserInput(formData) && action.search === '?/update-user') {
       cancel();
     } else {
@@ -108,14 +110,19 @@
         } else if (result.data?.listOfSchedules) {
           usersData.batchSched(result.data.listOfSchedules);
           toasts.add({ message: 'Users schedules updated successfully' });
+        } else if (result.data?.listOfUsers) {
+          usersData.batchUpdateUser(result.data.listOfUsers, data?.defaultOptions?.leads ?? []);
+          toasts.add({ message: 'Multiple users updated successfully' });
+          update({ invalidateAll: true, reset: true });
         } else {
+          console.log(result.data);
           toasts.add({ message: 'Success' });
         }
       } else {
         toasts.add({ message: 'Something went wrong', type: 'error', timeout: 0 });
         console.error(result);
       }
-      await update({ invalidateAll: false, reset: false });
+      await update({ invalidateAll: true, reset: false });
       disabled = false;
     };
   };
@@ -199,7 +206,7 @@
     window.removeEventListener('keydown', () => {});
   });
 
-  $: if ($isBatchSched) {
+  $: if ($isBatchUpdate) {
     $editUser.showType = 'manysched';
   } else {
     editUser.reset();
@@ -210,7 +217,7 @@
   {#key $editUser.updateId}
     <AsideContainer on:exit={() => editUser.reset()}>
       {#if $editUser.showType == 'user' && selectedUser}
-        <form action="?/update-user" method="POST" use:enhance={scheduleOnSubmit}>
+        <form action="?/update-user" method="POST" use:enhance={onDataUpdate}>
           <UserInputs
             user={selectedUser}
             leads={data?.defaultOptions?.leads}
@@ -220,7 +227,7 @@
         </form>
       {:else if $editUser.showType == 'sched'}
         <UserScheduleTable schedules={userSchedules} exclude={OMIT_SCHED_COLUMN} />
-        <form action="?/add-schedule" method="POST" use:enhance={scheduleOnSubmit}>
+        <form action="?/add-schedule" method="POST" use:enhance={onDataUpdate}>
           <ScheduleInputs
             schedule={userSchedules.at(0)}
             user_id={$editUser.selectedId}
@@ -228,16 +235,17 @@
           />
         </form>
       {:else if $editUser.showType == 'manysched'}
-        <form action="?/add-many-schedule" method="POST" use:enhance={scheduleOnSubmit}>
-          <input
-            type="text"
-            name="ids_list"
-            class="input"
-            required
-            readonly
-            value={Object.keys($selectedDataIds).join('_')}
-          />
+        <form action="?/add-many-schedule" method="POST" use:enhance={onDataUpdate}>
+          <input type="hidden" name="ids_list" value={Object.keys($selectedDataIds).join('_')} />
           <ScheduleInputs schedule={userSchedules.at(0)} user_id={0} {disabled} cols={2} />
+        </form>
+      {:else if $editUser.showType == 'manyuser'}
+        <form action="?/update-many-user" method="POST" use:enhance={onDataUpdate}>
+          <UserBatchInputs
+            leads={data?.defaultOptions?.leads}
+            regions={data?.defaultOptions?.regions}
+            selectedIds={$selectedDataIds}
+          />
         </form>
       {/if}
     </AsideContainer>
@@ -251,13 +259,24 @@
       <div class="level">
         <div class="level-left">
           <div class="level-item">
-            <Switch bind:checked={$isBatchSched} label="Batch Schedule" />
+            <Switch bind:checked={$isBatchUpdate} label="Batch Update" />
           </div>
-          {#if $isBatchSched}
-            <div class="level-item" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
-              <button class="button is-small is-rounded" on:click={() => ($editUser.isEdit = true)}
-                >Set Schedule</button
-              >
+          {#if $isBatchUpdate}
+            <div class="buttons" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
+              <div class="level-item">
+                <button
+                  class="button is-small is-rounded"
+                  on:click={() => editUser.edit('manysched')}>Set Schedule</button
+                >
+              </div>
+              {#if isAdmin(data?.user?.role)}
+                <div class="level-item">
+                  <button
+                    class="button is-small is-rounded"
+                    on:click={() => editUser.edit('manyuser')}>Update Users</button
+                  >
+                </div>
+              {/if}
             </div>
           {/if}
         </div>

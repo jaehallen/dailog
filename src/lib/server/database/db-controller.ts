@@ -180,6 +180,20 @@ export class DatabaseController extends DBClient {
     return { data: toUserScheddule(data.rows[0]) };
   }
 
+  public async updateManyUser(
+    args: Pick<UserRecord, 'id' | 'lead_id' | 'region' | 'lock_password'>[]
+  ): Promise<DbResponse<UserRecord[]>> {
+    const { data, error } = await super.batchSet(args.map((user) => WRITE.UPDATE_MANY_USER(user)));
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return {
+      data: data.map((user) => toUserRecord(user.rows[0]))
+    };
+  }
+
   public async createManySchedule(
     args: Omit<ScheduleRecord, 'id'>[]
   ): Promise<DbResponse<ScheduleRecord[]>> {
@@ -249,19 +263,32 @@ export function toUserRecord(record: Record<string, any>): UserRecord {
     updated_at
   } = record;
 
-  return {
+  const val = {
     id,
     name,
     region,
     role,
+    active,
+    lock_password,
     password_hash,
     lead_id,
-    active: Boolean(active),
-    lock_password: Boolean(lock_password),
     created_at,
     updated_at,
-    preferences: parseJSON(preferences)
+    preferences
   };
+  if (active != undefined) {
+    val.active = Boolean(active);
+  }
+
+  if (lock_password != undefined) {
+    val.lock_password = Boolean(lock_password);
+  }
+
+  if (preferences != undefined) {
+    val.preferences = parseJSON(preferences);
+  }
+
+  return val;
 }
 
 function toUserProfile(record: Record<string, any>): UserProfile {

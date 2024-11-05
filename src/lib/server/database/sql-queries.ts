@@ -284,6 +284,44 @@ export const WRITE = {
       }
     };
   },
+  UPDATE_MANY_USER: (args: Pick<UserRecord, 'id' | 'lead_id' | 'lock_password' | 'region'>) => {
+    const set = [];
+    const returnFields: (keyof UserRecord)[] = ['id', 'updated_at'];
+    const values: Partial<typeof args> = {
+      id: args.id
+    };
+
+    if (args.lead_id) {
+      set.push('lead_id = $lead_id');
+      values.lead_id = args.lead_id;
+      returnFields.push('lead_id');
+    }
+
+    if (
+      args.lock_password !== null &&
+      args.lock_password !== undefined &&
+      typeof args.lock_password == 'number'
+    ) {
+      set.push('lock_password = $lock_password');
+      values.lock_password = args.lock_password;
+      returnFields.push('lock_password');
+    }
+
+    if (args.region) {
+      set.push('region = $region');
+      values.region = args.region;
+      returnFields.push('region');
+    }
+
+    if (!set.length) {
+      throw new Error('No value to set');
+    }
+
+    return {
+      sql: `UPDATE users SET ${set.join(', ')} WHERE id = $id RETURNING ${returnFields.join(', ')}`,
+      args: values
+    };
+  },
   ADD_MANY_SCHEDULE: (
     args: (Omit<ScheduleRecord, 'id'> & { [key: string]: number | string })[]
   ) => {

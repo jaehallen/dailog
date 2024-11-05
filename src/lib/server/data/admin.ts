@@ -56,6 +56,7 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 };
 
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
+  const last_id = isAdmin(user.role) && user.id < TEMPID ? 0 : TEMPID;
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
         search: '',
@@ -63,7 +64,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         limit: 100,
         region: null,
         lead_id: null,
-        last_id: 0,
+        last_id: last_id,
         page_total: null,
         page_index: String(0)
       }

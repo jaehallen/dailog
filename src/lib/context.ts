@@ -6,7 +6,7 @@ import { getContext, setContext } from 'svelte';
  **/
 interface UserUpdate {
   updateId: number;
-  showType: 'sched' | 'user' | 'manysched';
+  showType: 'sched' | 'user' | 'manysched' | 'manyuser';
   selectedId: number;
   isEdit: boolean;
 }
@@ -16,7 +16,7 @@ type UserUpdateStore = ReturnType<typeof getStoreUserUpdate>;
 export function setContextUpdate() {
   const editUserStore = getStoreUserUpdate();
   setContext<UserUpdateStore>('editUser', editUserStore);
-  setContext<Writable<Boolean>>('isBatchSched', writable(false));
+  setContext<Writable<Boolean>>('isBatchUpdate', writable(false));
 }
 
 export function setContextProfile() {
@@ -30,7 +30,7 @@ export function getContextProfile() {
 export function getContextUpdate() {
   return {
     editUser: getContext<UserUpdateStore>('editUser'),
-    isBatchSched: getContext<Writable<boolean>>('isBatchSched')
+    isBatchUpdate: getContext<Writable<boolean>>('isBatchUpdate')
   };
 }
 
@@ -44,5 +44,15 @@ function getStoreUserUpdate() {
 
   const { set, update, subscribe } = writable<UserUpdate>({ ...info });
   const reset = () => set({ ...info });
-  return { subscribe, set, update, reset };
+  const edit = (type: UserUpdate['showType'], id?: number) =>
+    update(() => {
+      const randomId = () => Math.floor(Math.random() * 10000);
+      return {
+        updateId: randomId(),
+        showType: type,
+        selectedId: id ?? 0,
+        isEdit: true
+      };
+    });
+  return { subscribe, set, update, edit, reset };
 }

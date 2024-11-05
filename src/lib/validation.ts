@@ -24,6 +24,25 @@ export const validatePreference = z.object({
     .nullish()
 });
 
+export const validateBatchUser = z.object({
+  ids_list: z
+    .string()
+    .transform((v) => v.split('_').map((x) => parseInt(x)))
+    .pipe(z.number().gte(100000).lt(999999).array()),
+  lead_id: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .pipe(z.coerce.number().nullish()),
+  region: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .pipe(z.string().nullish()),
+  lock_password: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : parseInt(v)))
+    .pipe(z.number().nullish())
+});
+
 export const validatePostTime: ZodType<ZPostTime> = z.object({
   id: z.coerce.number(),
   sched_id: z.coerce.number(),

@@ -22,7 +22,7 @@ export const actions = {
     const inputValid = validateSignIn.safeParse(data);
 
     if (!inputValid.success) {
-      return fail(400);
+      return fail(400, { message: inputValid.error.errors });
     }
 
     const { data: user, error } = await validateUser(inputValid.data);

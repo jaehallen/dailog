@@ -45,7 +45,7 @@ export const actions = {
     const valid = validatePreference.safeParse(Object.fromEntries(form));
 
     if (!valid.success) {
-      return fail(400, { message: valid.error });
+      return fail(400, { message: valid.error.errors });
     }
 
     if (!valid.data) {
