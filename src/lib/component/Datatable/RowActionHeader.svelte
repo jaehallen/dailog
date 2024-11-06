@@ -2,6 +2,7 @@
   import type { SelectedRowsState } from 'svelte-headless-table/plugins';
   import type { Writable } from 'svelte/store';
   import ButtonIcon from '$lib/component/ButtonIcon.svelte';
+  import DropdownButton from '../DropdownButton.svelte';
   import { FilterX } from 'lucide-svelte';
   import { getContextUpdate } from '$lib/context';
   import { fly } from 'svelte/transition';
@@ -18,7 +19,11 @@
 </script>
 
 <div>
-  Action
+  <DropdownButton label="Action" display="is-ghost py-0 px-0">
+      <button class="button is-small dropdown-item is-ghost">Update Users</button>
+      <!-- <button class="button is-small dropdown-item is-ghost" on:click={}>Batch Updates</button>
+      <button class="button is-small dropdown-item is-ghost" on:click={}>User Lastest Entries</button> -->
+  </DropdownButton>
   <div class="buttons">
     <ButtonIcon
       small

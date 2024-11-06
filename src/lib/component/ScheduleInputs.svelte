@@ -86,15 +86,17 @@
         <div class="field-body">
           <div class="field has-addons has-addons-right">
             <div class="control">
-              <DropdownButton label="Day" dropup={false}>
-                {#each DAYS as day, i (i)}
-                  <p>
-                    <label class="label">
-                      <input type="checkbox" bind:checked={daysValue[i]} />
-                      {day}
-                    </label>
-                  </p>
-                {/each}
+              <DropdownButton label="Day">
+                <p class="dropdown-item">
+                  {#each DAYS as day, i (i)}
+                    <p>
+                      <label class="label">
+                        <input type="checkbox" bind:checked={daysValue[i]} />
+                        {day}
+                      </label>
+                    </p>
+                  {/each}
+                </p>
               </DropdownButton>
             </div>
             <p class="control">

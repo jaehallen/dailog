@@ -84,11 +84,6 @@ export const ROUTES: RouteProfile[] = [
     role: ['admin', 'lead', 'poc', 'user'],
     region: ['APAC']
   },
-  // {
-  //   name: 'Dashboard',
-  //   path: '/admin',
-  //   role: ['admin', 'lead', 'poc']
-  // },
   {
     name: 'Users',
     path: '/admin/users',

@@ -61,7 +61,7 @@
 <main class="container">
   <section class="section">
     <form method="post" use:enhance={handSubmit}>
-      <input class="is-hidden" type="date" value={dateEntry} name="date" readonly />
+      <input type="hidden" value={dateEntry} name="date" readonly />
       <div class="field is-grouped is-align-items-center">
         <div class="control">
           <DateInput bind:value={date} {...datePicker} />

@@ -22,6 +22,8 @@
   import { getContextUpdate, setContextUpdate } from '$lib/context';
   import UserBatchInputs from '$lib/component/UserBatchInputs.svelte';
   import { isAdmin } from '$lib/utility';
+  import { CalendarCog, UserRoundPen } from 'lucide-svelte';
+  import ButtonIcon from '$lib/component/ButtonIcon.svelte';
 
   export let data: PageData;
   setContextUpdate();
@@ -262,21 +264,15 @@
             <Switch bind:checked={$isBatchUpdate} label="Batch Update" />
           </div>
           {#if $isBatchUpdate}
-            <div class="buttons" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
-              <div class="level-item">
-                <button
-                  class="button is-small is-rounded"
-                  on:click={() => editUser.edit('manysched')}>Set Schedule</button
-                >
-              </div>
-              {#if isAdmin(data?.user?.role)}
-                <div class="level-item">
-                  <button
-                    class="button is-small is-rounded"
-                    on:click={() => editUser.edit('manyuser')}>Update Users</button
-                  >
-                </div>
+            <div class="buttons" in:fly={{ delay: 200, duration: 200, y: '1rem' }}>
+              {#if isAdmin(data.user?.role)}
+                <ButtonIcon small on:click={() => editUser.edit('manyuser')}>
+                  <UserRoundPen />
+                </ButtonIcon>
               {/if}
+              <ButtonIcon small on:click={() => editUser.edit('manysched')}>
+                <CalendarCog />
+              </ButtonIcon>
             </div>
           {/if}
         </div>
