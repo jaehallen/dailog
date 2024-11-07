@@ -10,7 +10,7 @@
   const DAYS = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
   const SHORTDAYS = DAYS.map((day) => day.toLowerCase().substring(0, 3));
   const UTCMAP = new Map(UTCOFFSET);
-  const TODAY = new Date().toISOString().split('T')[0];
+  const TODAY = new Date().toISOString().substring(0, 10);
   let effectiveDate = TODAY;
   let daysValue = SHORTDAYS.map((day) => Boolean(schedule?.day_off?.includes(day)));
   let clientUTC = String(

@@ -133,15 +133,17 @@ export class DatabaseController extends DBClient {
     };
   }
 
-  public async searchUserTimeEntries(params: { search: string; date_at: string; region?: string | null }): Promise<DbResponse<UserTimesheetReport[]>> {
+  public async searchUserTimeEntries(params: {
+    search: string;
+    date_at: string;
+    region?: string | null;
+  }): Promise<DbResponse<UserTimesheetReport[]>> {
     const { sql, args } = QUERY.SEARCH_USER_TIME_ENTRIES(params);
     const { data, error } = await super.get(sql, args);
 
     if (error) {
       return { data: null, error };
     }
-
-    console.log(data)
 
     return {
       data: data.rows.map((row) => {
@@ -152,7 +154,7 @@ export class DatabaseController extends DBClient {
           clock_at: row.clock_at as string,
           effective_date: row.effective_date as string,
           name: row.name as string,
-          region: row.region as string,
+          region: row.region as string
         };
       })
     };

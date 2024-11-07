@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     redirect(302, '/login');
   }
 
-  const [today] = new Date().toISOString().split('T');
+  const today = new Date().toISOString().substring(0, 10);
   const { data, error } = await db.getTimeEntries(locals.user.id, getWeekRange(today));
 
   if (error) {

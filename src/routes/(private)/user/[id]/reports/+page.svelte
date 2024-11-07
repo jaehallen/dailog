@@ -32,7 +32,7 @@
     }
   });
 
-  $: dateEntry = date.toISOString().split('T')[0];
+  $: dateEntry = date.toISOString().substring(0, 10);
 
   const handSubmit: SubmitFunction = async ({ cancel, formData }) => {
     disabled = true;
@@ -115,6 +115,6 @@
     font-size: var(--bulma-body-font-size);
     border-radius: var(--bulma-radius-rounded);
     padding-inline-start: 1em;
-    padding-inline-end: 2.5em
+    padding-inline-end: 2.5em;
   }
 </style>
