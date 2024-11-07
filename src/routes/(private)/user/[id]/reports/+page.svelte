@@ -113,5 +113,8 @@
 
   :global(#entrydate) {
     font-size: var(--bulma-body-font-size);
+    border-radius: var(--bulma-radius-rounded);
+    padding-inline-start: 1em;
+    padding-inline-end: 2.5em
   }
 </style>

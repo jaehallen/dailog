@@ -2,7 +2,7 @@
   import type { User } from 'lucia';
   import type { UsersList } from '$lib/types/schema';
   import type { Writable } from 'svelte/store';
-  import { CalendarCog, UserRoundPen, History } from 'lucide-svelte';
+  import { CalendarCog, UserRoundPen } from 'lucide-svelte';
   import ButtonIcon from '../ButtonIcon.svelte';
   import { getContextUpdate } from '$lib/context';
   import { fly } from 'svelte/transition';
@@ -32,9 +32,6 @@
         {/if}
         <ButtonIcon small disabled={!data.region} on:click={() => onUpdate('sched')}>
           <CalendarCog />
-        </ButtonIcon>
-        <ButtonIcon small>
-          <History/>
         </ButtonIcon>
       </div>
     </div>

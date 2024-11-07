@@ -42,7 +42,7 @@ export function getUsersTable(userslist: Writable<UsersList[]>, user: User | nul
         return '-';
       },
       plugins: {
-        resize: { initialWidth: 120, minWidth: 120 }
+        resize: { initialWidth: 100, minWidth: 100 }
       }
     }),
     table.column({

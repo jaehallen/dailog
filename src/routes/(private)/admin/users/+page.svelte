@@ -255,7 +255,7 @@
 {/if}
 
 <Toasts />
-<main class="container mt-4" class:is-skeleton={loading}>
+<main class="container mt-6" class:is-skeleton={loading}>
   <div class="columns mb-0">
     <div class="column is-3 is-flex is-align-items-center">
       <div class="level">

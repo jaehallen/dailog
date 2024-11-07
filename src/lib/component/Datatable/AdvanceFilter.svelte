@@ -21,11 +21,11 @@
   $: hasNextPage = queries.page_total !== pages.length || queries.page_total > currentPage;
 </script>
 
-<div class="is-hidden">
-  <input type="number" name="last_id" value={queries.last_id || 0} readonly />
-  <input type="number" name="page_total" value={queries.page_total || ''} readonly />
-  <input type="text" name="page_index" value={queries.page_index || ''} readonly />
-</div>
+
+  <input type="hidden" name="last_id" value={queries.last_id || 0} readonly />
+  <input type="hidden" name="page_total" value={queries.page_total || ''} readonly />
+  <input type="hidden" name="page_index" value={queries.page_index || ''} readonly />
+
 <div class="level">
   <div class="level-left"></div>
   <div class="level-right">

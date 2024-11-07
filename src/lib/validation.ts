@@ -24,6 +24,19 @@ export const validatePreference = z.object({
     .nullish()
 });
 
+export const validateTimeEntriesFilter = z.object({
+  search: z.coerce
+    .string()
+    .min(3),
+  date_at: z.coerce
+    .string()
+    .date(),
+  region: z.coerce
+    .string()
+    .transform((v) => (v == '' ? null : v))
+    .nullish(),
+})
+
 export const validateBatchUser = z.object({
   ids_list: z
     .string()

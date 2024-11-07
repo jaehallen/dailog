@@ -171,6 +171,40 @@ export const QUERY = {
       sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
       args
     };
+  },
+  SEARCH_USER_TIME_ENTRIES: (args: { search: string, date_at: string, region?: string | null }) => {
+    const values: typeof args = {
+      search: args.search,
+      date_at: args.date_at
+    }
+
+    if (args.region) {
+      values.region = args.region;
+    }
+
+    return {
+      sql: `SELECT
+              time_entries.id id,
+              time_entries.user_id user_id,
+              users.name name,
+              users.region region,
+              sched_id,
+              category,
+              date_at,
+              start_at,
+              end_at,
+              remarks,
+              schedules.utc_offset,
+              schedules.local_offset,
+              schedules.clock_at,
+              schedules.effective_date
+            FROM time_entries
+            LEFT JOIN users ON users.id = time_entries.user_id
+            LEFT JOIN schedules ON time_entries.sched_id = schedules.id
+            JOIN fts_users WHERE fts_users.rowid = time_entries.user_id AND fts_users match $search 
+                AND date_at = $date_at ${args.region ? 'AND region = $region' : ''}`,
+      args: values
+    };
   }
 };
 
