@@ -365,3 +365,6 @@
     z-index: 1;
   }
 </style>
+libsql://chronoz-dev-mugen.turso.io
+'https://48e25d3f71ed38-chronoz-dev-mugen.turso.io/beta/listen?table=time_entries'
+
