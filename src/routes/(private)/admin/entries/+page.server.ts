@@ -1,11 +1,21 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { isEditor } from '$lib/utility';
 import { validateTimeEntriesFilter } from '$lib/validation';
 import { db } from '$lib/server/database/db-controller';
 
-export const load = (async () => {
-  return {};
+export const load = (async ({ locals, url }) => {
+  if (!locals.user) {
+    redirect(302, '/login')
+  }
+
+  return {
+    entriesSearch: {
+      search: url.searchParams.get('search') ?? '',
+      date_at: url.searchParams.get('date_at') ?? new Date().toISOString().substring(0, 10),
+      region: url.searchParams.get('region') ?? locals.user.region
+    }
+  };
 }) satisfies PageServerLoad;
 
 export const actions = {
@@ -18,10 +28,11 @@ export const actions = {
       return fail(401, { message: 'User not authorized' });
     }
 
-    const day = url.searchParams.get('day');
-    console.log(day);
 
     const form = await request.formData();
+    const day = parseInt(url.searchParams.get('day') || '');
+    const offsetDate = offsetDateByWeekday(form.get('date_at') as string, day);
+    form.set('date_at', offsetDate)
     const validSearch = validateTimeEntriesFilter.safeParse(Object.fromEntries(form));
 
     if (!validSearch.success) {
@@ -39,8 +50,16 @@ export const actions = {
     }
 
     return {
-      userEntries: data
+      userEntries: data,
+      queries: { ...validSearch.data }
     };
   }
 } satisfies Actions;
+
+function offsetDateByWeekday(date: string | null, weekday: number): string {
+  let temp = typeof date == 'string' ? new Date(date) : new Date();
+  let day = (!isNaN(weekday) && weekday >= 0 ? weekday : temp.getDay())
+  temp.setDate(temp.getDate() - temp.getDay() + day);
+  return temp.toISOString().substring(0, 10)
+}
 

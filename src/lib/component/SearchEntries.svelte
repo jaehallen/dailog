@@ -2,21 +2,19 @@
   import ButtonIcon from '$lib/component/ButtonIcon.svelte';
   import { DateInput } from 'date-picker-svelte';
   import { UserRoundSearch } from 'lucide-svelte/icons';
+  import {page} from '$app/stores'
 
   let now = new Date();
 
   export let regions: string[] = [];
+  export let date = new Date();
   export let queries: {
     search: string;
     date_at: string;
     region: string;
-  } = {
-    search: '',
-    date_at: now.toISOString().substring(0, 10),
-    region: ''
   };
-
-  let date = new Date(queries.date_at);
+  
+  const WEEKS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const datePicker = {
     min: new Date(now.setDate(now.getDate() - 35)),
     max: new Date(),
@@ -27,9 +25,9 @@
       weekStartsOn: 0
     }
   };
-
-  const WEEKS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const atDay = new Date(queries.date_at).getDay();
+  
+  $: atDay = new Date(queries.date_at).getDay();
+  $: console.log(date)
 </script>
 
 <div class="level px-2">
@@ -48,6 +46,7 @@
           name="search"
           type="text"
           class="input is-small is-rounded"
+          value={queries.search}
           placeholder="Search User..."
         />
       </div>
