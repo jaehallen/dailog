@@ -6,15 +6,30 @@ import { db } from '$lib/server/database/db-controller';
 
 export const load = (async ({ locals, url }) => {
   if (!locals.user) {
-    redirect(302, '/login')
+    redirect(302, '/login');
+  }
+
+  const q = {
+    search: url.searchParams.get('search') ?? '',
+    date_at: url.searchParams.get('date_at') ?? new Date().toISOString().substring(0, 10),
+    region: url.searchParams.get('region') ?? locals.user.region
+  };
+
+  const validSearch = validateTimeEntriesFilter.safeParse(q);
+
+  if (!validSearch.success || !validSearch.data) {
+    return {};
+  }
+
+  const { data, error } = await db.searchUserTimeEntries(validSearch.data);
+
+  if (error) {
+    return {};
   }
 
   return {
-    entriesSearch: {
-      search: url.searchParams.get('search') ?? '',
-      date_at: url.searchParams.get('date_at') ?? new Date().toISOString().substring(0, 10),
-      region: url.searchParams.get('region') ?? locals.user.region
-    }
+    entriesQuery: q,
+    entriesResults: data || []
   };
 }) satisfies PageServerLoad;
 
@@ -28,11 +43,10 @@ export const actions = {
       return fail(401, { message: 'User not authorized' });
     }
 
-
     const form = await request.formData();
     const day = parseInt(url.searchParams.get('day') || '');
     const offsetDate = offsetDateByWeekday(form.get('date_at') as string, day);
-    form.set('date_at', offsetDate)
+    form.set('date_at', offsetDate);
     const validSearch = validateTimeEntriesFilter.safeParse(Object.fromEntries(form));
 
     if (!validSearch.success) {
@@ -50,7 +64,7 @@ export const actions = {
     }
 
     return {
-      userEntries: data,
+      entriesResults: data,
       queries: { ...validSearch.data }
     };
   }
@@ -58,8 +72,7 @@ export const actions = {
 
 function offsetDateByWeekday(date: string | null, weekday: number): string {
   let temp = typeof date == 'string' ? new Date(date) : new Date();
-  let day = (!isNaN(weekday) && weekday >= 0 ? weekday : temp.getDay())
+  let day = !isNaN(weekday) && weekday >= 0 ? weekday : temp.getDay();
   temp.setDate(temp.getDate() - temp.getDay() + day);
-  return temp.toISOString().substring(0, 10)
+  return temp.toISOString().substring(0, 10);
 }
-

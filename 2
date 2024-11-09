@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { SubmitFunction } from '@sveltejs/kit';
-  import type { UserTimesheetReport } from '$lib/types/schema';
   import SearchEntries from '$lib/component/SearchEntries.svelte';
   import { enhance } from '$app/forms';
   import { page } from '$app/stores';
@@ -9,13 +8,10 @@
   import { entriesData, getEntriesTable } from '$lib/table-entries';
   import { onMount } from 'svelte';
   import { Subscribe, Render } from 'svelte-headless-table';
-  import { fly } from 'svelte/transition';
-  import Toasts from '$lib/component/Toasts.svelte';
-  import { toasts } from '$lib/data-store';
+  import { fly, scale } from 'svelte/transition';
 
   export let data: PageData;
 
-  let searchForm: HTMLFormElement;
   let loading = true;
   let qEntries = data?.entriesQuery ?? {
     search: '',
@@ -25,15 +21,11 @@
   let date = qEntries?.date_at ? new Date(qEntries?.date_at) : new Date();
   const { headerRows, rows, tableAttrs, tableBodyAttrs } = getEntriesTable(entriesData ?? []);
 
-  const onEntriesSearch: SubmitFunction = ({ formData, cancel }) => {
+  const onEntriesSearch: SubmitFunction = () => {
     loading = true;
-    if (String(formData.get('search') ?? '').length < 3) {
-      loading = false;
-      toasts.add({ message: 'Invalid Name', type: 'info' });
-      cancel();
-    }
     return async ({ update, result }) => {
       if (result.type === 'success') {
+        console.log(result);
         if (result.data?.queries) {
           updateQuery(result.data.queries);
           date = new Date(result.data.queries.date_at);
@@ -42,11 +34,6 @@
         update({ invalidateAll: false, reset: false });
       } else {
         console.error(result);
-        let message = result.type == 'error' ? result.error.message : 'Something went wrong';
-        if (!result.type) {
-          message = 'Internal Server Error';
-        }
-        toasts.add({ message, type: 'error', timeout: 0 });
       }
       loading = false;
     };
@@ -65,40 +52,11 @@
     }
     loading = false;
   });
-
-  const rowStyle = (data: UserTimesheetReport, column: string | undefined) => {
-    const { category } = data;
-    if (category == 'clock' && !column) {
-      return 'has-text-weight-bold is-dark is-light';
-    } else if (column && category !== 'clock') {
-      if (['user_id', 'name', 'clock_at'].includes(column)) {
-        return 'is-light';
-      }
-    }
-    return '';
-  };
-
-  const onSearchEntry = () => {
-    searchForm.requestSubmit();
-  };
 </script>
 
-<Toasts />
 <main class="container mt-6">
-  <form
-    action="?/search"
-    class="block"
-    method="POST"
-    use:enhance={onEntriesSearch}
-    bind:this={searchForm}
-  >
-    <SearchEntries
-      regions={data.defaultOptions?.regions}
-      queries={qEntries}
-      {date}
-      on:search={onSearchEntry}
-      disabled={loading}
-    />
+  <form action="?/search" class="block" method="POST" use:enhance={onEntriesSearch}>
+    <SearchEntries regions={data.defaultOptions?.regions} queries={qEntries} {date} />
   </form>
   <div class="box">
     <table
@@ -122,41 +80,27 @@
         {/each}
       </thead>
       <tbody {...$tableBodyAttrs}>
-        {#if !$rows.length}
-          <tr>
-            <td colspan="0">
-              <strong>No ENTRIES</strong>
-            </td>
-          </tr>
-        {:else}
-          {#each $rows as row (row.id)}
-            {#if row.isData()}
-              <Subscribe rowAttrs={row.attrs()} rowProps={row.props()} let:rowAttrs>
-                {#key row.original.id}
-                  <tr
-                    {...rowAttrs}
-                    in:fly={{ delay: 200, duration: 300, x: '-2em' }}
-                    class={rowStyle(row.original, undefined)}
-                  >
-                    {#each row.cells as cell (cell.id)}
-                      {#if cell.isData()}
-                        <Subscribe attrs={cell.attrs()} let:attrs>
-                          <td {...attrs} class={rowStyle(row.original, cell.column.id)}>
-                            {#if cell.value == null || cell.value == undefined}
-                              <Render of={'-'} />
-                            {:else}
-                              <Render of={cell.render()} />
-                            {/if}
-                          </td>
-                        </Subscribe>
-                      {/if}
-                    {/each}
-                  </tr>
-                {/key}
-              </Subscribe>
-            {/if}
-          {/each}
-        {/if}
+        {#each $rows as row (row.id)}
+          {#if row.isData()}
+            <Subscribe rowAttrs={row.attrs()} rowProps={row.props()} let:rowAttrs>
+              {#key row.original.id}
+                <tr {...rowAttrs} in:fly={{ delay: 300, x: '2em' }}>
+                  {#each row.cells as cell (cell.id)}
+                    <Subscribe attrs={cell.attrs()} let:attrs>
+                      <td {...attrs}>
+                        {#if !cell.isData() || cell.value == null || cell.value == undefined}
+                          <Render of={'-'} />
+                        {:else}
+                          <Render of={cell.render()} />
+                        {/if}
+                      </td>
+                    </Subscribe>
+                  {/each}
+                </tr>
+              {/key}
+            </Subscribe>
+          {/if}
+        {/each}
       </tbody>
     </table>
   </div>

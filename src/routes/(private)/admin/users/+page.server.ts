@@ -46,7 +46,7 @@ export const actions = {
     const form = await request.formData();
     form.set('page_total', '');
     form.set('page_index', '');
-    form.set('last_id', admin ? '0' : TEMPID.toString());
+    form.set('last_id', admin && locals.user.id < TEMPID ? '0' : TEMPID.toString());
     if (!admin) {
       form.set('region', locals.user.region);
     }
@@ -58,9 +58,16 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
     const form = await request.formData();
+    const lastId = Number(form.get('last_id'));
+
+    if (isEditor(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+      form.set('last_id', String(TEMPID))
+    }
+
     if (isLepo(locals.user.role)) {
       form.set('region', locals.user.region);
     }
+
     return await queryData(form);
   },
 

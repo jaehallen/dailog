@@ -7,6 +7,7 @@ import FilterDropdown from '$lib/component/Datatable/FilterDropdown.svelte';
 import AdvanceFilter from '$lib/component/Datatable/AdvanceFilter.svelte';
 import RowActionHeader from '$lib/component/Datatable/RowActionHeader.svelte';
 import RowAction from '$lib/component/Datatable/RowAction.svelte';
+import Text from '$lib/component/Datatable/Text.svelte';
 
 export {
   TextFilter,
@@ -17,5 +18,6 @@ export {
   FilterDropdown,
   AdvanceFilter,
   RowActionHeader,
-  RowAction
+  RowAction,
+  Text
 };
