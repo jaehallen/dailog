@@ -32,6 +32,7 @@
       toasts.add({ message: 'Invalid Name', type: 'info' });
       cancel();
     }
+    formData.set('date_at', date.toISOString().substring(0, 10));
     return async ({ update, result }) => {
       if (result.type === 'success') {
         if (result.data?.queries) {
@@ -95,7 +96,7 @@
     <SearchEntries
       regions={data.defaultOptions?.regions}
       queries={qEntries}
-      {date}
+      bind:date
       on:search={onSearchEntry}
       disabled={loading}
     />
@@ -168,10 +169,14 @@
     --date-picker-foreground: #f7f7f7;
   }
 
+  :global(.date-time-picker) {
+    width: 16rem;
+  }
   :global(#entrydate) {
     font-size: var(--bulma-body-font-size);
     border-radius: var(--bulma-radius-rounded);
     padding-inline-start: 1em;
     padding-inline-end: 2.5em;
+    width: 10em;
   }
 </style>

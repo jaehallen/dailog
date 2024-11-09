@@ -17,19 +17,19 @@
   const dispatch = createEventDispatcher();
   const WEEKS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const datePicker = {
-    min: new Date(now.setDate(now.getDate() - 35)),
-    max: new Date(),
+    max: new Date(now.setDate(now.getDate() + 1)),
+    min: new Date(now.setDate(now.getDate() - 36)),
+    closeOnSelection: true,
+    browseWithoutSelecting: true,
     timePrecision: null,
     id: 'entrydate',
     format: 'MMM dd, yyyy',
-    closeOnSelection: true,
     locale: {
       weekStartsOn: 0
     }
   };
 
   const onChange = () => {
-    console.log('test');
     dispatch('search');
   };
 </script>
@@ -52,6 +52,7 @@
           value={queries.search ?? ''}
           autocomplete="off"
           placeholder="Search User..."
+          required
           {disabled}
         />
       </div>
@@ -70,8 +71,8 @@
     </div>
     <div class="level-item">
       <div class="control">
-        <input type="hidden" value={date.toISOString().substring(0, 10)} name="date_at" readonly />
-        <DateInput bind:value={date} {...datePicker} on:select={onChange} {disabled} />
+        <input type="hidden" value={date.toISOString().substring(0, 10)} name="date_at" />
+        <DateInput bind:value={date} {...datePicker} {disabled} on:select={onChange} />
       </div>
     </div>
   </div>
