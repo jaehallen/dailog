@@ -6,7 +6,8 @@
   import ButtonIcon from '../ButtonIcon.svelte';
   import { getContextUpdate } from '$lib/context';
   import { fly } from 'svelte/transition';
-  import { TEMPID } from '$lib/defaults';
+  import { TEMPID, SUPERUSER } from '$lib/defaults';
+  import { isAdmin } from '$lib/utility';
 
   export let user: User | null;
   export let data: UsersList;
@@ -19,14 +20,15 @@
     $allRowsSelected = false;
     $isSelected = true;
   };
+  const notEditable = isAdmin(data.role) && user?.id !== SUPERUSER;
 </script>
 
 <div class="field wh-fixed is-grouped is-grouped-centered">
   {#if !$isBatchUpdate}
     <div class="control" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
       <div class="buttons">
-        {#if user?.role == 'admin'}
-          <ButtonIcon small disabled={!data.region} on:click={() => onUpdate('user')}>
+        {#if isAdmin(user?.role)}
+          <ButtonIcon small disabled={notEditable} on:click={() => onUpdate('user')}>
             <UserRoundPen />
           </ButtonIcon>
         {/if}

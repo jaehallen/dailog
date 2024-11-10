@@ -12,6 +12,8 @@
   import { fly } from 'svelte/transition';
   import Toasts from '$lib/component/Toasts.svelte';
   import { toasts } from '$lib/data-store';
+  import { sineIn } from 'svelte/easing';
+  import { isAdmin } from '$lib/utility';
 
   export let data: PageData;
 
@@ -94,7 +96,9 @@
     bind:this={searchForm}
   >
     <SearchEntries
-      regions={data.defaultOptions?.regions}
+      regions={data.defaultOptions?.regions?.filter(
+        (r) => isAdmin(data.user?.role) || r == data.user?.region
+      )}
       queries={qEntries}
       bind:date
       on:search={onSearchEntry}
@@ -136,7 +140,7 @@
                 {#key row.original.id}
                   <tr
                     {...rowAttrs}
-                    in:fly={{ delay: 200, duration: 300, x: '-2em' }}
+                    in:fly={{ delay: 200, duration: 300, x: '-20rem', easing: sineIn }}
                     class={rowStyle(row.original, undefined)}
                   >
                     {#each row.cells as cell (cell.id)}

@@ -69,7 +69,7 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
         const str = String(value || '-')
           .replace('[start]', '🚀 ')
           .replace('[end]', '🏁 ');
-        return createRender(Text, { text: str, typography: 'remarks is-size-7 is-italic' });
+        return createRender(Text, { text: str, typography: 'remarks is-size-7 is-italic remarks' });
       }
     })
   ]);

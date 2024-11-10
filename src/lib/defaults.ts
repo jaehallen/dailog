@@ -4,6 +4,7 @@
 import type { OptActionState, OptCategory, RouteProfile, TimesheetStateInfo } from './types/schema';
 
 export const TEMPID = 100020;
+export const SUPERUSER = 100000;
 export const LIMIT = {
   SCHEDULES: 5,
   USERS: 50,
@@ -85,7 +86,7 @@ export const ROUTES: RouteProfile[] = [
     region: ['APAC']
   },
   {
-    name: "Entries",
+    name: 'Entries',
     path: '/admin/entries',
     role: ['admin', 'lead']
   },
@@ -97,7 +98,7 @@ export const ROUTES: RouteProfile[] = [
   {
     name: 'Register',
     path: '/admin/register',
-    role: ['admin']
+    role: ['admin', 'lead']
   }
 ];
 

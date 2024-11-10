@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { isAdmin } from '$lib/utility';
+import { isAdmin, isLead } from '$lib/utility';
 import { validateRegistration } from '$lib/validation';
 import { insertUser } from '$lib/server/data/admin';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!isAdmin(locals?.user?.role)) {
+  if (!isAdmin(locals?.user?.role) && !isLead(locals?.user?.role)) {
     redirect(302, `/user/${locals?.user?.id}/timesheets`);
   }
 
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions = {
   default: async ({ request, locals }) => {
-    if (!isAdmin(locals?.user?.role)) {
+    if (!isAdmin(locals?.user?.role) && !isLead(locals?.user?.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 

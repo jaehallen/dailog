@@ -224,6 +224,7 @@
             user={selectedUser}
             leads={data?.defaultOptions?.leads}
             regions={data?.defaultOptions?.regions}
+            editor={data?.user ?? {}}
             {disabled}
           />
         </form>
