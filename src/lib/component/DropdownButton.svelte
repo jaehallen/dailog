@@ -4,12 +4,13 @@
   export let dropup = false;
   export let small = false;
   export let label = '';
+  export let display = '';
   let isDropdown = false;
 </script>
 
 <div class="dropdown" class:is-up={dropup} class:is-active={isDropdown}>
   <div class="dropdown-trigger">
-    <button class="button" type="button" class:is-small={small} on:click={() => (isDropdown = !isDropdown)}>
+    <button class={`button ${display}`} type="button" class:is-small={small} on:click={() => (isDropdown = !isDropdown)}>
       <span>{label}</span>
       <span class="icon" class:is-small={small}>
         {#if (dropup && !isDropdown) || (!dropup && isDropdown)}
@@ -22,9 +23,7 @@
   </div>
   <div class="dropdown-menu" role="menu">
     <div class="dropdown-content">
-      <div class="dropdown-item">
-        <slot />
-      </div>
+        <slot/>
     </div>
   </div>
 </div>

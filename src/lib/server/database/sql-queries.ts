@@ -171,6 +171,40 @@ export const QUERY = {
       sql: `SELECT MAX(date_at) as max_date_at, * FROM time_entries WHERE user_id = $user_id AND category = 'clock'`,
       args
     };
+  },
+  SEARCH_USER_TIME_ENTRIES: (args: { search: string, date_at: string, region?: string | null }) => {
+    const values: typeof args = {
+      search: args.search,
+      date_at: args.date_at
+    }
+
+    if (args.region) {
+      values.region = args.region;
+    }
+
+    return {
+      sql: `SELECT
+              time_entries.id id,
+              time_entries.user_id user_id,
+              users.name name,
+              users.region region,
+              sched_id,
+              category,
+              date_at,
+              start_at,
+              end_at,
+              remarks,
+              schedules.utc_offset,
+              schedules.local_offset,
+              schedules.clock_at,
+              schedules.effective_date
+            FROM time_entries
+            LEFT JOIN users ON users.id = time_entries.user_id
+            LEFT JOIN schedules ON time_entries.sched_id = schedules.id
+            JOIN fts_users WHERE fts_users.rowid = time_entries.user_id AND fts_users match $search 
+                AND date_at = $date_at ${args.region ? 'AND region = $region' : ''}`,
+      args: values
+    };
   }
 };
 
@@ -282,6 +316,44 @@ export const WRITE = {
         second_break_at,
         day_off
       }
+    };
+  },
+  UPDATE_MANY_USER: (args: Pick<UserRecord, 'id' | 'lead_id' | 'lock_password' | 'region'>) => {
+    const set = [];
+    const returnFields: (keyof UserRecord)[] = ['id', 'updated_at'];
+    const values: Partial<typeof args> = {
+      id: args.id
+    };
+
+    if (args.lead_id) {
+      set.push('lead_id = $lead_id');
+      values.lead_id = args.lead_id;
+      returnFields.push('lead_id');
+    }
+
+    if (
+      args.lock_password !== null &&
+      args.lock_password !== undefined &&
+      typeof args.lock_password == 'number'
+    ) {
+      set.push('lock_password = $lock_password');
+      values.lock_password = args.lock_password;
+      returnFields.push('lock_password');
+    }
+
+    if (args.region) {
+      set.push('region = $region');
+      values.region = args.region;
+      returnFields.push('region');
+    }
+
+    if (!set.length) {
+      throw new Error('No value to set');
+    }
+
+    return {
+      sql: `UPDATE users SET ${set.join(', ')} WHERE id = $id RETURNING ${returnFields.join(', ')}`,
+      args: values
     };
   },
   ADD_MANY_SCHEDULE: (

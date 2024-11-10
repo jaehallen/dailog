@@ -15,11 +15,12 @@ export const timeProcess = (note?: string) => {
 /** Check if user is Admin only */
 export const isAdmin = (role: OptRole | undefined | null) => role === 'admin';
 /** Check if user is in Admin, Lead or POC */
-export const isEditor = (role: OptRole | undefined | null) => ['admin', 'lead' ,'poc'].includes(role ?? '');
+export const isEditor = (role: OptRole | undefined | null) =>
+  ['admin', 'lead', 'poc'].includes(role ?? '');
 /** Check if user is Lead only */
 export const isLead = (role: OptRole | undefined | null) => role === 'lead';
 /** Check if user is Lead or POC */
-export const isLepo = (role: OptRole | undefined | null) =>  ['lead', 'poc'].includes(role ?? '');
+export const isLepo = (role: OptRole | undefined | null) => ['lead', 'poc'].includes(role ?? '');
 
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
@@ -57,11 +58,16 @@ export const dateAtOffset = (date: Date | number, offset: number): Date => {
 };
 
 export const dateAtOffsetStr = (date: Date | number, offset: number): string => {
-  return dateAtOffset(date, offset).toISOString().split('T', 1)[0];
+  return dateAtOffset(date, offset).toISOString().substring(0, 10);
 };
 
 //This should only be executed at client side. UTC-Offset timezone is not supported.
-export const formatDateOrTime = (val: string | Date, long = false, offset = 0, isTime = false): string => {
+export const formatDateOrTime = (
+  val: string | Date,
+  long = false,
+  offset = 0,
+  isTime = false
+): string => {
   let date = val instanceof Date ? val : new Date(val);
 
   if (!date.getTime() && typeof val === 'string') {
@@ -74,7 +80,7 @@ export const formatDateOrTime = (val: string | Date, long = false, offset = 0, i
   let options: Intl.DateTimeFormatOptions = {};
 
   if (isTime) {
-    if(offset){
+    if (offset) {
       date = dateAtOffset(date, offset);
     }
     options = { ...timeOpt, timeZone: 'UTC' };
@@ -181,8 +187,8 @@ export function getWeekRange(dateStr: string): { dateStart: string; dateEnd: str
   let dateEnd = new Date(d.setDate(d.getDate() + 6));
 
   return {
-    dateStart: dateStart.toISOString().split('T')[0],
-    dateEnd: dateEnd.toISOString().split('T')[0]
+    dateStart: dateStart.toISOString().substring(0, 10),
+    dateEnd: dateEnd.toISOString().substring(0, 10)
   };
 }
 
@@ -205,3 +211,4 @@ export function matchFilter({ filterValue, value }: Record<'filterValue' | 'valu
   if (filterValue === undefined) return true;
   return filterValue === value;
 }
+

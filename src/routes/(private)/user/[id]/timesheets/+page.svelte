@@ -23,6 +23,9 @@
   let disabled = true;
   let clockInOut = false;
   let remarks = '';
+  let clientWidth = 300;
+  let notification: (Notification & { timestamp?: number }) | undefined = undefined;
+  let notificationTimestamp = 978307200000;
 
   onMount(() => {
     if (data.userTimsheet) {
@@ -110,7 +113,51 @@
     timeAction.cancel();
   };
 
-  let clientWidth = 300;
+  const notify = (event: { detail: number }) => {
+    const showNotification = () => {
+      if (Math.floor((Date.now() - notificationTimestamp) / 60000) < 5) {
+        return;
+      }
+      // Redundant, notification is checked at Time.svelte
+      // Nah, just add it 😁
+      if (
+        browser &&
+        'Notification' in window &&
+        Notification.permission == 'granted' &&
+        data.user
+      ) {
+        notification = new Notification('Timer still running!', {
+          body: `${data.user.name} your timer for ${$timeAction.category} is still running.`,
+          requireInteraction: true,
+          silent: false,
+          icon: data.user.preferences?.avatar_src
+            ? String(data.user.preferences.avatar_src)
+            : undefined
+        });
+
+        notificationTimestamp = notification.timestamp ?? Date.now();
+      }
+    };
+
+    const schedule = data.userTimsheet?.schedule;
+    if (schedule) {
+      const time = Math.floor(event.detail / 60);
+      const duration = (category: OptCategory) => {
+        switch (category) {
+          case 'lunch':
+            return schedule.lunch_dur_min ?? 60;
+          case 'bio':
+            return 5;
+          default:
+            return schedule.break_dur_min ?? 15;
+        }
+      };
+
+      if (duration($timeAction.category) - time <= 2) {
+        showNotification();
+      }
+    }
+  };
 </script>
 
 {#if browser}
@@ -138,6 +185,7 @@
                 on:conclude={concludeBreak}
                 category={$timeAction.category}
                 {disabled}
+                on:notify={notify}
               />
             </div>
           {/if}

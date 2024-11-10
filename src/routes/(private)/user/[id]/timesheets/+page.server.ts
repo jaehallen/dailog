@@ -33,7 +33,7 @@ export const actions = {
     const validPost = validatePostTime.safeParse(Object.fromEntries(form));
 
     if (!validPost.success) {
-      fail(400, { message: validPost.error.issues });
+      fail(400, { message: validPost.error.errors });
     }
 
     const ipAddrss = getClientAddress();

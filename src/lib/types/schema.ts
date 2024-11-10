@@ -92,6 +92,11 @@ export interface ScheduleRecord {
 export type TimeEntryReport = TimeEntryRecord &
   Pick<ScheduleRecord, 'utc_offset' | 'local_offset' | 'clock_at' | 'effective_date'>;
 
+export type UserTimesheetReport = TimeEntryReport & {
+  name: string;
+  region: string;
+};
+
 export interface UserSchedule extends ScheduleRecord {
   date_at: string;
   startOfDuty: boolean;

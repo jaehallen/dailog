@@ -32,7 +32,7 @@
     }
   });
 
-  $: dateEntry = date.toISOString().split('T')[0];
+  $: dateEntry = date.toISOString().substring(0, 10);
 
   const handSubmit: SubmitFunction = async ({ cancel, formData }) => {
     disabled = true;
@@ -61,7 +61,7 @@
 <main class="container">
   <section class="section">
     <form method="post" use:enhance={handSubmit}>
-      <input class="is-hidden" type="date" value={dateEntry} name="date" readonly />
+      <input type="hidden" value={dateEntry} name="date" readonly />
       <div class="field is-grouped is-align-items-center">
         <div class="control">
           <DateInput bind:value={date} {...datePicker} />
@@ -113,5 +113,8 @@
 
   :global(#entrydate) {
     font-size: var(--bulma-body-font-size);
+    border-radius: var(--bulma-radius-rounded);
+    padding-inline-start: 1em;
+    padding-inline-end: 2.5em;
   }
 </style>

@@ -12,7 +12,7 @@
   export let curPath = '/';
   export let user: User | null;
 
-  let url = new URL(AVATAR_SRC);
+  let url = new URL(user?.preferences?.avatar_src ? user?.preferences.avatar_src : AVATAR_SRC);
   url.searchParams.set('seed', user?.name ?? 'dailog');
 
   let userRoute: RouteProfile[] = [];

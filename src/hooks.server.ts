@@ -6,23 +6,23 @@ import { sequence } from '@sveltejs/kit/hooks';
 export const handleError: HandleServerError = async ({ error }) => {
   console.log(error);
   return {
-    message: '🤯 Noooooooo'
+    message: '🤯 Internal Server Error'
   };
 };
 
 export const auth: Handle = async ({ event, resolve }) => {
   const sessionId = event.cookies.get(lucia.sessionCookieName);
-  
+
   if (event.url.pathname === '/') {
     redirect(302, '/login');
   }
-  
+
   if (!sessionId) {
     event.locals.user = null;
     event.locals.session = null;
     return resolve(event);
   }
-  
+
   const { session, user } = await lucia.validateSession(sessionId);
   if (session && session.fresh) {
     const sessionCookie = lucia.createSessionCookie(session.id);
@@ -31,7 +31,7 @@ export const auth: Handle = async ({ event, resolve }) => {
       ...sessionCookie.attributes
     });
   }
-  
+
   if (!session) {
     const sessionCookie = lucia.createBlankSessionCookie();
     event.cookies.set(sessionCookie.name, sessionCookie.value, {
@@ -39,7 +39,7 @@ export const auth: Handle = async ({ event, resolve }) => {
       ...sessionCookie.attributes
     });
   }
-  
+
   event.locals.user = user;
   event.locals.session = session;
   return resolve(event);
@@ -49,23 +49,23 @@ export const checkUser: Handle = async ({ event, resolve }) => {
   if (event.url.pathname !== '/login' && !event.locals.user) {
     redirect(302, '/login');
   }
-  
+
   return resolve(event);
 };
 
 export const userRoute: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
-  
+
   if (isProtectedRoute(pathname)) {
     if (!event.locals.user) {
       return error(405, 'Not Allowed');
     } else {
       const routeList = routeProfile(event.locals.user);
-      
+
       if (!routeList.some((route) => route.path === pathname)) {
         return error(405, 'Not Allowed');
       }
-      
+
       event.locals.routes = routeList;
     }
   }

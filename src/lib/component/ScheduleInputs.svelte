@@ -10,7 +10,7 @@
   const DAYS = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
   const SHORTDAYS = DAYS.map((day) => day.toLowerCase().substring(0, 3));
   const UTCMAP = new Map(UTCOFFSET);
-  const TODAY = new Date().toISOString().split('T')[0];
+  const TODAY = new Date().toISOString().substring(0, 10);
   let effectiveDate = TODAY;
   let daysValue = SHORTDAYS.map((day) => Boolean(schedule?.day_off?.includes(day)));
   let clientUTC = String(
@@ -86,15 +86,17 @@
         <div class="field-body">
           <div class="field has-addons has-addons-right">
             <div class="control">
-              <DropdownButton label="Day" dropup={false}>
-                {#each DAYS as day, i (i)}
-                  <p>
-                    <label class="label">
-                      <input type="checkbox" bind:checked={daysValue[i]} />
-                      {day}
-                    </label>
-                  </p>
-                {/each}
+              <DropdownButton label="Day">
+                <p class="dropdown-item">
+                  {#each DAYS as day, i (i)}
+                    <p>
+                      <label class="label">
+                        <input type="checkbox" bind:checked={daysValue[i]} />
+                        {day}
+                      </label>
+                    </p>
+                  {/each}
+                </p>
               </DropdownButton>
             </div>
             <p class="control">

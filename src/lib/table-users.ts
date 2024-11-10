@@ -9,8 +9,7 @@ import {
 } from 'svelte-headless-table/plugins';
 import { SelectFilter, BooleanRender, TextFilter } from '$lib/component/Datatable';
 import { textFilter, matchFilter, formatDateOrTime } from './utility';
-import RowActionHeader from './component/Datatable/RowActionHeader.svelte';
-import RowAction from './component/Datatable/RowAction.svelte';
+import { RowAction, RowActionHeader } from '$lib/component/Datatable';
 import type { User } from 'lucia';
 
 export const usersData = usersListStore();
@@ -181,31 +180,45 @@ function usersListStore() {
     });
   };
 
-  const updateUser = (
-    updates: Omit<UserRecord, 'preferences'>,
-    leads: { id: number; name: string }[]
-  ) => {
+  const batchUpdateUser = (listOfUsers: UserRecord[], leads: { id: number; name: string }[]) =>
+    update((lists) => {
+      listOfUsers.forEach((user) => {
+        const idx = lists.findIndex((list) => list.id == user.id);
+        if (idx >= 0) {
+          lists[idx] = updatedVal(user, lists[idx], leads);
+        }
+      });
+
+      return lists;
+    });
+
+  const updatedVal = (user: UserRecord, old: UsersList, leads: { id: number; name: string }[]) => {
+    const val = Object.fromEntries(Object.entries(user).filter(([_, v]) => v != undefined));
+    let { lead_id, teamlead } = old;
+
+    if (lead_id !== val.lead_id && val.lead_id) {
+      const newLead = leads.find((l) => l.id == val.lead_id)?.name;
+      teamlead = newLead ?? teamlead;
+      lead_id = newLead ? val.lead_id : lead_id;
+    }
+
+    return {
+      ...old,
+      ...val,
+      lead_id,
+      teamlead,
+      updated_at: new Date().toISOString()
+    };
+  };
+
+  const updateUser = (updates: UserRecord, leads: { id: number; name: string }[]) => {
     update((lists) => {
       const idx = lists.findIndex((u) => u.id == updates.id);
-      if (idx) {
-        let { lead_id, teamlead } = lists[idx];
-
-        if (lead_id !== updates.lead_id) {
-          const updatedLead = leads.find((l) => l.id === updates.lead_id)?.name;
-          teamlead = updatedLead ?? teamlead;
-          lead_id = updatedLead ? updates.lead_id : lead_id;
-        }
-
-        lists[idx] = {
-          ...lists[idx],
-          ...updates,
-          lead_id,
-          teamlead,
-          updated_at: new Date().toISOString()
-        };
+      if (idx >= 0) {
+        lists[idx] = updatedVal(updates, lists[idx], leads);
       }
       return lists;
     });
   };
-  return { set, update, subscribe, addUserSched, updateUser, batchSched };
+  return { set, update, subscribe, addUserSched, updateUser, batchSched, batchUpdateUser };
 }

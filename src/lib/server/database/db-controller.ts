@@ -7,7 +7,8 @@ import type {
   TimeEntryReport,
   UserInfo,
   UserProfile,
-  UserRecord
+  UserRecord,
+  UserTimesheetReport
 } from '$lib/types/schema';
 import { QUERY, WRITE } from './sql-queries';
 import { DBClient, getClient } from './turso';
@@ -132,6 +133,33 @@ export class DatabaseController extends DBClient {
     };
   }
 
+  public async searchUserTimeEntries(params: {
+    search: string;
+    date_at: string;
+    region?: string | null;
+  }): Promise<DbResponse<UserTimesheetReport[]>> {
+    const { sql, args } = QUERY.SEARCH_USER_TIME_ENTRIES(params);
+    const { data, error } = await super.get(sql, args);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return {
+      data: data.rows.map((row) => {
+        return {
+          ...toTimeEntryRecord(row),
+          utc_offset: row.utc_offset as number,
+          local_offset: row.local_offset as number,
+          clock_at: row.clock_at as string,
+          effective_date: row.effective_date as string,
+          name: row.name as string,
+          region: row.region as string
+        };
+      })
+    };
+  }
+
   public async startTime(
     args: Omit<TimeEntryRecord, 'id' | 'end_at' | 'elapse_sec' | 'total_sec'>
   ): Promise<DbResponse<TimeEntryRecord>> {
@@ -178,6 +206,20 @@ export class DatabaseController extends DBClient {
     }
 
     return { data: toUserScheddule(data.rows[0]) };
+  }
+
+  public async updateManyUser(
+    args: Pick<UserRecord, 'id' | 'lead_id' | 'region' | 'lock_password'>[]
+  ): Promise<DbResponse<UserRecord[]>> {
+    const { data, error } = await super.batchSet(args.map((user) => WRITE.UPDATE_MANY_USER(user)));
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return {
+      data: data.map((user) => toUserRecord(user.rows[0]))
+    };
   }
 
   public async createManySchedule(
@@ -249,19 +291,32 @@ export function toUserRecord(record: Record<string, any>): UserRecord {
     updated_at
   } = record;
 
-  return {
+  const val = {
     id,
     name,
     region,
     role,
+    active,
+    lock_password,
     password_hash,
     lead_id,
-    active: Boolean(active),
-    lock_password: Boolean(lock_password),
     created_at,
     updated_at,
-    preferences: parseJSON(preferences)
+    preferences
   };
+  if (active != undefined) {
+    val.active = Boolean(active);
+  }
+
+  if (lock_password != undefined) {
+    val.lock_password = Boolean(lock_password);
+  }
+
+  if (preferences != undefined) {
+    val.preferences = parseJSON(preferences);
+  }
+
+  return val;
 }
 
 function toUserProfile(record: Record<string, any>): UserProfile {

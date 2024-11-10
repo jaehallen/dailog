@@ -1,13 +1,16 @@
 <script lang="ts">
   import type { UserRecord } from '$lib/types/schema';
+  import type { User } from 'lucia';
   import { USERROLE } from '$lib/defaults';
   import FieldH from './FieldH.svelte';
   export let user: Omit<UserRecord, 'password_hash' | 'preferences'>;
   export let regions: string[] = [];
   export let leads: { id: number; name: string }[] = [];
   export let disabled = false;
+  export let editor: Partial<User> = {};
   let activeStr = user.active ? '1' : '0';
   let lockpassStr = user.lock_password ? '1' : '0';
+  let roles = USERROLE.filter((role) => editor.id === 100000 || role !== 'admin');
 </script>
 
 <h4 class="title is-4">{user.name}</h4>
@@ -37,7 +40,7 @@
 </FieldH>
 <FieldH id="role" label="Role">
   <select name="role" id="role" class="input" value={user.role}>
-    {#each USERROLE as role}
+    {#each roles as role}
       <option value={role}>{role}</option>
     {/each}
   </select>

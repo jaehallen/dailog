@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { FilterX } from 'lucide-svelte';
-  import ButtonIcon from '../ButtonIcon.svelte';
-  import { getContextUpdate } from '$lib/context';
-  import { fly } from 'svelte/transition';
   import type { SelectedRowsState } from 'svelte-headless-table/plugins';
   import type { Writable } from 'svelte/store';
+  import ButtonIcon from '$lib/component/ButtonIcon.svelte';
+  import { FilterX } from 'lucide-svelte';
+  import { getContextUpdate } from '$lib/context';
+  import { fly } from 'svelte/transition';
+  export let filterValues;
+  export let select: SelectedRowsState<SelectedRows>;
 
   type SelectedRows = {
     allRowsSelected: Writable<boolean>;
     someRowsSelected: Writable<boolean>;
   };
-  export let filterValues;
-  export let select: SelectedRowsState<SelectedRows>;
-  const { isBatchSched } = getContextUpdate();
+  const { isBatchUpdate } = getContextUpdate();
   const { allRowsSelected, someRowsSelected } = select;
   $: hasFilter = Object.values($filterValues).filter((v) => v !== undefined && v !== '').length;
 </script>
@@ -27,7 +27,7 @@
     >
       <FilterX />
     </ButtonIcon>
-    {#if $isBatchSched}
+    {#if $isBatchUpdate}
       <label class="checkbox" transition:fly={{ duration: 400, x: '1rem' }}>
         <input
           type="checkbox"

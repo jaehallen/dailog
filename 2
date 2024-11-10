@@ -1,0 +1,121 @@
+<script lang="ts">
+  import type { PageData } from './$types';
+  import type { SubmitFunction } from '@sveltejs/kit';
+  import SearchEntries from '$lib/component/SearchEntries.svelte';
+  import { enhance } from '$app/forms';
+  import { page } from '$app/stores';
+  import { replaceState } from '$app/navigation';
+  import { entriesData, getEntriesTable } from '$lib/table-entries';
+  import { onMount } from 'svelte';
+  import { Subscribe, Render } from 'svelte-headless-table';
+  import { fly, scale } from 'svelte/transition';
+
+  export let data: PageData;
+
+  let loading = true;
+  let qEntries = data?.entriesQuery ?? {
+    search: '',
+    date_at: new Date().toISOString().substring(0, 10),
+    region: data?.user?.region ?? ''
+  };
+  let date = qEntries?.date_at ? new Date(qEntries?.date_at) : new Date();
+  const { headerRows, rows, tableAttrs, tableBodyAttrs } = getEntriesTable(entriesData ?? []);
+
+  const onEntriesSearch: SubmitFunction = () => {
+    loading = true;
+    return async ({ update, result }) => {
+      if (result.type === 'success') {
+        console.log(result);
+        if (result.data?.queries) {
+          updateQuery(result.data.queries);
+          date = new Date(result.data.queries.date_at);
+          entriesData.updateList(result.data.entriesResults);
+        }
+        update({ invalidateAll: false, reset: false });
+      } else {
+        console.error(result);
+      }
+      loading = false;
+    };
+  };
+
+  const updateQuery = async (values: { search: string; date_at: string; region: string }) => {
+    Object.entries(values).forEach(([key, value]) => {
+      $page.url.searchParams.set(key, String(value || ''));
+    });
+    replaceState($page.url, $page.state);
+  };
+
+  onMount(() => {
+    if (data.entriesResults) {
+      entriesData.updateList(data.entriesResults);
+    }
+    loading = false;
+  });
+</script>
+
+<main class="container mt-6">
+  <form action="?/search" class="block" method="POST" use:enhance={onEntriesSearch}>
+    <SearchEntries regions={data.defaultOptions?.regions} queries={qEntries} {date} />
+  </form>
+  <div class="box">
+    <table
+      class="table is-striped is-hoverable is-fullwidth"
+      class:is-skeleton={loading}
+      {...$tableAttrs}
+    >
+      <thead>
+        {#each $headerRows as headerRow (headerRow.id)}
+          <Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+            <tr {...rowAttrs}>
+              {#each headerRow.cells as cell (cell.id)}
+                <Subscribe attrs={cell.attrs()} let:attrs>
+                  <th {...attrs}>
+                    <Render of={cell.render()} />
+                  </th>
+                </Subscribe>
+              {/each}
+            </tr>
+          </Subscribe>
+        {/each}
+      </thead>
+      <tbody {...$tableBodyAttrs}>
+        {#each $rows as row (row.id)}
+          {#if row.isData()}
+            <Subscribe rowAttrs={row.attrs()} rowProps={row.props()} let:rowAttrs>
+              {#key row.original.id}
+                <tr {...rowAttrs} in:fly={{ delay: 300, x: '2em' }}>
+                  {#each row.cells as cell (cell.id)}
+                    <Subscribe attrs={cell.attrs()} let:attrs>
+                      <td {...attrs}>
+                        {#if !cell.isData() || cell.value == null || cell.value == undefined}
+                          <Render of={'-'} />
+                        {:else}
+                          <Render of={cell.render()} />
+                        {/if}
+                      </td>
+                    </Subscribe>
+                  {/each}
+                </tr>
+              {/key}
+            </Subscribe>
+          {/if}
+        {/each}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<style>
+  :global([data-theme='dark'], .theme-dark) {
+    --date-picker-background: #1b1e27;
+    --date-picker-foreground: #f7f7f7;
+  }
+
+  :global(#entrydate) {
+    font-size: var(--bulma-body-font-size);
+    border-radius: var(--bulma-radius-rounded);
+    padding-inline-start: 1em;
+    padding-inline-end: 2.5em;
+  }
+</style>

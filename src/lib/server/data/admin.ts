@@ -1,7 +1,7 @@
 import type { User } from 'lucia';
-import { db } from '$lib/server/database/db-controller';
 import type { DbResponse, ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
-import { isAdmin, parseJSON } from '$lib/utility';
+import { db } from '$lib/server/database/db-controller';
+import { isAdmin, isEditor, parseJSON } from '$lib/utility';
 import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
@@ -56,6 +56,10 @@ export const updateUser = async (user: Omit<UserRecord, 'password_hash' | 'prefe
 };
 
 export const userFilters = (user: User, query: URLSearchParams): SearchOptions => {
+  let lastId = Number(query.get('last_id')) || 0;
+  if (isEditor(user.role) && user.id > TEMPID && lastId < TEMPID) {
+    lastId = TEMPID;
+  }
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
         search: '',
@@ -63,9 +67,9 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         limit: 100,
         region: null,
         lead_id: null,
-        last_id: 0,
+        last_id: lastId,
         page_total: null,
-        page_index: String(0)
+        page_index: String(lastId)
       }
     : {
         search: '',
@@ -85,7 +89,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
       limit: Number(query.get('limit')),
       region: query.get('region'),
       lead_id: query.get('lead_id'),
-      last_id: Number(query.get('last_id')),
+      last_id: lastId,
       page_total: Number(query.get('page_total')),
       page_index: query.get('page_index')
     };

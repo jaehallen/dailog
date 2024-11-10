@@ -1,3 +1,15 @@
+import type { PageServerLoad, Actions } from './$types';
+import { redirect, fail } from '@sveltejs/kit';
+import {
+  validateSchedule,
+  validateUser,
+  validateSearch,
+  validateManySched,
+  validateBatchUser
+} from '$lib/validation';
+import { isAdmin, isEditor, isLepo } from '$lib/utility';
+import { TEMPID } from '$lib/defaults';
+import { db } from '$lib/server/database/db-controller';
 import {
   listOfUsers,
   reDefaultPassword,
@@ -5,12 +17,6 @@ import {
   updateUser,
   userFilters
 } from '$lib/server/data/admin';
-import { redirect, fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
-import { validateSchedule, validateUser, validateSearch, validateManySched } from '$lib/validation';
-import { isAdmin, isEditor, isLepo } from '$lib/utility';
-import { TEMPID } from '$lib/defaults';
-import { db } from '$lib/server/database/db-controller';
 
 export const load = (async ({ locals, url }) => {
   if (!locals.user) {
@@ -40,7 +46,7 @@ export const actions = {
     const form = await request.formData();
     form.set('page_total', '');
     form.set('page_index', '');
-    form.set('last_id', admin ? '0' : TEMPID.toString());
+    form.set('last_id', admin && locals.user.id < TEMPID ? '0' : TEMPID.toString());
     if (!admin) {
       form.set('region', locals.user.region);
     }
@@ -52,9 +58,16 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
     const form = await request.formData();
+    const lastId = Number(form.get('last_id'));
+
+    if (isEditor(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+      form.set('last_id', String(TEMPID))
+    }
+
     if (isLepo(locals.user.role)) {
       form.set('region', locals.user.region);
     }
+
     return await queryData(form);
   },
 
@@ -82,7 +95,7 @@ export const actions = {
     const validSched = validateSchedule.safeParse(Object.fromEntries(form));
 
     if (!validSched.success) {
-      return fail(404, { message: validSched.error });
+      return fail(404, { message: validSched.error.errors });
     }
 
     const { data, error } = await db.createUserSchedule(validSched.data);
@@ -108,7 +121,7 @@ export const actions = {
     const validSched = validateManySched.safeParse(Object.fromEntries(form));
 
     if (!validSched.success) {
-      return fail(404, { message: validSched.error });
+      return fail(404, { message: validSched.error.errors });
     }
 
     const { ids_list, ...scheds } = validSched.data;
@@ -121,6 +134,40 @@ export const actions = {
 
     return {
       listOfSchedules: data
+    };
+  },
+  'update-many-user': async ({ request, locals }) => {
+    if (!locals.user || !locals.session) {
+      return fail(404, { message: 'User not found' });
+    }
+
+    if (!isAdmin(locals.user.role)) {
+      return fail(401, { message: 'User not authorized' });
+    }
+
+    const form = await request.formData();
+    const validInfo = validateBatchUser.safeParse(Object.fromEntries(form));
+
+    if (!validInfo.success) {
+      return fail(401, { message: validInfo.error.errors });
+    }
+
+    const { ids_list, ...info } = validInfo.data;
+    const temp = Object.entries(info).filter(([_, v]) => v !== null);
+
+    if (!temp.length) {
+      return fail(401, { message: 'No value to set' });
+    }
+    const infoVal = Object.fromEntries(temp);
+    const values = ids_list.map((id) => Object.assign({ ...infoVal, id }));
+    const { data, error } = await db.updateManyUser(values);
+
+    if (error) {
+      return fail(401, { message: error.message });
+    }
+
+    return {
+      listOfUsers: data
     };
   },
   'update-user': async ({ request, locals }) => {
@@ -136,7 +183,7 @@ export const actions = {
     const validUser = validateUser.safeParse(Object.fromEntries(form));
 
     if (!validUser.success) {
-      return fail(404, { message: validUser.error });
+      return fail(404, { message: validUser.error.errors });
     }
 
     const { data, error } = await updateUser(validUser.data);
@@ -164,7 +211,7 @@ export const actions = {
     const validUser = validateUser.safeParse(Object.fromEntries(form));
 
     if (!validUser.success) {
-      return fail(404, { message: validUser.error });
+      return fail(404, { message: validUser.error.errors });
     }
 
     const { data, error } = await reDefaultPassword(validUser.data);
