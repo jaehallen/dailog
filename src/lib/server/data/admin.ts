@@ -76,7 +76,7 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
         active: 1,
         limit: 100,
         region: user.region,
-        lead_id: user.id,
+        lead_id: null,
         last_id: TEMPID,
         page_total: null,
         page_index: String(TEMPID)
