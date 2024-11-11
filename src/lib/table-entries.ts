@@ -25,16 +25,18 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
       }
     }),
     table.column({
-      header: 'Clock In',
-      accessor: 'clock_at',
+      header: 'Date',
+      accessor: 'date_at',
       cell: ({ row, value }) => {
         return row.isData() && row.original.category != 'clock' ? '' : formatDateOrTime(value);
       }
     }),
     table.column({
-      header: 'Date',
-      accessor: 'date_at',
-      cell: ({ value }) => formatDateOrTime(value)
+      header: 'Clock In',
+      accessor: 'clock_at',
+      cell: ({ row, value }) => {
+        return row.isData() && row.original.category != 'clock' ? '' : formatDateOrTime(value);
+      }
     }),
     table.column({
       header: 'Category',
@@ -98,3 +100,5 @@ function entriesStore() {
     update
   };
 }
+
+function isLate(row: UserTimesheetReport) {}

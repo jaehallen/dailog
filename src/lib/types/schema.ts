@@ -90,7 +90,16 @@ export interface ScheduleRecord {
 }
 
 export type TimeEntryReport = TimeEntryRecord &
-  Pick<ScheduleRecord, 'utc_offset' | 'local_offset' | 'clock_at' | 'effective_date'>;
+  Pick<
+    ScheduleRecord,
+    | 'utc_offset'
+    | 'local_offset'
+    | 'clock_at'
+    | 'effective_date'
+    | 'clock_dur_min'
+    | 'break_dur_min'
+    | 'lunch_dur_min'
+  >;
 
 export type UserTimesheetReport = TimeEntryReport & {
   name: string;
