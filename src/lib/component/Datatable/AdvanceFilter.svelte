@@ -21,10 +21,9 @@
   $: hasNextPage = queries.page_total !== pages.length || queries.page_total > currentPage;
 </script>
 
-
-  <input type="hidden" name="last_id" value={queries.last_id || 0} readonly />
-  <input type="hidden" name="page_total" value={queries.page_total || ''} readonly />
-  <input type="hidden" name="page_index" value={queries.page_index || ''} readonly />
+<input type="hidden" name="last_id" value={queries.last_id || 0} readonly />
+<input type="hidden" name="page_total" value={queries.page_total || ''} readonly />
+<input type="hidden" name="page_index" value={queries.page_index || ''} readonly />
 
 <div class="level">
   <div class="level-left"></div>
@@ -89,7 +88,9 @@
                 <option value="10">10 rows</option>
                 <option value="50">50 rows</option>
                 <option value="100">100 rows</option>
-                <option value="500">500 rows</option>
+                {#if isAdmin(user.role)}
+                  <option value="500">500 rows</option>
+                {/if}
               </select>
             </div>
           </div>
