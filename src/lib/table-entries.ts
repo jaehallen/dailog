@@ -48,7 +48,13 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
       accessor: 'start_at',
       cell: ({ value, row }) => {
         const offset = row.isData() ? row.original.local_offset : 8;
-        return formatDateOrTime(new Date(Number(value) * 1000), true, offset, true);
+        // const isLate = row.isData() ? !onTime(row.original) : false;
+        const isLate = false;
+        const typography = isLate ? 'is-italic is-danger' : '';
+        const str = formatDateOrTime(new Date(Number(value) * 1000), true, offset, true);
+        return row.isData() && row.original.category == 'clock'
+          ? createRender(Text, { text: str, typography })
+          : str;
       }
     }),
     table.column({
@@ -71,7 +77,7 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
         const str = String(value || '-')
           .replace('[start]', '🚀 ')
           .replace('[end]', '🏁 ');
-        return createRender(Text, { text: str, typography: 'remarks is-size-7 is-italic remarks' });
+        return createRender(Text, { text: str, typography: 'is-size-7 is-italic remarks' });
       }
     })
   ]);
@@ -101,4 +107,24 @@ function entriesStore() {
   };
 }
 
-function isLate(row: UserTimesheetReport) {}
+function onTime(row: UserTimesheetReport) {
+  const MAX_WORK = row.clock_dur_min ?? 540;
+  const MIN_HOUR = (MAX_WORK - 23) * -60;
+  const [ckHH, ckMM] = row.clock_at.split(':');
+  const [_, time] = new Date(row.start_at * 1000).toISOString().split('T');
+  const [hh, mm, ss] = time.split(':');
+  const clockTime = Math.round(parseInt(ckHH) * 60 + parseInt(ckMM));
+  const loginTime = Math.round(parseInt(hh) * 60 + parseInt(mm) + parseInt(ss) / 60);
+  const diffHours = loginTime - clockTime;
+  console.log(row.clock_at, clockTime, loginTime);
+  console.log(diffHours, MAX_WORK, MIN_HOUR);
+
+  if (diffHours >= 0 && diffHours <= MAX_WORK) {
+    return true;
+  }
+  if (MAX_WORK >= diffHours && diffHours <= MIN_HOUR) {
+    return true;
+  }
+
+  return false;
+}
