@@ -172,11 +172,11 @@ export const QUERY = {
       args
     };
   },
-  SEARCH_USER_TIME_ENTRIES: (args: { search: string, date_at: string, region?: string | null }) => {
+  SEARCH_USER_TIME_ENTRIES: (args: { search: string; date_at: string; region?: string | null }) => {
     const values: typeof args = {
       search: args.search,
       date_at: args.date_at
-    }
+    };
 
     if (args.region) {
       values.region = args.region;
@@ -197,7 +197,10 @@ export const QUERY = {
               schedules.utc_offset,
               schedules.local_offset,
               schedules.clock_at,
-              schedules.effective_date
+              schedules.effective_date,
+              schedules.clock_dur_min,
+              schedules.break_dur_min,
+              schedules.lunch_dur_min
             FROM time_entries
             LEFT JOIN users ON users.id = time_entries.user_id
             LEFT JOIN schedules ON time_entries.sched_id = schedules.id

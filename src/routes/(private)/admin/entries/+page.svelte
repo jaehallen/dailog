@@ -72,10 +72,10 @@
   const rowStyle = (data: UserTimesheetReport, column: string | undefined) => {
     const { category } = data;
     if (category == 'clock' && !column) {
-      return 'has-text-weight-bold is-dark is-light';
+      return 'has-text-weight-bold is-dark';
     } else if (column && category !== 'clock') {
       if (['user_id', 'name', 'clock_at'].includes(column)) {
-        return 'is-light';
+        return '';
       }
     }
     return '';

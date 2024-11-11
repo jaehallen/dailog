@@ -153,6 +153,9 @@ export class DatabaseController extends DBClient {
           local_offset: row.local_offset as number,
           clock_at: row.clock_at as string,
           effective_date: row.effective_date as string,
+          clock_dur_min: row.clock_dur_min as number,
+          break_dur_min: row.break_dur_min as number,
+          lunch_dur_min: row.lunch_dur_min as number,
           name: row.name as string,
           region: row.region as string
         };
