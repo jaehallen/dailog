@@ -9,7 +9,7 @@
   import { entriesData, getEntriesTable } from '$lib/table-entries';
   import { onMount } from 'svelte';
   import { Subscribe, Render } from 'svelte-headless-table';
-  import { fly } from 'svelte/transition';
+  import { fade, fly, scale, slide } from 'svelte/transition';
   import Toasts from '$lib/component/Toasts.svelte';
   import { toasts } from '$lib/data-store';
   import { sineIn } from 'svelte/easing';
@@ -137,10 +137,10 @@
           {#each $rows as row (row.id)}
             {#if row.isData()}
               <Subscribe rowAttrs={row.attrs()} rowProps={row.props()} let:rowAttrs>
-                {#key row.original.id}
+                {#key row.original.date_at}
                   <tr
                     {...rowAttrs}
-                    in:fly={{ delay: 200, duration: 300, x: '-20rem', easing: sineIn }}
+                    in:fly={{ duration: 300, y: '-2rem', easing: sineIn }}
                     class={rowStyle(row.original, undefined)}
                   >
                     {#each row.cells as cell (cell.id)}

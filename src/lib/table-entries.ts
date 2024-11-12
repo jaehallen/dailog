@@ -4,6 +4,7 @@ import { Text } from '$lib/component/Datatable';
 import { writable } from 'svelte/store';
 import { createRender, createTable } from 'svelte-headless-table';
 import { formatDateOrTime, secToDuration } from './utility';
+import type { User } from 'lucide-svelte';
 
 export const entriesData = entriesStore();
 
@@ -48,10 +49,9 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
       accessor: 'start_at',
       cell: ({ value, row }) => {
         const offset = row.isData() ? row.original.local_offset : 8;
-        // const isLate = row.isData() ? !onTime(row.original) : false;
-        const isLate = false;
-        const typography = isLate ? 'is-italic is-danger' : '';
         const str = formatDateOrTime(new Date(Number(value) * 1000), true, offset, true);
+        const isLate = row.isData() ? !onTime(row.original, str) : false;
+        const typography = isLate ? 'is-italic has-text-danger' : '';
         return row.isData() && row.original.category == 'clock'
           ? createRender(Text, { text: str, typography })
           : str;
@@ -68,7 +68,12 @@ export function getEntriesTable(data: Writable<UserTimesheetReport[]>) {
     table.column({
       header: 'Duration',
       accessor: 'total_sec',
-      cell: ({ value }) => secToDuration(value ?? 0)
+      cell: ({ value, row }) => {
+        const text = secToDuration(value ?? 0)
+        const overBreak = row.isData() ? isOverBreak(row.original) : false;
+        const typography = overBreak ? 'is-italic has-text-danger' : '';
+        return createRender(Text, { text, typography })
+      }
     }),
     table.column({
       header: 'Remarks',
@@ -107,17 +112,14 @@ function entriesStore() {
   };
 }
 
-function onTime(row: UserTimesheetReport) {
+function onTime(row: UserTimesheetReport, clockIn?: string) {
   const MAX_WORK = row.clock_dur_min ?? 540;
   const MIN_HOUR = (MAX_WORK - 23) * -60;
   const [ckHH, ckMM] = row.clock_at.split(':');
-  const [_, time] = new Date(row.start_at * 1000).toISOString().split('T');
-  const [hh, mm, ss] = time.split(':');
+  const [hh, mm] = typeof clockIn == 'string' ? clockIn.split(":") : formatDateOrTime(new Date(Number(row.start_at) * 1000), true, row.local_offset, true).split(":")
   const clockTime = Math.round(parseInt(ckHH) * 60 + parseInt(ckMM));
-  const loginTime = Math.round(parseInt(hh) * 60 + parseInt(mm) + parseInt(ss) / 60);
-  const diffHours = loginTime - clockTime;
-  console.log(row.clock_at, clockTime, loginTime);
-  console.log(diffHours, MAX_WORK, MIN_HOUR);
+  const loginTime = Math.round(parseInt(hh) * 60 + parseInt(mm));
+  const diffHours = clockTime - loginTime;
 
   if (diffHours >= 0 && diffHours <= MAX_WORK) {
     return true;
@@ -127,4 +129,14 @@ function onTime(row: UserTimesheetReport) {
   }
 
   return false;
+}
+
+function isOverBreak(row: UserTimesheetReport) {
+  const totalBreakMin = Math.floor((row.total_sec || 0) / 60)
+  if (row.category === 'break') {
+    return row.break_dur_min && totalBreakMin > row.break_dur_min
+  } else if (row.category === 'lunch') {
+    return row.lunch_dur_min && totalBreakMin > row.lunch_dur_min
+  }
+  return false
 }
