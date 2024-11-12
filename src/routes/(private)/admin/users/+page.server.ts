@@ -50,7 +50,7 @@ export const actions = {
     if (!admin) {
       form.set('region', locals.user.region);
     }
-    return await queryData(form);
+    return await queryData(form, admin);
   },
 
   'prev-page': async ({ request, locals }) => {
@@ -225,7 +225,7 @@ export const actions = {
   }
 } satisfies Actions;
 
-async function queryData(form: FormData) {
+async function queryData(form: FormData, admin?: boolean) {
   const validFilter = validateSearch.safeParse(Object.fromEntries(form));
 
   if (!validFilter.success) {
@@ -233,6 +233,10 @@ async function queryData(form: FormData) {
   }
 
   if (validFilter.data.search) {
+    if(admin){
+      validFilter.data.region = null;
+    }
+
     const { data, error } = await searchUsers(validFilter.data);
     return {
       queries: { ...validFilter.data },
