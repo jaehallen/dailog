@@ -122,6 +122,7 @@
         body,
         requireInteraction: true,
         silent: false,
+        tag: $timeAction.category,
         icon
       });
     };
