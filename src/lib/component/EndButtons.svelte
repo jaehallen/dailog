@@ -23,6 +23,6 @@
     />
   </div>
   <div class="field" slot="right">
-    <h1 class="subtitle is-capitalized">{category}: <Timer {timestamp} isNotify={['bio', 'break', 'lunch'].includes(category)} on:notify/></h1>
+    <h1 class="subtitle is-capitalized">{category}: <Timer {timestamp}/></h1>
   </div>
 </ButtonsContainer>

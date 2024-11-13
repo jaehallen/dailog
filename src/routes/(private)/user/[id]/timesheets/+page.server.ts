@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   const { schedules, timeEntries } = await db.getUserEntryAndSched(locals.user.id);
 
   return {
-    userTimsheet: {
+    userTimesheet: {
       timeEntries,
       schedule: getSchedule(schedules, timeEntries)
     }
