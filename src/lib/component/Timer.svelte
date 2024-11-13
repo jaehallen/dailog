@@ -1,12 +1,8 @@
 <script lang="ts">
   import { readable } from 'svelte/store';
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { browser } from '$app/environment';
 
-  const dispatch = createEventDispatcher();
   const f = (v: number) => String(v).padStart(2, '0');
   export let timestamp: number;
-  export let isNotify = false;
 
   const time = readable(0, (set) => {
     const interval = setInterval(() => {
@@ -14,17 +10,6 @@
     }, 1000);
 
     return () => clearInterval(interval);
-  });
-
-  onMount(() => {
-    let notify = undefined
-    if (isNotify && browser && 'Notification' in window && Notification.permission == 'granted') {
-      notify = setInterval(() => {
-        dispatch('notify', $time);
-      }, 60000);
-    }
-
-    return () => clearInterval(notify);
   });
 
   $: hh = Math.floor($time / 3600);

@@ -24,18 +24,18 @@
   let clockInOut = false;
   let remarks = '';
   let clientWidth = 300;
-  let notification: (Notification & { timestamp?: number }) | undefined = undefined;
-  let notificationTimestamp = 978307200000;
+  let notifTimeout: NodeJS.Timeout | null = null;
 
   onMount(() => {
-    if (data.userTimsheet) {
-      const { timeEntries, schedule } = data.userTimsheet;
+    if (data.userTimesheet) {
+      const { timeEntries, schedule } = data.userTimesheet;
       timesheet.set(
         timeEntries
           .filter((entry: TimeEntryRecord) => entry.date_at === schedule.date_at)
           .sort((a, b) => a.start_at - b.start_at)
       );
       timeAction.validate($timeLog, schedule);
+      setNotification();
     }
 
     clockInOut = !$timeLog.clocked;
@@ -55,7 +55,6 @@
         }
       }
     });
-
     return () => {
       window.removeEventListener('storage', () => {});
     };
@@ -92,6 +91,7 @@
           }
           if (record.category !== 'clock') {
             timeAction.save(record);
+            setNotification();
           }
         }
       } else {
@@ -113,51 +113,66 @@
     timeAction.cancel();
   };
 
-  const notify = (event: { detail: number }) => {
-    const showNotification = () => {
-      if (Math.floor((Date.now() - notificationTimestamp) / 60000) < 5) {
-        return;
-      }
-      // Redundant, notification is checked at Time.svelte
-      // Nah, just add it 😁
-      if (
-        browser &&
-        'Notification' in window &&
-        Notification.permission == 'granted' &&
-        data.user
-      ) {
-        notification = new Notification('Timer still running!', {
-          body: `${data.user.name} your timer for ${$timeAction.category} is still running.`,
-          requireInteraction: true,
-          silent: false,
-          icon: data.user.preferences?.avatar_src
-            ? String(data.user.preferences.avatar_src)
-            : undefined
-        });
-
-        notificationTimestamp = notification.timestamp ?? Date.now();
-      }
+  function notify(
+    { title, body, icon }: { title: string; body: string; icon?: string },
+    snoozeTimeMin?: number
+  ) {
+    const notifOn = () => {
+      new Notification(title, {
+        body,
+        requireInteraction: true,
+        silent: false,
+        tag: $timeAction.category,
+        icon
+      });
     };
+    notifOn();
+    if (notifTimeout) {
+      clearTimeout(notifTimeout);
+    }
 
-    const schedule = data.userTimsheet?.schedule;
-    if (schedule) {
-      const time = Math.floor(event.detail / 60);
-      const duration = (category: OptCategory) => {
-        switch (category) {
-          case 'lunch':
-            return schedule.lunch_dur_min ?? 60;
-          case 'bio':
-            return 5;
-          default:
-            return schedule.break_dur_min ?? 15;
-        }
+    if (snoozeTimeMin) {
+      notifTimeout = setTimeout(
+        notify,
+        snoozeTimeMin * 60000,
+        { title, body, icon },
+        snoozeTimeMin
+      );
+    }
+  }
+
+  function setNotification() {
+    if (notifTimeout) {
+      clearTimeout(notifTimeout);
+      notifTimeout = null;
+    }
+
+    if (!(browser && 'Notification' in window && Notification.permission == 'granted')) return;
+    if (!data.user || !data.userTimesheet?.schedule) return;
+
+    if (['break', 'bio', 'lunch', 'coffee'].includes($timeAction.category) && $timeAction.isBreak) {
+      const maxBreak =
+        ($timeAction.category == 'lunch'
+          ? (data.userTimesheet.schedule.lunch_dur_min ?? 60)
+          : (data.userTimesheet.schedule.break_dur_min ?? 15)) - 1;
+
+      let delay =
+        new Date(($timeAction.timestamp + maxBreak * 60) * 1000).getTime() - new Date().getTime();
+      const snoozeInterval = 5; //minutes
+      const options = {
+        title: 'Timer still running!',
+        body: `${data.user.name} your timer for ${$timeAction.category} is still running.`,
+        icon: data.user.preferences?.avatar_src
+          ? String(data.user.preferences.avatar_src)
+          : undefined
       };
 
-      if (duration($timeAction.category) - time <= 2) {
-        showNotification();
+      if (delay < 0) {
+        delay = 300000; // 5 mintues
       }
+      notifTimeout = setTimeout(notify, delay, options, snoozeInterval);
     }
-  };
+  }
 </script>
 
 {#if browser}
@@ -185,7 +200,6 @@
                 on:conclude={concludeBreak}
                 category={$timeAction.category}
                 {disabled}
-                on:notify={notify}
               />
             </div>
           {/if}
