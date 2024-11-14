@@ -122,7 +122,7 @@ export class DatabaseController extends DBClient {
   }
 
   public async getAdmninInitData(role: OptRole) {
-    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
+    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS({role})])) || [];
     return {
       regions: regions?.rows.map((r) => String(r.region)) || [],
       leads: leads?.rows

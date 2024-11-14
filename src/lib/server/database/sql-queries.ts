@@ -9,10 +9,19 @@ export const QUERY = {
       args: {}
     };
   },
-  LEADS: (role: OptRole) => {
+  LEADS: (args: {role: OptRole, region?: string}) => {
+    const values: typeof args = {
+      role: args.role
+    };
+    let regionClause = '';
+    if(args.region){
+      values.region = args.region
+      regionClause = 'region = $region'
+    }
+    
     return {
-      sql: "SELECT id, name, region FROM users WHERE id > $id AND active = 1 AND role in ('admin','lead','poc')",
-      args: { id: role === 'admin' ? 0 : TEMPID }
+      sql: `SELECT id, name, region FROM users WHERE id > $id AND role in ('admin', 'editor','scheduler','lead','poc') AND active = 1 ${regionClause}`,
+      args: values,
     };
   },
   USER: (args: { user_id: number }) => {

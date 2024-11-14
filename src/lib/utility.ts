@@ -12,15 +12,17 @@ export const timeProcess = (note?: string) => {
   }
 };
 
-/** Check if user is Admin only */
+/** Check if user is Admin only ['admin'] */
 export const isAdmin = (role: OptRole | undefined | null) => role === 'admin';
-/** Check if user is in Admin, Lead or POC */
+/** Check if user can update users info ['admin','editor'] */
 export const isEditor = (role: OptRole | undefined | null) =>
-  ['admin', 'lead', 'poc'].includes(role ?? '');
-/** Check if user is Lead only */
-export const isLead = (role: OptRole | undefined | null) => role === 'lead';
-/** Check if user is Lead or POC */
-export const isLepo = (role: OptRole | undefined | null) => ['lead', 'poc'].includes(role ?? '');
+  ['admin', 'editor'].includes(role ?? '');
+/** Check if user can update user schedules ['admin', 'editor', 'scheduler'] */
+export const isScheduler = (role: OptRole | undefined | null) =>
+  ['admin', 'editor', 'scheduler'].includes(role ?? '');
+/** Check if user if it can view Time Entries */
+export const isViewer = (role: OptRole | undefined | null) =>
+  ['admin', 'editor', 'scheduler','lead'].includes(role ?? '');
 
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');

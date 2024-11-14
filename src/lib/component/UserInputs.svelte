@@ -10,7 +10,7 @@
   export let editor: Partial<User> = {};
   let activeStr = user.active ? '1' : '0';
   let lockpassStr = user.lock_password ? '1' : '0';
-  let roles = USERROLE.filter((role) => editor.id === 100000 || role !== 'admin');
+  let roles = USERROLE.filter((role) => editor.id === 100000 || !['admin', 'editor', 'scheduler'].includes(role));
 </script>
 
 <h4 class="title is-4">{user.name}</h4>

@@ -48,7 +48,7 @@ export const UTCOFFSET: [string, number][] = [
   ['UTC+14:00', 14]
 ];
 
-export const USERROLE = ['admin', 'lead', 'poc', 'user'] as const;
+export const USERROLE = ['admin', 'editor', 'scheduler', 'lead', 'poc', 'user'] as const;
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
 export const DEFAULT_MIN_WORKDATE = 18;

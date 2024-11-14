@@ -7,7 +7,7 @@ import {
   validateManySched,
   validateBatchUser
 } from '$lib/validation';
-import { isAdmin, isEditor, isLepo } from '$lib/utility';
+import { isAdmin, isEditor, isScheduler } from '$lib/utility';
 import { TEMPID } from '$lib/defaults';
 import { db } from '$lib/server/database/db-controller';
 import {
@@ -23,7 +23,7 @@ export const load = (async ({ locals, url }) => {
     redirect(302, '/login');
   }
 
-  if (!isEditor(locals.user.role)) {
+  if (!isScheduler(locals.user.role)) {
     redirect(302, '/');
   }
 
@@ -60,11 +60,11 @@ export const actions = {
     const form = await request.formData();
     const lastId = Number(form.get('last_id'));
 
-    if (isEditor(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+    if (isScheduler(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
       form.set('last_id', String(TEMPID))
     }
 
-    if (isLepo(locals.user.role)) {
+    if (isScheduler(locals.user.role)) {
       form.set('region', locals.user.region);
     }
 
@@ -76,7 +76,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
     const form = await request.formData();
-    if (isLepo(locals.user.role)) {
+    if (isScheduler(locals.user.role)) {
       form.set('region', locals.user.region);
     }
     return await queryData(form);
@@ -87,7 +87,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isEditor(locals.user.role)) {
+    if (!isScheduler(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
@@ -114,7 +114,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isEditor(locals.user.role)) {
+    if (!isScheduler(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
     const form = await request.formData();
@@ -141,7 +141,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isAdmin(locals.user.role)) {
+    if (!isEditor(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
@@ -175,17 +175,22 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isAdmin(locals.user.role)) {
+    if (!isEditor(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
+    
     const form = await request.formData();
     const validUser = validateUser.safeParse(Object.fromEntries(form));
-
+    
     if (!validUser.success) {
       return fail(404, { message: validUser.error.errors });
     }
 
+    if(!isAdmin(locals.user.role) && isScheduler(validUser.data.role)){
+      return fail(401, {message: 'User not authorized'})
+    }
+    
     const { data, error } = await updateUser(validUser.data);
 
     if (error) {
