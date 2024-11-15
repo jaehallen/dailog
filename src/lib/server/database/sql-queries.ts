@@ -1,5 +1,6 @@
 import { LIMIT, TEMPID } from '$lib/defaults';
 import type { OptRole, ScheduleRecord, TimeEntryRecord, UserRecord } from '$lib/types/schema';
+import { isAdmin } from '$lib/permission';
 import type { SearchOptions } from '$lib/validation';
 
 export const QUERY = {
@@ -9,16 +10,20 @@ export const QUERY = {
       args: {}
     };
   },
-  LEADS: (args: {role: OptRole, region?: string}) => {
-    const values: typeof args = {
-      role: args.role
+  LEADS: (args: { id: number, role: OptRole, region: string }) => {
+    const values: {
+      id: number,
+      region?: string
+    } = {
+      id: args.id < TEMPID ? 0 : TEMPID,
     };
-    let regionClause = '';
-    if(args.region){
-      values.region = args.region
-      regionClause = 'region = $region'
-    }
+
     
+    if(!isAdmin(args.role)){
+      values.region = args.region;
+    }
+
+    const  regionClause = values.region ? 'AND region = $region' : '';
     return {
       sql: `SELECT id, name, region FROM users WHERE id > $id AND role in ('admin', 'editor','scheduler','lead','poc') AND active = 1 ${regionClause}`,
       args: values,

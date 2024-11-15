@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SearchOptions } from '$lib/validation';
   import type { User } from 'lucia';
-  import { isAdmin } from '$lib/utility';
+  import { isAdmin } from '$lib/permission';
   import { ChevronRight, ChevronLeft, UserRoundSearch, SearchX, Filter } from 'lucide-svelte/icons';
   import ButtonIcon from '../ButtonIcon.svelte';
   export let user: Partial<User>;
@@ -13,7 +13,6 @@
   let searchname = queries.search || '';
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
-
   $: pages = queries.page_index?.split('_').map((id) => Number(id)) || [];
   $: currentPage = pages.indexOf(queries.last_id) + 1;
 

@@ -6,8 +6,8 @@
   import ButtonIcon from '../ButtonIcon.svelte';
   import { getContextUpdate } from '$lib/context';
   import { fly } from 'svelte/transition';
-  import { TEMPID, SUPERUSER } from '$lib/defaults';
-  import { isAdmin } from '$lib/utility';
+  import { SUPERUSER } from '$lib/defaults';
+  import { isAdmin, isEditor } from '$lib/permission';
 
   export let user: User | null;
   export let data: UsersList;
@@ -27,7 +27,7 @@
   {#if !$isBatchUpdate}
     <div class="control" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
       <div class="buttons">
-        {#if isAdmin(user?.role)}
+        {#if isEditor(user?.role)}
           <ButtonIcon small disabled={notEditable} on:click={() => onUpdate('user')}>
             <UserRoundPen />
           </ButtonIcon>
@@ -40,7 +40,7 @@
   {:else}
     <div class="control" in:fly={{ delay: 200, duration: 200, x: '1rem' }}>
       <label class="checkbox">
-        <input type="checkbox" bind:checked={$isSelected} disabled={data.id < TEMPID} />
+        <input type="checkbox" bind:checked={$isSelected} disabled={notEditable} />
       </label>
     </div>
   {/if}

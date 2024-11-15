@@ -20,7 +20,7 @@
   let isActive = false;
 
   routeList.forEach((route) => {
-    if (!route.role.includes('user')) {
+    if (route.path.includes('admin')) {
       adminRoute.push(route);
     } else {
       userRoute.push(route);

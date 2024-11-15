@@ -21,7 +21,7 @@
   import { toasts } from '$lib/data-store';
   import { getContextUpdate, setContextUpdate } from '$lib/context';
   import UserBatchInputs from '$lib/component/UserBatchInputs.svelte';
-  import { isAdmin } from '$lib/utility';
+  import { isEditor } from '$lib/permission';
   import { CalendarCog, UserRoundPen } from 'lucide-svelte';
   import ButtonIcon from '$lib/component/ButtonIcon.svelte';
 
@@ -96,6 +96,7 @@
 
   const onDataUpdate: SubmitFunction = ({ formData, cancel, action }) => {
     if (!isDirtyUserInput(formData) && action.search === '?/update-user') {
+      console.log("is cancelled")
       cancel();
     } else {
       disabled = true;
@@ -266,7 +267,7 @@
           </div>
           {#if $isBatchUpdate}
             <div class="buttons" in:fly={{ delay: 200, duration: 200, y: '1rem' }}>
-              {#if isAdmin(data.user?.role)}
+              {#if isEditor(data.user?.role)}
                 <ButtonIcon small on:click={() => editUser.edit('manyuser')}>
                   <UserRoundPen />
                 </ButtonIcon>

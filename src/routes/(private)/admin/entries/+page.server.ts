@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { isEditor } from '$lib/utility';
+import { isAdmin, isViewer } from '$lib/permission';
 import { validateTimeEntriesFilter } from '$lib/validation';
 import { db } from '$lib/server/database/db-controller';
 
@@ -39,7 +39,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isEditor(locals.user.role)) {
+    if (!isViewer(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 

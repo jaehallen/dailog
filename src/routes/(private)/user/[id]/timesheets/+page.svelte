@@ -118,13 +118,15 @@
     snoozeTimeMin?: number
   ) {
     const notifOn = () => {
-      new Notification(title, {
+      const options = {
         body,
+        icon,
+        tag: $timeAction.category,
         requireInteraction: true,
         silent: false,
-        tag: $timeAction.category,
-        icon
-      });
+        renotify: true,
+      };
+      new Notification(title, options);
     };
     notifOn();
     if (notifTimeout) {

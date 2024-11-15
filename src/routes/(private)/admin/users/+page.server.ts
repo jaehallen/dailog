@@ -7,7 +7,7 @@ import {
   validateManySched,
   validateBatchUser
 } from '$lib/validation';
-import { isAdmin, isEditor, isScheduler } from '$lib/utility';
+import { isAdmin, isEditor, isScheduler } from '$lib/permission';
 import { TEMPID } from '$lib/defaults';
 import { db } from '$lib/server/database/db-controller';
 import {

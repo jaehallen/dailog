@@ -141,8 +141,7 @@ export interface UserCurrentInfo {
 export interface RouteProfile {
   name: string;
   path: string;
-  role: OptRole[];
-  region?: string[];
+  isPermitted: (role: OptRole, region: string) => boolean
 }
 
 export interface TimeEntryResults {

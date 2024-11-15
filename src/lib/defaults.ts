@@ -1,7 +1,7 @@
 /*
  * TODO: A configuration page for the defaults;
  */
-import type { OptActionState, OptCategory, RouteProfile, TimesheetStateInfo } from './types/schema';
+import type { OptActionState, OptCategory, TimesheetStateInfo } from './types/schema';
 
 export const TEMPID = 100020;
 export const SUPERUSER = 100000;
@@ -67,40 +67,6 @@ export const CATEGORY = [
 //DICEBREAR LINK FOR AVATAR
 export const AVATAR_SRC =
   'https://api.dicebear.com/9.x/initials/svg?seed=Jessica&radius=50&fontWeight=900';
-
-export const ROUTES: RouteProfile[] = [
-  {
-    name: 'Profile',
-    path: '/user/[id]/profile',
-    role: ['admin', 'lead', 'poc', 'user']
-  },
-  {
-    name: 'Timesheets',
-    path: '/user/[id]/timesheets',
-    role: ['admin', 'lead', 'poc', 'user']
-  },
-  {
-    name: 'Reports',
-    path: '/user/[id]/reports',
-    role: ['admin', 'lead', 'poc', 'user'],
-    region: ['APAC']
-  },
-  {
-    name: 'Entries',
-    path: '/admin/entries',
-    role: ['admin', 'lead']
-  },
-  {
-    name: 'Users',
-    path: '/admin/users',
-    role: ['admin', 'lead', 'poc']
-  },
-  {
-    name: 'Register',
-    path: '/admin/register',
-    role: ['admin', 'lead']
-  }
-];
 
 export const TIMESHEETINFO: TimesheetStateInfo = {
   confirm: false,

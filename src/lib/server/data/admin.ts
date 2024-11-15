@@ -1,7 +1,8 @@
 import type { User } from 'lucia';
 import type { DbResponse, ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
 import { db } from '$lib/server/database/db-controller';
-import { isAdmin, isEditor, parseJSON } from '$lib/utility';
+import { parseJSON } from '$lib/utility';
+import {isAdmin, isEditor, } from '$lib/permission';
 import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
