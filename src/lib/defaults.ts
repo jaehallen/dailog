@@ -49,7 +49,7 @@ export const UTCOFFSET: [string, number][] = [
 ];
 
 export const USERROLE = ['admin', 'editor', 'scheduler', 'lead', 'poc', 'user'] as const;
-export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Friday', 'Saturday'] as const;
+export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 export const ACTIONSTATE = ['start', 'end'] as const;
 export const DEFAULT_MIN_WORKDATE = 18;
 export const DEFAULT_GRACE_HOUR = 4;
