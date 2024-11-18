@@ -1,5 +1,6 @@
 import { LIMIT, TEMPID } from '$lib/defaults';
 import type { OptRole, ScheduleRecord, TimeEntryRecord, UserRecord } from '$lib/types/schema';
+import { isAdmin } from '$lib/permission';
 import type { SearchOptions } from '$lib/validation';
 
 export const QUERY = {
@@ -9,10 +10,23 @@ export const QUERY = {
       args: {}
     };
   },
-  LEADS: (role: OptRole) => {
+  LEADS: (args: { id: number, role: OptRole, region: string }) => {
+    const values: {
+      id: number,
+      region?: string
+    } = {
+      id: args.id < TEMPID ? 0 : TEMPID,
+    };
+
+    
+    if(!isAdmin(args.role)){
+      values.region = args.region;
+    }
+
+    const  regionClause = values.region ? 'AND region = $region' : '';
     return {
-      sql: "SELECT id, name, region FROM users WHERE id > $id AND active = 1 AND role in ('admin','lead','poc')",
-      args: { id: role === 'admin' ? 0 : TEMPID }
+      sql: `SELECT id, name, region FROM users WHERE id > $id AND role in ('admin', 'editor','scheduler','lead','poc') AND active = 1 ${regionClause}`,
+      args: values,
     };
   },
   USER: (args: { user_id: number }) => {
@@ -245,15 +259,25 @@ export const WRITE = {
       args
     };
   },
-  UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
-    const { lock_password, active, ...user } = args;
-    return {
-      sql: `UPDATE users SET name = $name, region = $region, lead_id = $lead_id, role = $role, active = $active, lock_password = $lock_password WHERE id = $id RETURNING *`,
-      args: {
-        ...user,
-        lock_password: Number(lock_password),
-        active: Number(active)
+  UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'> & {[key: string]: string | number | boolean}) => {
+    const setFields: string[] = []
+    const {id, ...info} = args;
+
+    Object.keys(info).forEach(k => {
+      if(['lock_password', 'active'].includes(k)){
+        info[k] = Number(info[k])
       }
+
+      setFields.push(`${k} = @${k}`)
+    })
+
+    if(!setFields.length){
+      throw new Error('UPDATE_USER: No fields to update')
+    }
+
+    return {
+      sql: `UPDATE users SET ${setFields.join(", ")} WHERE id = $id RETURNING *`,
+      args: {id, ...info}
     };
   },
   UPDATE_PREFERENCE: (args: {

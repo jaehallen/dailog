@@ -12,16 +12,6 @@ export const timeProcess = (note?: string) => {
   }
 };
 
-/** Check if user is Admin only */
-export const isAdmin = (role: OptRole | undefined | null) => role === 'admin';
-/** Check if user is in Admin, Lead or POC */
-export const isEditor = (role: OptRole | undefined | null) =>
-  ['admin', 'lead', 'poc'].includes(role ?? '');
-/** Check if user is Lead only */
-export const isLead = (role: OptRole | undefined | null) => role === 'lead';
-/** Check if user is Lead or POC */
-export const isLepo = (role: OptRole | undefined | null) => ['lead', 'poc'].includes(role ?? '');
-
 export const toEpochDatetime = (timeStr: string): Date => {
   const [hr, min] = timeStr.split(':');
   const d = Date.UTC(1970, 0, 1, parseInt(hr) || 0, parseInt(min) || 0);

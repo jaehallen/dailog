@@ -9,11 +9,11 @@
   import { entriesData, getEntriesTable } from '$lib/table-entries';
   import { onMount } from 'svelte';
   import { Subscribe, Render } from 'svelte-headless-table';
-  import { fade, fly, scale, slide } from 'svelte/transition';
+  import { fly } from 'svelte/transition';
   import Toasts from '$lib/component/Toasts.svelte';
   import { toasts } from '$lib/data-store';
   import { sineIn } from 'svelte/easing';
-  import { isAdmin } from '$lib/utility';
+  import { isAdmin } from '$lib/permission';
 
   export let data: PageData;
 
@@ -44,10 +44,16 @@
         }
         update({ invalidateAll: false, reset: false });
       } else {
-        console.error(result);
-        let message = result.type == 'error' ? result.error.message : 'Something went wrong';
-        if (!result.type) {
-          message = 'Internal Server Error';
+        let message =  'Something went wrong';
+        if(result.type == 'error'){
+          console.error(result.error);
+          message = result.error
+        }else if(result.type == 'failure'){
+          console.error(result.data)
+          message+= `, status ${result.status}`
+        }else if(!result.type){
+          console.error(result)
+          message = (result as {message: string})?.message
         }
         toasts.add({ message, type: 'error', timeout: 0 });
       }

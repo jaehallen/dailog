@@ -21,7 +21,7 @@
   import { toasts } from '$lib/data-store';
   import { getContextUpdate, setContextUpdate } from '$lib/context';
   import UserBatchInputs from '$lib/component/UserBatchInputs.svelte';
-  import { isAdmin } from '$lib/utility';
+  import { isEditor } from '$lib/permission';
   import { CalendarCog, UserRoundPen } from 'lucide-svelte';
   import ButtonIcon from '$lib/component/ButtonIcon.svelte';
 
@@ -52,14 +52,19 @@
     return data.length ? Math.max(...data.map((x) => x.id)) : 0;
   };
 
-  const isDirtyUserInput = (formData: FormData) => {
+  const fieldsToUpdate = (formData: FormData) => {
     const data = Object.fromEntries(formData);
     const valid = validateUser.safeParse(data);
-    return (
-      selectedUser &&
-      valid.success &&
-      Object.entries(valid.data).some(([key, val]) => selectedUser[key] !== val)
-    );
+    const fields: (keyof UsersList)[] = ['id'];
+    if (valid.success && selectedUser) {
+      Object.entries(valid.data).forEach(([key, value]) => {
+        if (selectedUser[key] !== value) {
+          fields.push(key);
+        }
+      });
+    }
+
+    return fields;
   };
 
   const isDirtyFilterInput = (formData: FormData) => {
@@ -95,11 +100,15 @@
   };
 
   const onDataUpdate: SubmitFunction = ({ formData, cancel, action }) => {
-    if (!isDirtyUserInput(formData) && action.search === '?/update-user') {
-      cancel();
-    } else {
-      disabled = true;
+    if (action.search === '?/update-user') {
+      const fields = fieldsToUpdate(formData);
+      if (fields.length < 2) {
+        cancel();
+        return;
+      }
+      formData.set('fields', fields.join('|'));
     }
+    disabled = true;
 
     return async ({ update, result }) => {
       if (result.type === 'success') {
@@ -117,7 +126,6 @@
           toasts.add({ message: 'Multiple users updated successfully' });
           update({ invalidateAll: true, reset: true });
         } else {
-          console.log(result.data);
           toasts.add({ message: 'Success' });
         }
       } else {
@@ -193,8 +201,8 @@
   onMount(async () => {
     await tick();
     if (data.error) {
-      console.error(data?.error);
-      toasts.add({ message: data.error.message, type: 'error', timeout: 0 });
+      console.error(data.error);
+      toasts.add({ message: data.error?.message, type: 'error', timeout: 0 });
     }
     initDatatable(data.listOfUsers, data.queries);
     window.addEventListener('keydown', (e) => {
@@ -266,7 +274,7 @@
           </div>
           {#if $isBatchUpdate}
             <div class="buttons" in:fly={{ delay: 200, duration: 200, y: '1rem' }}>
-              {#if isAdmin(data.user?.role)}
+              {#if isEditor(data.user?.role)}
                 <ButtonIcon small on:click={() => editUser.edit('manyuser')}>
                   <UserRoundPen />
                 </ButtonIcon>

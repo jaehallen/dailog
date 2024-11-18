@@ -1,6 +1,6 @@
 import { z, type ZodType } from 'zod';
 import type { ZPostTime } from './types/schema';
-import { CATEGORY, ACTIONSTATE } from './defaults';
+import { CATEGORY, ACTIONSTATE, USERROLE } from './defaults';
 
 const TIMEREG = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -104,10 +104,12 @@ export const validateUser = z.object({
   name: z.coerce.string(),
   lead_id: z.coerce.number().gte(100000).lte(999999),
   region: z.coerce.string(),
-  role: z.enum(['admin', 'lead', 'poc', 'user']),
+  role: z.enum(USERROLE),
   active: z.coerce.number().transform(Boolean),
   lock_password: z.coerce.number().transform(Boolean)
 });
+
+export type ValidUserFields = z.infer<typeof validateUser>;
 
 export const validateRegistration = z.object({
   id: z.coerce.number().gte(100000).lte(999999),

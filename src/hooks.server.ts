@@ -1,5 +1,5 @@
-import { isProtectedRoute, lucia } from '$lib/server/lucia/auth';
-import { routeProfile } from '$lib/server/lucia/auth';
+import { ROUTES, isProtectedRoute } from '$lib/permission';
+import { lucia } from '$lib/server/lucia/auth';
 import { error, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
@@ -55,19 +55,23 @@ export const checkUser: Handle = async ({ event, resolve }) => {
 
 export const userRoute: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
+  const { user } = event.locals;
 
   if (isProtectedRoute(pathname)) {
-    if (!event.locals.user) {
+    if (!user) {
       return error(405, 'Not Allowed');
-    } else {
-      const routeList = routeProfile(event.locals.user);
-
-      if (!routeList.some((route) => route.path === pathname)) {
-        return error(405, 'Not Allowed');
-      }
-
-      event.locals.routes = routeList;
     }
+
+    const routeList = ROUTES
+      .filter(route => route.isPermitted(user.role, user.region))
+      .map(route => Object.assign({ name: route.name, path: route.path.replace('[id]', String(user.id)) }))
+
+    if (!routeList.some((route) => route.path === pathname)) {
+      return error(401, 'Unauthorized');
+    }
+
+    event.locals.routes = routeList;
+
   }
   return resolve(event);
 };

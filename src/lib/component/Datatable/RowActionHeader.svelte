@@ -31,8 +31,8 @@
       <label class="checkbox" transition:fly={{ duration: 400, x: '1rem' }}>
         <input
           type="checkbox"
-          bind:checked={$allRowsSelected}
           indeterminate={$someRowsSelected && !$allRowsSelected}
+          on:click={() => $allRowsSelected = false}
         />
       </label>
     {/if}

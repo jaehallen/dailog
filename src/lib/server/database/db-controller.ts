@@ -121,8 +121,8 @@ export class DatabaseController extends DBClient {
     return await super.get(sql, args);
   }
 
-  public async getAdmninInitData(role: OptRole) {
-    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(role)])) || [];
+  public async getAdmninInitData(params: { id: number, role: OptRole, region: string}) {
+    const [regions, leads] = (await super.batchGet([QUERY.REGIONS(), QUERY.LEADS(params)])) || [];
     return {
       regions: regions?.rows.map((r) => String(r.region)) || [],
       leads: leads?.rows
@@ -256,6 +256,7 @@ export class DatabaseController extends DBClient {
     user: Omit<UserRecord, 'password_hash' | 'preferences'>
   ): Promise<DbResponse<UserRecord>> {
     const q = WRITE.UPDATE_USER(user);
+
     const { data, error } = await super.set(q.sql, q.args);
 
     if (error) {

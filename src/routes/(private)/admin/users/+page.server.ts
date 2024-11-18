@@ -1,13 +1,14 @@
 import type { PageServerLoad, Actions } from './$types';
+import type { ValidUserFields } from '$lib/validation';
 import { redirect, fail } from '@sveltejs/kit';
 import {
   validateSchedule,
   validateUser,
   validateSearch,
   validateManySched,
-  validateBatchUser
+  validateBatchUser,
 } from '$lib/validation';
-import { isAdmin, isEditor, isLepo } from '$lib/utility';
+import { isAdmin, isEditor, isScheduler } from '$lib/permission';
 import { TEMPID } from '$lib/defaults';
 import { db } from '$lib/server/database/db-controller';
 import {
@@ -23,7 +24,7 @@ export const load = (async ({ locals, url }) => {
     redirect(302, '/login');
   }
 
-  if (!isEditor(locals.user.role)) {
+  if (!isScheduler(locals.user.role)) {
     redirect(302, '/');
   }
 
@@ -60,11 +61,11 @@ export const actions = {
     const form = await request.formData();
     const lastId = Number(form.get('last_id'));
 
-    if (isEditor(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+    if (isScheduler(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
       form.set('last_id', String(TEMPID))
     }
 
-    if (isLepo(locals.user.role)) {
+    if (isScheduler(locals.user.role)) {
       form.set('region', locals.user.region);
     }
 
@@ -76,7 +77,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
     const form = await request.formData();
-    if (isLepo(locals.user.role)) {
+    if (isScheduler(locals.user.role)) {
       form.set('region', locals.user.region);
     }
     return await queryData(form);
@@ -87,7 +88,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isEditor(locals.user.role)) {
+    if (!isScheduler(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
@@ -114,7 +115,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isEditor(locals.user.role)) {
+    if (!isScheduler(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
     const form = await request.formData();
@@ -141,7 +142,7 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isAdmin(locals.user.role)) {
+    if (!isEditor(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
@@ -175,18 +176,27 @@ export const actions = {
       return fail(404, { message: 'User not found' });
     }
 
-    if (!isAdmin(locals.user.role)) {
+    if (!isEditor(locals.user.role)) {
       return fail(401, { message: 'User not authorized' });
     }
 
     const form = await request.formData();
-    const validUser = validateUser.safeParse(Object.fromEntries(form));
 
-    if (!validUser.success) {
-      return fail(404, { message: validUser.error.errors });
+    const validUserInput = validateFieldToUpdate(form);
+
+    if (!validUserInput.success) {
+      return fail(401, { message: validUserInput.error.errors });
     }
 
-    const { data, error } = await updateUser(validUser.data);
+    if (Object.keys(validUserInput.data).length < 2){
+      return fail(401, {message: "No value to update"})
+    }
+
+    if (!isAdmin(locals.user.role) && validUserInput.data.role && isScheduler(validUserInput.data.role)) {
+      return fail(401, { message: 'User not authorized' })
+    }
+
+    const { data, error } = await updateUser(validUserInput.data);
 
     if (error) {
       return fail(404, { message: error.message });
@@ -233,7 +243,7 @@ async function queryData(form: FormData, admin?: boolean) {
   }
 
   if (validFilter.data.search) {
-    if(admin){
+    if (admin) {
       validFilter.data.region = null;
     }
 
@@ -252,4 +262,12 @@ async function queryData(form: FormData, admin?: boolean) {
     listOfUsers: data,
     error
   };
+}
+
+function validateFieldToUpdate(form: FormData) {
+  const fields = String(form.get('fields')).split("|");
+  const fieldEntries = Object.fromEntries(fields.map((f) => [f, true])) as { [key in keyof ValidUserFields]: true | undefined }
+
+  const validateFields = validateUser.pick(fieldEntries)
+  return validateFields.safeParse(Object.fromEntries(form))
 }
