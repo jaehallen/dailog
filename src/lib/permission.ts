@@ -32,8 +32,8 @@ export const ROUTES: RouteProfile[] = [
     isPermitted: (role: OptRole, region: string) => isUser(role) && ['APAC'].includes(region)
   },
   {
-    name: 'Entries',
-    path: '/admin/entries',
+    name: 'Time Entries',
+    path: '/admin/time_entries',
     isPermitted: (role: OptRole) => isViewer(role)
   },
   {

@@ -20,7 +20,7 @@
     $allRowsSelected = false;
     $isSelected = true;
   };
-  const notEditable = isAdmin(data.role) && user?.id !== SUPERUSER;
+  const notEditable = isEditor(data.role) && user?.id !== SUPERUSER;
 </script>
 
 <div class="field wh-fixed is-grouped is-grouped-centered">

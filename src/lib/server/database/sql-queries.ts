@@ -259,15 +259,25 @@ export const WRITE = {
       args
     };
   },
-  UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'>) => {
-    const { lock_password, active, ...user } = args;
-    return {
-      sql: `UPDATE users SET name = $name, region = $region, lead_id = $lead_id, role = $role, active = $active, lock_password = $lock_password WHERE id = $id RETURNING *`,
-      args: {
-        ...user,
-        lock_password: Number(lock_password),
-        active: Number(active)
+  UPDATE_USER: (args: Omit<UserRecord, 'password_hash' | 'preferences'> & {[key: string]: string | number | boolean}) => {
+    const setFields: string[] = []
+    const {id, ...info} = args;
+
+    Object.keys(info).forEach(k => {
+      if(['lock_password', 'active'].includes(k)){
+        info[k] = Number(info[k])
       }
+
+      setFields.push(`${k} = @${k}`)
+    })
+
+    if(!setFields.length){
+      throw new Error('UPDATE_USER: No fields to update')
+    }
+
+    return {
+      sql: `UPDATE users SET ${setFields.join(", ")} WHERE id = $id RETURNING *`,
+      args: {id, ...info}
     };
   },
   UPDATE_PREFERENCE: (args: {

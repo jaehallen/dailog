@@ -1,11 +1,12 @@
 import type { PageServerLoad, Actions } from './$types';
+import type { ValidUserFields } from '$lib/validation';
 import { redirect, fail } from '@sveltejs/kit';
 import {
   validateSchedule,
   validateUser,
   validateSearch,
   validateManySched,
-  validateBatchUser
+  validateBatchUser,
 } from '$lib/validation';
 import { isAdmin, isEditor, isScheduler } from '$lib/permission';
 import { TEMPID } from '$lib/defaults';
@@ -179,19 +180,23 @@ export const actions = {
       return fail(401, { message: 'User not authorized' });
     }
 
-    
     const form = await request.formData();
-    const validUser = validateUser.safeParse(Object.fromEntries(form));
-    
-    if (!validUser.success) {
-      return fail(404, { message: validUser.error.errors });
+
+    const validUserInput = validateFieldToUpdate(form);
+
+    if (!validUserInput.success) {
+      return fail(401, { message: validUserInput.error.errors });
     }
 
-    if(!isAdmin(locals.user.role) && isScheduler(validUser.data.role)){
-      return fail(401, {message: 'User not authorized'})
+    if (Object.keys(validUserInput.data).length < 2){
+      return fail(401, {message: "No value to update"})
     }
-    
-    const { data, error } = await updateUser(validUser.data);
+
+    if (!isAdmin(locals.user.role) && validUserInput.data.role && isScheduler(validUserInput.data.role)) {
+      return fail(401, { message: 'User not authorized' })
+    }
+
+    const { data, error } = await updateUser(validUserInput.data);
 
     if (error) {
       return fail(404, { message: error.message });
@@ -238,7 +243,7 @@ async function queryData(form: FormData, admin?: boolean) {
   }
 
   if (validFilter.data.search) {
-    if(admin){
+    if (admin) {
       validFilter.data.region = null;
     }
 
@@ -257,4 +262,12 @@ async function queryData(form: FormData, admin?: boolean) {
     listOfUsers: data,
     error
   };
+}
+
+function validateFieldToUpdate(form: FormData) {
+  const fields = String(form.get('fields')).split("|");
+  const fieldEntries = Object.fromEntries(fields.map((f) => [f, true])) as { [key in keyof ValidUserFields]: true | undefined }
+
+  const validateFields = validateUser.pick(fieldEntries)
+  return validateFields.safeParse(Object.fromEntries(form))
 }

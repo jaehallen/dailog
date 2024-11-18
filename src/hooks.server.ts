@@ -67,7 +67,7 @@ export const userRoute: Handle = async ({ event, resolve }) => {
       .map(route => Object.assign({ name: route.name, path: route.path.replace('[id]', String(user.id)) }))
 
     if (!routeList.some((route) => route.path === pathname)) {
-      return error(405, 'Not Allowed');
+      return error(401, 'Unauthorized');
     }
 
     event.locals.routes = routeList;

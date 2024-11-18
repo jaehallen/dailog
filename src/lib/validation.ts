@@ -109,6 +109,8 @@ export const validateUser = z.object({
   lock_password: z.coerce.number().transform(Boolean)
 });
 
+export type ValidUserFields = z.infer<typeof validateUser>;
+
 export const validateRegistration = z.object({
   id: z.coerce.number().gte(100000).lte(999999),
   lead_id: z.coerce.number().gte(100000).lte(999999),

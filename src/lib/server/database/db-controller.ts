@@ -256,6 +256,7 @@ export class DatabaseController extends DBClient {
     user: Omit<UserRecord, 'password_hash' | 'preferences'>
   ): Promise<DbResponse<UserRecord>> {
     const q = WRITE.UPDATE_USER(user);
+
     const { data, error } = await super.set(q.sql, q.args);
 
     if (error) {
