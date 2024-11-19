@@ -113,10 +113,7 @@
     timeAction.cancel();
   };
 
-  function notify(
-    { title, body, icon }: { title: string; body: string; icon?: string },
-    snoozeTimeMin?: number
-  ) {
+  function notify({ title, body, icon }: { title: string; body: string; icon?: string }) {
     const notifOn = () => {
       const options = {
         body,
@@ -124,26 +121,15 @@
         tag: $timeAction.category,
         requireInteraction: true,
         silent: false,
-        renotify: true,
+        renotify: true
       };
       new Notification(title, options);
     };
     notifOn();
-    if (notifTimeout) {
-      clearTimeout(notifTimeout);
-    }
-
-    if (snoozeTimeMin) {
-      notifTimeout = setTimeout(
-        notify,
-        snoozeTimeMin * 60000,
-        { title, body, icon },
-        snoozeTimeMin
-      );
-    }
+    setNotification(5);
   }
 
-  function setNotification() {
+  function setNotification(snoozeMinute?: number) {
     if (notifTimeout) {
       clearTimeout(notifTimeout);
       notifTimeout = null;
@@ -158,9 +144,9 @@
           ? (data.userTimesheet.schedule.lunch_dur_min ?? 60)
           : (data.userTimesheet.schedule.break_dur_min ?? 15)) - 1;
 
-      let delay =
-        new Date(($timeAction.timestamp + maxBreak * 60) * 1000).getTime() - new Date().getTime();
-      const snoozeInterval = 5; //minutes
+      let delay = snoozeMinute
+        ? snoozeMinute * 60000
+        : new Date(($timeAction.timestamp + maxBreak * 60) * 1000).getTime() - new Date().getTime();
       const options = {
         title: 'Timer still running!',
         body: `${data.user.name} your timer for ${$timeAction.category} is still running.`,
@@ -172,7 +158,7 @@
       if (delay < 0) {
         delay = 300000; // 5 mintues
       }
-      notifTimeout = setTimeout(notify, delay, options, snoozeInterval);
+      notifTimeout = setTimeout(notify, delay, options);
     }
   }
 </script>
