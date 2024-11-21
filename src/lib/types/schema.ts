@@ -1,7 +1,10 @@
 // export const BREAKTYPE: Record<string, OptCategory> = {};
 
 import type { ACTIONSTATE, CATEGORY, USERROLE, WEEKDAYS } from '$lib/defaults';
-
+export type SvelteFetch = {
+  (input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>;
+  (input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>;
+}
 export type OptRole = (typeof USERROLE)[number];
 export type OptCategory = (typeof CATEGORY)[number];
 export type OptActionState = (typeof ACTIONSTATE)[number];

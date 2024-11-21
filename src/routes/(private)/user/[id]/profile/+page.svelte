@@ -18,6 +18,7 @@
   let disabled = false;
   let newPassword = '';
   let retypePassword = '';
+  let oldPassword = '';
   let invalidPassword = false;
 
   const handleEnhance: SubmitFunction = ({ cancel }) => {
@@ -89,6 +90,7 @@
           required
           minlength="6"
           on:focus={() => (invalidPassword = false)}
+          bind:value={oldPassword}
           autocomplete="current-password"
         />
         <div class:is-hidden={!invalidPassword} class="help is-danger">Invalid Password</div>
@@ -105,6 +107,10 @@
           minlength="6"
           autocomplete="new-password"
         />
+        {#if oldPassword.length >= 6 && newPassword == oldPassword}
+          <p class="help is-danger">New password must be different from old password</p>
+        {/if}
+        <p class="help is-danger"></p>
       </Field>
       <Field>
         <input
@@ -124,7 +130,7 @@
     <button
       form={RESET_FORM_ID}
       class:is-loading={disabled}
-      disabled={retypePassword !== newPassword}
+      disabled={retypePassword !== newPassword || oldPassword == newPassword}
       class="button card-footer-item is-ghost">Save</button
     >
   </Modal>

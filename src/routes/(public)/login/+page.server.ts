@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
+import type { DbResponse, UserRecord, SvelteFetch } from '$lib/types/schema';
 import { lucia } from '$lib/server/lucia/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateSignIn } from '$lib/validation';
-import { AppPass } from '$lib/server/lucia/hash-ish';
-import { env } from '$env/dynamic/private';
+import { verifyPassword } from '$lib/server/lucia/hash-ish';
 import { db } from '$lib/server/database/db-controller';
-import type { DbResponse, UserRecord } from '$lib/types/schema';
+
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.session) {
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions = {
-  default: async ({ cookies, request }) => {
+  default: async ({ cookies, request, fetch }) => {
     const form = await request.formData();
     const data: Record<string, any> = Object.fromEntries(form);
     const inputValid = validateSignIn.safeParse(data);
@@ -25,7 +25,7 @@ export const actions = {
       return fail(400, { message: inputValid.error.errors });
     }
 
-    const { data: user, error } = await validateUser(inputValid.data);
+    const { data: user, error } = await validateUser(fetch, inputValid.data);
 
     if (error) {
       return fail(420, { message: error.message });
@@ -50,14 +50,13 @@ export const actions = {
   }
 } satisfies Actions;
 
-async function validateUser({
+async function validateUser(fetch: SvelteFetch, {
   id,
   password
 }: {
   id: number;
   password: string;
 }): Promise<DbResponse<(UserRecord & { sched_id: number }) | null>> {
-  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
   const { data, error } = await db.getUserValidation(id);
 
   if (error) {
@@ -68,7 +67,9 @@ async function validateUser({
     return { data: null };
   }
 
-  if (!(await appPass.verify(data.password_hash, password))) {
+  const res = await verifyPassword(fetch, { password, password_hash: data.password_hash })
+
+  if (!res.data || res.error) {
     return { data: null };
   }
 

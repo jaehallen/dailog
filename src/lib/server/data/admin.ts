@@ -1,13 +1,12 @@
 import type { User } from 'lucia';
-import type { DbResponse, ScheduleRecord, UserRecord, UsersList } from '$lib/types/schema';
+import type { DbResponse, ScheduleRecord, SvelteFetch, UserRecord, UsersList } from '$lib/types/schema';
 import { db } from '$lib/server/database/db-controller';
 import { parseJSON } from '$lib/utility';
-import {isAdmin, isEditor, } from '$lib/permission';
+import { isAdmin, isEditor, } from '$lib/permission';
 import { getCurrentSchedule } from './schedule';
 import { validateSearch, type SearchOptions } from '$lib/validation';
 import { TEMPID } from '$lib/defaults';
-import { AppPass } from '../lucia/hash-ish';
-import { env } from '$env/dynamic/private';
+import {  hashPassword } from '../lucia/hash-ish';
 
 export const listOfUsers = async (options: SearchOptions): Promise<DbResponse<UsersList[]>> => {
   const { data, error } = await db.getManyUsers(options);
@@ -26,18 +25,29 @@ export const searchUsers = async (options: SearchOptions): Promise<DbResponse<Us
   return { data: data.rows.map(toUsersList) };
 };
 
-export const insertUser = async (args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>) => {
-  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`);
-  return db.createUser({ ...args, password_hash });
+export const insertUser = async (
+  fetch: SvelteFetch,
+  args: Pick<UserRecord, 'id' | 'name' | 'lead_id' | 'region'>
+) => {
+  const { data, error } = await hashPassword(fetch, `${args.id}@${args.region.toLowerCase()}`);
+  if (error || !data) {
+    return { data: null, error: { message: 'failed to hash password' } }
+  }
+
+  return db.createUser({ ...args, password_hash: data });
 };
 
 export const reDefaultPassword = async (
+  fetch: SvelteFetch,
   args: Omit<UserRecord, 'password_hash' | 'preferences'>
 ) => {
-  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  const password_hash = await appPass.hash(`${args.id}@${args.region.toLowerCase()}`);
-  return db.updatePassword(args.id, password_hash);
+
+  const { data, error } = await hashPassword(fetch, `${args.id}@${args.region.toLowerCase()}`);
+
+  if (error || !data) {
+    return { data: null, error: { message: 'failed to hash password' } }
+  }
+  return db.updatePassword(args.id, data);
 };
 
 export const addUserSchedule = async (args: Omit<ScheduleRecord, 'id'>) => {
@@ -63,25 +73,25 @@ export const userFilters = (user: User, query: URLSearchParams): SearchOptions =
   }
   const defaultSearch: SearchOptions = isAdmin(user.role)
     ? {
-        search: '',
-        active: null,
-        limit: 100,
-        region: null,
-        lead_id: null,
-        last_id: lastId,
-        page_total: null,
-        page_index: String(lastId)
-      }
+      search: '',
+      active: null,
+      limit: 100,
+      region: null,
+      lead_id: null,
+      last_id: lastId,
+      page_total: null,
+      page_index: String(lastId)
+    }
     : {
-        search: '',
-        active: 1,
-        limit: 100,
-        region: user.region,
-        lead_id: null,
-        last_id: TEMPID,
-        page_total: null,
-        page_index: String(TEMPID)
-      };
+      search: '',
+      active: 1,
+      limit: 100,
+      region: user.region,
+      lead_id: null,
+      last_id: TEMPID,
+      page_total: null,
+      page_index: String(TEMPID)
+    };
 
   if (query.size) {
     const temp = {

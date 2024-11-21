@@ -208,7 +208,7 @@ export const actions = {
       user
     };
   },
-  'password-reset': async ({ request, locals }) => {
+  'password-reset': async ({ request, locals, fetch }) => {
     if (!locals.user || !locals.session) {
       return fail(404, { message: 'User not found' });
     }
@@ -224,7 +224,7 @@ export const actions = {
       return fail(404, { message: validUser.error.errors });
     }
 
-    const { data, error } = await reDefaultPassword(validUser.data);
+    const { data, error } = await reDefaultPassword(fetch, validUser.data);
     if (error) {
       return fail(404, { message: error.message });
     }
