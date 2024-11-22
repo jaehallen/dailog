@@ -174,7 +174,7 @@
       <input type="hidden" id="sched-id" name="sched_id" value={$timeAction.sched_id} readonly />
       <input type="hidden" id="remarks" name="remarks" value={remarks} />
     </form>
-    <section class="mt-6">
+    <section class="section pb-0">
       {#if $timeLog.clocked && !clockInOut && !$timeLog.endOfDay}
         <div in:fly={{ delay: 200, duration: 300, x: 100, y: 0, opacity: 0.5, easing: quintOut }}>
           {#if !$timeAction.isBreak}
