@@ -33,9 +33,12 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_leads ON users(lead_id)
-CREATE INDEX IF NOT EXISTS idx_users_regions ON users(region)
-CREATE INDEX IF NOT EXISTS idx_users_roles ON users(role, region)
+DROP INDEX IF EXISTS idx_users_leads
+CREATE INDEX IF NOT EXISTS idx_users_leads ON users(lead_id, region, active);
+DROP INDEX IF EXISTS idx_users_roles
+CREATE INDEX IF NOT EXISTS idx_users_roles ON users(role, region, active);
+DROP INDEX IF EXISTS idx_users_regions
+CREATE INDEX IF NOT EXISTS idx_users_regions ON users(region, active);
 
 
 CREATE TRIGGER IF NOT EXISTS users_updated 

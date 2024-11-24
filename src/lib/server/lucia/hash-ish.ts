@@ -1,72 +1,73 @@
-//blog: https://lord.technology/2024/02/21/hashing-passwords-on-cloudflare-workers.html
-export class AppPass {
-  private format: "pkcs8" | "raw" | "spki";
-  private algorithm: string;
-  private usages: KeyUsage[];
-  private salt: Uint8Array;
-  private iterations: number;
+import type { SvelteFetch } from "$lib/types/schema";
+import { env } from '$env/dynamic/private';
+import { parseJSON } from "$lib/utility";
 
-  constructor(salt?: Uint8Array, options: {
-    format?: "pkcs8" | "raw" | "spki",
-    algorithm?: string,
-    usages?: KeyUsage[],
-    iterations?: number
-  } = {}) {
-    this.salt = salt || crypto.getRandomValues(new Uint8Array(16))
-    this.format = options.format || "raw";
-    this.algorithm = options.algorithm || "PBKDF2";
-    this.usages = options.usages || ["deriveBits", "deriveKey"];
-    this.iterations = options.iterations || 100000;
+export async function hashPassword(
+  fetch: SvelteFetch,
+  password: string
+): Promise<{ data: string, error?: never } | { data: null, error: { message: string } }> {
+  const url = env.HASH_URL
+  const token = env.API_TOKEN
+
+  if (!url || !token) {
+    return { data: null, error: { message: "Invalid configuration" } };
   }
 
-  public async hash(password: string, salt?: Uint8Array): Promise<string> {
-    const encoder = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
-      this.format,
-      encoder.encode(password),
-      { name: this.algorithm },
-      false,
-      this.usages
-    );
-    const key = await crypto.subtle.deriveKey(
-      {
-        name: this.algorithm,
-        salt: salt || this.salt,
-        iterations: this.iterations,
-        hash: "SHA-256",
-      },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
-    const exportedKey = (await crypto.subtle.exportKey(
-      this.format,
-      key
-    )) as ArrayBuffer;
-    const hashBuffer = new Uint8Array(exportedKey);
-    const hashArray = Array.from(hashBuffer);
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    const saltHex = Array.from(this.salt)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    return `${saltHex}:${hashHex}`;
+  const res = await fetch(url + "/auth/hash", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ password })
+  })
+
+  if (res.status !== 200) {
+    return { data: null, error: { message: "failed to hash password" } };
   }
 
-  public async verify(
-    storedHash: string,
-    passwordAttempt: string
-  ): Promise<boolean> {
-    const [saltHex, originalHash] = storedHash.split(":");
-    const matchResult = saltHex.match(/.{1,2}/g);
-    if (!matchResult) {
-      throw new Error("Invalid salt format");
-    }
-    const salt = new Uint8Array(matchResult.map((byte) => parseInt(byte, 16)));
-    const attemptHashWithSalt = await this.hash(passwordAttempt, salt);
-    const [, attemptHash] = attemptHashWithSalt.split(":");
-    return attemptHash === originalHash;
+  const resData = parseJSON(await res.json());
+
+  if (resData.success !== "ok") {
+    return { data: null, error: { message: "failed to hash password" } }
+  }
+
+  return {
+    data: resData.data
+  }
+}
+
+export async function verifyPassword(
+  fetch: SvelteFetch,
+  data: { password: string, password_hash: string }
+): Promise<{ data: boolean, error?: never } | { data: null, error: { message: string } }> {
+  const url = env.HASH_URL
+  const token = env.API_TOKEN
+
+  if (!url || !token) {
+    return { data: null, error: { message: "Invalid configuration" } };
+  }
+
+  const res = await fetch(url + "/auth/verify", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+
+  if (res.status !== 200) {
+    return { data: null, error: { message: "Invalid Password" } };
+  }
+
+  const resData = parseJSON(await res.json());
+
+  if (resData.success !== "ok") {
+    return { data: null, error: { message: "Invalid Password" } }
+  }
+
+  return {
+    data: resData.data
   }
 }

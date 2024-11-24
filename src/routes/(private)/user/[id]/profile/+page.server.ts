@@ -2,8 +2,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { validatePasswordReset, validatePreference } from '$lib/validation';
 import { db } from '$lib/server/database/db-controller';
-import { AppPass } from '$lib/server/lucia/hash-ish';
-import { env } from '$env/dynamic/private';
+import { hashPassword, verifyPassword } from '$lib/server/lucia/hash-ish';
+import type { SvelteFetch } from '$lib/types/schema';
 
 export const load = (async ({ locals }) => {
   if (!locals.user) {
@@ -14,7 +14,7 @@ export const load = (async ({ locals }) => {
 }) satisfies PageServerLoad;
 
 export const actions = {
-  'password-reset': async ({ request, locals }) => {
+  'password-reset': async ({ request, locals, fetch }) => {
     if (!locals.user) {
       redirect(302, '/login');
     }
@@ -28,7 +28,7 @@ export const actions = {
       return fail(400, { invalidInputs: true });
     }
 
-    const response = await userPasswordReset(locals.user.id, valid.data);
+    const response = await userPasswordReset(fetch, locals.user.id, valid.data);
 
     if (!response?.success) {
       return fail(400, { ...response });
@@ -63,6 +63,7 @@ export const actions = {
 } satisfies Actions;
 
 async function userPasswordReset(
+  fetch: SvelteFetch,
   userId: number,
   { oldPassword, newPassword }: { oldPassword: string; newPassword: string }
 ): Promise<{ incorrect?: boolean; locked?: boolean; success?: boolean } | null> {
@@ -72,8 +73,12 @@ async function userPasswordReset(
     return null;
   }
 
-  const appPass = new AppPass(undefined, { iterations: Number(env.ITERATIONS) });
-  if (!(await appPass.verify(user.password_hash, oldPassword))) {
+  const verifiedData = await verifyPassword(fetch, {
+    password: oldPassword,
+    password_hash: user.password_hash
+  });
+
+  if (!verifiedData.data) {
     return {
       incorrect: true
     };
@@ -84,8 +89,16 @@ async function userPasswordReset(
       locked: true
     };
   }
-  const hash = await appPass.hash(newPassword);
-  const { data, error } = await db.updatePassword(userId, hash);
+
+  const hashData = await hashPassword(fetch, newPassword);
+
+  if (!hashData.data || hashData.error) {
+    return {
+      success: false
+    };
+  }
+
+  const { data, error } = await db.updatePassword(userId, hashData.data);
 
   if (error) {
     return {

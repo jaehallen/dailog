@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions = {
-  default: async ({ request, locals }) => {
+  default: async ({ request, locals, fetch }) => {
     if (!isEditor(locals?.user?.role)) {
       return fail(401, { message: 'User not authorized' });
     }
@@ -25,7 +25,7 @@ export const actions = {
       return fail(404, { message: validRegister.error });
     }
 
-    const { data, error } = await insertUser(validRegister.data);
+    const { data, error } = await insertUser(fetch, validRegister.data);
     if (error) {
       return fail(404, { message: error.message });
     }
