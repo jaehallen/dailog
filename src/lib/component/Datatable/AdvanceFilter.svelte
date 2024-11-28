@@ -13,14 +13,22 @@
   let searchname = queries.search || '';
   let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
+
   $: pages = queries.page_index?.split('_').map((id) => Number(id)) || [];
   $: currentPage = pages.indexOf(queries.last_id) + 1;
-
+  $: subPages = getSubPage(currentPage, pages, 5);
   $: hasPrevPage = pages?.length > 1 && currentPage > 1;
   $: hasNextPage = queries.page_total !== pages.length || queries.page_total > currentPage;
+
+  function getSubPage(current: number, pages: number[], size: number) {
+    const minIndex = Math.max(0, current - Math.ceil(size / 2));
+    const maxIndex = Math.min(pages.length - size, minIndex);
+    const startIndex = Math.max(0, maxIndex);
+    return pages.map((_, i) => i + 1).slice(startIndex, startIndex + size);
+  }
 </script>
 
-<input type="hidden" name="last_id" value={queries.last_id || 0} readonly />
+<input type="hidden" name="last_id" value={queries.last_id || ''} readonly />
 <input type="hidden" name="page_total" value={queries.page_total || ''} readonly />
 <input type="hidden" name="page_index" value={queries.page_index || ''} readonly />
 
@@ -112,6 +120,19 @@
               </ButtonIcon>
             </div>
           </div>
+          {#if pages.length > 1}
+            <div class="field">
+              <div class="buttons has-addons">
+                {#each subPages as p (p)}
+                  <button
+                    class={`button is-small ${p == currentPage ? 'is-text' : 'is-ghost'}`}
+                    disabled={p == currentPage}
+                    formaction={'?/select-page&last_id=' + pages[p - 1]}>{p}</button
+                  >
+                {/each}
+              </div>
+            </div>
+          {/if}
           <div class="field">
             <div class="control">
               <ButtonIcon

@@ -266,7 +266,7 @@
 <Toasts />
 <main class="container mt-6" class:is-skeleton={loading}>
   <div class="columns mb-0">
-    <div class="column is-3 is-flex is-align-items-center">
+    <div class="column is-narrow is-flex is-align-items-center">
       <div class="level">
         <div class="level-left">
           <div class="level-item">

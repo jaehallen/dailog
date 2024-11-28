@@ -45,9 +45,11 @@ export const actions = {
     }
     const admin = isAdmin(locals.user.role);
     const form = await request.formData();
+
     form.set('page_total', '');
     form.set('page_index', '');
     form.set('last_id', admin && locals.user.id < TEMPID ? '0' : TEMPID.toString());
+
     if (!admin) {
       form.set('region', locals.user.region);
     }
@@ -61,23 +63,40 @@ export const actions = {
     const form = await request.formData();
     const lastId = Number(form.get('last_id'));
 
-    if (isScheduler(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+    if (!isAdmin(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
       form.set('last_id', String(TEMPID))
     }
 
-    if (isScheduler(locals.user.role)) {
+    if (!isAdmin(locals.user.role)) {
       form.set('region', locals.user.region);
     }
 
     return await queryData(form);
   },
-
   'next-page': async ({ request, locals }) => {
     if (!locals.user) {
       return fail(404, { message: 'User not found' });
     }
     const form = await request.formData();
-    if (isScheduler(locals.user.role)) {
+    if (!isAdmin(locals.user.role)) {
+      form.set('region', locals.user.region);
+    }
+    return await queryData(form);
+  },
+  'select-page': async ({locals, request, url}) => {
+    if (!locals.user) {
+      return fail(404, { message: 'User not found' });
+    }
+
+    const lastId = Number(url.searchParams.get('last_id') || '');
+    const form = await request.formData();
+
+    if (!isAdmin(locals.user.role) && locals.user.id > TEMPID && lastId < TEMPID) {
+      form.set('last_id', String(TEMPID))
+    }else{
+      form.set('last_id', String(lastId))
+    }
+    if (!isAdmin(locals.user.role)) {
       form.set('region', locals.user.region);
     }
     return await queryData(form);
@@ -188,8 +207,8 @@ export const actions = {
       return fail(401, { message: validUserInput.error.errors });
     }
 
-    if (Object.keys(validUserInput.data).length < 2){
-      return fail(401, {message: "No value to update"})
+    if (Object.keys(validUserInput.data).length < 2) {
+      return fail(401, { message: "No value to update" })
     }
 
     if (!isAdmin(locals.user.role) && validUserInput.data.role && isScheduler(validUserInput.data.role)) {
@@ -243,9 +262,9 @@ async function queryData(form: FormData, admin?: boolean) {
   }
 
   if (validFilter.data.search) {
-    if (admin) {
-      validFilter.data.region = null;
-    }
+    // if (admin) {
+    //   validFilter.data.region = null;
+    // }
 
     const { data, error } = await searchUsers(validFilter.data);
     return {
