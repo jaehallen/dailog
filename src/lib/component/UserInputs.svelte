@@ -2,15 +2,27 @@
   import type { UserRecord } from '$lib/types/schema';
   import type { User } from 'lucia';
   import { USERROLE } from '$lib/defaults';
+  import { isAdmin } from '$lib/permission';
   import FieldH from './FieldH.svelte';
   export let user: Omit<UserRecord, 'password_hash' | 'preferences'>;
   export let regions: string[] = [];
-  export let leads: { id: number; name: string }[] = [];
+  export let leads: { id: number; name: string, region: string }[] = [];
   export let disabled = false;
   export let editor: Partial<User> = {};
+  let tempLeads = leads
+    .toSorted((a, b) => {
+      const aReg = a.region.toLowerCase();
+      const bReg = b.region.toLowerCase();
+      if (aReg > bReg) return 1;
+      if (aReg < bReg) return -1;
+      return 0;
+    })
+    .filter((l) => isAdmin(user.role) || l.region === user.region);
   let activeStr = user.active ? '1' : '0';
   let lockpassStr = user.lock_password ? '1' : '0';
-  let roles = USERROLE.filter((role) => editor.id === 100000 || !['admin', 'editor', 'scheduler'].includes(role));
+  let roles = USERROLE.filter(
+    (role) => editor.id === 100000 || !['admin', 'editor', 'scheduler'].includes(role)
+  );
 </script>
 
 <h4 class="title is-4">{user.name}</h4>
@@ -26,8 +38,8 @@
 </FieldH>
 <FieldH id="lead_id" label="Teamlead">
   <select name="lead_id" id="lead_id" class="input">
-    {#each leads as lead (lead.id)}
-      <option value={lead.id} selected={lead.id === user.lead_id}>{lead.name}</option>
+    {#each tempLeads as lead (lead.id)}
+      <option value={lead.id} selected={lead.id === user.lead_id}>{lead.name} ({lead.region || 'All'})</option>
     {/each}
   </select>
 </FieldH>

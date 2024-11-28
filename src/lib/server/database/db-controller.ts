@@ -127,7 +127,7 @@ export class DatabaseController extends DBClient {
       regions: regions?.rows.map((r) => String(r.region)) || [],
       leads: leads?.rows
         .map((l) => {
-          return { id: Number(l.id), name: String(l.name), region: String(l.region) };
+          return { id: Number(l.id), name: String(l.name), region: String(l.region || '') };
         })
         .toSorted((a, b) => b.id - a.id)
     };

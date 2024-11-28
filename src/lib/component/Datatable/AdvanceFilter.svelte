@@ -11,7 +11,15 @@
   export let queries: SearchOptions;
   let onUserSearch = false;
   let searchname = queries.search || '';
-  let tempLeads = leads.filter((l) => isAdmin(user.role) || l.region === user.region);
+  let tempLeads = leads
+    .toSorted((a, b) => {
+      const aReg = a.region.toLowerCase();
+      const bReg = b.region.toLowerCase();
+      if (aReg > bReg) return 1;
+      if (aReg < bReg) return -1;
+      return 0;
+    })
+    .filter((l) => isAdmin(user.role) || l.region === user.region);
   let tempRegions = regions.filter((r) => isAdmin(user.role) || r === user.region);
 
   $: pages = queries.page_index?.split('_').map((id) => Number(id)) || [];
@@ -78,7 +86,7 @@
                 <select name="lead_id" {disabled} value={queries.lead_id ?? ''}>
                   <option value="">All</option>
                   {#each tempLeads as lead (lead.id)}
-                    <option value={lead.id}>{lead.name}</option>
+                    <option value={lead.id}>{lead.name} ({lead.region || 'All'})</option>
                   {/each}
                 </select>
               </div>
