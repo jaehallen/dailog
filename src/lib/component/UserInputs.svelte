@@ -6,7 +6,7 @@
   import FieldH from './FieldH.svelte';
   export let user: Omit<UserRecord, 'password_hash' | 'preferences'>;
   export let regions: string[] = [];
-  export let leads: { id: number; name: string, region: string }[] = [];
+  export let leads: { id: number; name: string; region: string }[] = [];
   export let disabled = false;
   export let editor: Partial<User> = {};
   let tempLeads = leads
@@ -17,7 +17,7 @@
       if (aReg < bReg) return -1;
       return 0;
     })
-    .filter((l) => isAdmin(user.role) || l.region === user.region);
+    .filter((l) => isAdmin(editor.role) || l.region === editor.region);
   let activeStr = user.active ? '1' : '0';
   let lockpassStr = user.lock_password ? '1' : '0';
   let roles = USERROLE.filter(
@@ -39,7 +39,9 @@
 <FieldH id="lead_id" label="Teamlead">
   <select name="lead_id" id="lead_id" class="input">
     {#each tempLeads as lead (lead.id)}
-      <option value={lead.id} selected={lead.id === user.lead_id}>{lead.name} ({lead.region || 'All'})</option>
+      <option value={lead.id} selected={lead.id === user.lead_id}
+        >{lead.name} ({lead.region || 'All'})</option
+      >
     {/each}
   </select>
 </FieldH>
