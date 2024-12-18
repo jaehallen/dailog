@@ -101,7 +101,7 @@ export const secToDuration = (dur: number) => {
   const mm = Math.round(dur / 60 - hh * 60);
   // const ss = dur - hh * 3600 - mm * 60;
 
-  return `${f(hh)}:${f(mm)}`;
+  return mm > 59 ? `${f(hh + 1)}:00` : `${f(hh)}:${f(mm)}`;
 };
 
 export const minToDuration = (min: number) => {
@@ -109,7 +109,7 @@ export const minToDuration = (min: number) => {
   const hh = Math.floor(min / 60);
   const mm = Math.floor(min - hh * 60);
 
-  return `${f(hh)}:${f(mm)}`;
+  return mm > 59 ? `${f(hh + 1)}:00` : `${f(hh)}:${f(mm)}`;
 };
 
 export function isEqual(x: any, y: any) {
