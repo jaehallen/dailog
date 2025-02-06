@@ -145,7 +145,7 @@
               {#if !data.profile?.lock_password}
                 <br />
                 <button class="button is-ghost p-0 m-0" on:click={() => (isActive = true)}
-                  >Reset Password</button
+                  >Change Password</button
                 >
               {/if}
             </p>
