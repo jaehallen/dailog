@@ -1,5 +1,10 @@
 import type { Client } from '@libsql/client';
 import type {
+  //start of RBAC
+  PageRecord, 
+  PermissionRecord, 
+  RoleHasPageRecord, 
+  //end of RBAC
   DbResponse,
   OptRole,
   ScheduleRecord,
@@ -278,6 +283,59 @@ export class DatabaseController extends DBClient {
 
     return { data: parseJSON(data.rows[0]) };
   }
+
+  //start of RBAC
+  public async getPages(): Promise<DbResponse<PageRecord[]>> {
+    const { sql, args } = QUERY.PAGES();
+    const { data, error } = await super.get(sql, args);
+  
+    if (error) {
+      return { data: null, error };
+    }
+  
+    const pages = data.rows.map(row => ({
+      id: row.id as number,
+      name: row.name as string,
+      path: row.path as string | null
+    }));
+  
+    return { data: pages };
+  }
+  
+  public async getPermissions(): Promise<DbResponse<PermissionRecord[]>> {
+    const { sql, args } = QUERY.PERMISSIONS();
+    const { data, error } = await super.get(sql, args);
+  
+    if (error) {
+      return { data: null, error };
+    }
+  
+    const permissions = data.rows.map(row => ({
+      id: row.id as number,
+      action: row.action as string
+    }));
+  
+    return { data: permissions };
+  }
+  
+  public async getRolePermissions(role: OptRole): Promise<DbResponse<RoleHasPageRecord[]>> {
+    const { sql, args } = QUERY.ROLE_HAS_PAGE({ role });
+    const { data, error } = await super.get(sql, args);
+  
+    if (error) {
+      return { data: null, error };
+    }
+  
+    const rolePermissions = data.rows.map(row => ({
+      role: row.role as OptRole,
+      page_id: row.page_id as number,
+      permission_id: row.permission_id as number
+    }));
+  
+    return { data: rolePermissions };
+  }
+  
+  //end of RBAC
 }
 
 export function toUserRecord(record: Record<string, any>): UserRecord {
@@ -382,4 +440,7 @@ function toTimeEntryRecord(record: Record<string, any>) {
   };
 }
 
+
+
 export const db = new DatabaseController(getClient());
+

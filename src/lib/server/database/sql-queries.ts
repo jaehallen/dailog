@@ -411,5 +411,31 @@ export const WRITE = {
               RETURNING *`,
       args: values
     };
+  //start of RBAC
+  },
+  PAGES: () => {
+    return {
+      sql: `SELECT * FROM page ORDER BY id`,
+      args: {}
+    };
+  },
+  PERMISSIONS: () => {
+    return {
+      sql: `SELECT * FROM permission ORDER BY id`,
+      args: {}
+    };
+  },
+  ROLE_HAS_PAGE: (args: { role: OptRole }) => {
+    return {
+      sql: `
+        SELECT rp.role, p.name AS page_name, p.path, perm.action 
+        FROM opt_role_has_page rp 
+        JOIN page p ON rp.page_id = p.id 
+        JOIN permission perm ON rp.permission_id = perm.id 
+        WHERE rp.role = $role
+      `,
+      args
+    };
   }
+  //end of RBAC
 };

@@ -155,3 +155,21 @@ export interface TimeEntryResults {
   sched_id: number;
   timeAction: OptActionState;
 }
+
+export type PageRecord = {
+  id: number;
+  name: string;
+  path: string | null;
+};
+
+export type PermissionRecord = {
+  id: number;
+  action: string;
+};
+
+export type RoleHasPageRecord = {
+  role: OptRole;
+  page_id: number;
+  permission_id: number;
+};
+
