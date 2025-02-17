@@ -10,13 +10,13 @@ CREATE TABLE IF NOT EXISTS opt_category (
   category TEXT PRIMARY KEY
 ) WITHOUT ROWID;
 
-INSERT INTO opt_category VALUES ('clock'), ('lunch'), ('break'), ('coffee'), ('clinic'), ('meeting'), ('other');
+INSERT INTO opt_category VALUES ('clock'), ('bio'), ('lunch'), ('break'), ('coffee'), ('clinic'), ('meeting'), ('other');
 
 CREATE TABLE IF NOT EXISTS opt_role (
   role TEXT PRIMARY KEY
 ) WITHOUT ROWID;
 
-INSERT INTO opt_role VALUES ('admin'), ('lead'), ('user'), ('poc')
+INSERT INTO opt_role VALUES ('admin'), ('lead'), ('user'), ('poc'), ('editor'), ('scheduler');
 
 -- USERS TABLES
 CREATE TABLE IF NOT EXISTS users (
