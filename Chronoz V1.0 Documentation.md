@@ -3,52 +3,8 @@
 Chronoz V1.0  
 @chronoz.pages.dev
 
-Allen Garchitorena  
-Table of Contents
-
-[**1\. Table Documentation	3**](#table-documentation)
-
-[1.1 fts\_users (fts5)	3](#1.1-fts_users-\(fts5\))
-
-[1.2 opt\_category	5](#1.2-opt_category)
-
-[1.3 opt\_region	6](#1.3-opt_region)
-
-[1.4 opt\_role	7](#1.4-opt_role)
-
-[1.5 schedules	8](#1.5-schedules)
-
-[1.6 sessions	10](#1.6-sessions)
-
-[1.7 time\_entries	11](#1.7-time_entries)
-
-[1.8 users	14](#1.8-users)
-
-[**2\. Database Schema	17**](#database-schema)
-
-[2.1 \[fts5 \- fts\_users\]	17](#2.1-[fts5---fts_users])
-
-[2.1.1 \[fts\_users\_config\]	17](#2.1.1-[fts_users_config])
-
-[2.1.2 \[fts\_users\_data\]	17](#2.1.2-[fts_users_data])
-
-[2.1.3 \[fts\_users\_docsize\]	17](#2.1.3-[fts_users_docsize])
-
-[2.1.4 \[fts\_users\_idx\]	17](#2.1.4-[fts_users_idx])
-
-[2.2 \[opt\_category\]	18](#2.2-[opt_category])
-
-[2.3 \[opt\_region\]	19](#2.3-[opt_region])
-
-[2.4 \[opt\_role\]	20](#2.4-[opt_role])
-
-[2.5 \[schedules\]	21](#2.5-[schedules])
-
-[2.6 \[sessions\]	22](#2.6-[sessions])
-
-[2.7 \[time\_entries\]	23](#2.7-[time_entries])
-
-[2.8 \[users\]	25](#2.8-[users])
+Allen Garchitorena - Lead
+Prince Taguiling - Editor
 
 1. # **Table Documentation** {#table-documentation}
 
