@@ -275,3 +275,68 @@ VALUES
 --    sqlite_master
 -- WHERE
 --    type= 'index';
+
+-- RBAC Related
+--CREATE TABLE page (
+--  id INTEGER PRIMARY KEY AUTOINCREMENT,
+--  name TEXT NOT NULL UNIQUE,
+--  path TEXT NOT NULL
+--);
+
+--INSERT INTO page (name, path) VALUES
+--('Time Entries', '/admin/time_entries'),
+--('Users', '/admin/users'),
+--('Register', '/admin/register'),
+--('Profile', '/user/[id]/profile'),
+--('Timesheets', '/user/[id]/timesheets'),
+--('Reports', '/user/[id]/reports');
+
+--CREATE TABLE permission (
+--  id INTEGER PRIMARY KEY AUTOINCREMENT,
+--  action TEXT NOT NULL UNIQUE  -- C, R, U, D
+--);
+
+--INSERT INTO permission (action) VALUES ('C'), ('R'), ('U'), ('D');
+
+--CREATE TABLE role_has_page (
+--  role TEXT NOT NULL,
+--  page_id INTEGER NOT NULL,
+--  permission_id INTEGER NOT NULL,
+--  FOREIGN KEY (role) REFERENCES opt_role (role),
+--  FOREIGN KEY (page_id) REFERENCES page (id),
+--  FOREIGN KEY (permission_id) REFERENCES permission (id),
+--  UNIQUE (role, page_id, permission_id)
+--);
+
+
+-- Time Entries
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 1, (SELECT id FROM permission WHERE action = 'R'));
+
+-- Users
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 2, (SELECT id FROM permission WHERE action = 'R')),
+--('admin', 2, (SELECT id FROM permission WHERE action = 'U'));
+
+-- Register
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 3, (SELECT id FROM permission WHERE action = 'C'));
+
+-- Profile
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 4, (SELECT id FROM permission WHERE action = 'R')),
+--('admin', 4, (SELECT id FROM permission WHERE action = 'U')),
+--('user', 4, (SELECT id FROM permission WHERE action = 'R')),
+--('user', 4, (SELECT id FROM permission WHERE action = 'U'));
+
+-- Timesheets
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 5, (SELECT id FROM permission WHERE action = 'C')),
+--('admin', 5, (SELECT id FROM permission WHERE action = 'R')),
+--('user', 5, (SELECT id FROM permission WHERE action = 'C')),
+--('user', 5, (SELECT id FROM permission WHERE action = 'R'));
+
+-- Reports
+--INSERT INTO role_has_page (role, page_id, permission_id) VALUES
+--('admin', 6, (SELECT id FROM permission WHERE action = 'R')),
+--('user', 6, (SELECT id FROM permission WHERE action = 'R'));
