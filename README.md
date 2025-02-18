@@ -47,11 +47,11 @@ Chronoz V1.0
 Allen Garchitorena - Lead
 Prince Taguiling - Editor
 
-1. # **Table Documentation** {#table-documentation}
+1. # **Table Documentation** 
 
    
 
-## **1.1 fts\_users (fts5)** {#1.1-fts_users-(fts5)}
+## **1.1 fts\_users (fts5)** 
 
 Overview  
 The fts\_users virtual table is implemented using the FTS5 module with trigram tokenization in libSQL. It enhances the search functionality on the name field of the users table, allowing for efficient and flexible text searching, including partial matches. This is particularly useful for implementing features like autocomplete and fuzzy searching.
@@ -111,7 +111,7 @@ How It Works
      
 3. Relevance Ranking: Results are ranked based on document size and term frequency, stored in fts\_users\_docsize.
 
-## **1.2 opt\_category** {#1.2-opt_category}
+## **1.2 opt\_category** 
 
 Overview  
 The opt\_category table is a static lookup table used to categorize different types of events or activities, such as 'clock', 'bio', 'lunch', 'break', 'coffee', 'clinic', 'meeting', and 'other'. It is designed to be lightweight and efficient by using the WITHOUT ROWID option, which improves performance by directly storing the primary key in the B-Tree structure.
@@ -148,7 +148,7 @@ How It Works
 * Data Integrity and Uniqueness:  
   The PRIMARY KEY constraint ensures that each category is unique, preventing duplicate entries.
 
-## **1.3 opt\_region** {#1.3-opt_region}
+## **1.3 opt\_region** 
 
 Overview  
 The opt\_region table is a static lookup table designed to store a predefined list of regions: 'APAC', 'EMEA', and 'NA'. It helps maintain data consistency and normalization across the database by categorizing users, schedules, or other entities by region. The WITHOUT ROWID option enhances performance and reduces storage overhead.
@@ -180,7 +180,7 @@ How It Works
 * Data Integrity and Uniqueness:  
   The PRIMARY KEY constraint ensures that each region is unique, preventing duplicate entries.
 
-## **1.4 opt\_role** {#1.4-opt_role}
+## **1.4 opt\_role** 
 
 Overview  
 The opt\_role table is a static lookup table designed to store a predefined list of user roles: 'admin', 'lead', 'user', 'poc', 'editor', and 'scheduler'. It standardizes role assignments across the system, ensuring consistency and facilitating role-based access control. The WITHOUT ROWID option optimizes storage and lookup performance.
@@ -215,7 +215,7 @@ How It Works
 * Data Integrity and Uniqueness:  
   The PRIMARY KEY constraint ensures that each role is unique, preventing duplicate entries.
 
-## **1.5 schedules** {#1.5-schedules}
+## **1.5 schedules** 
 
 Overview  
 The schedules table is designed to manage user work schedules, including clock-in/out times, breaks, lunch duration, and days off. It ensures data integrity through constraints like CHECK, UNIQUE, and foreign key references. Additionally, an index is created to optimize query performance on frequently used columns.
@@ -300,7 +300,7 @@ How It Works
 * Time Zone Management:  
   * utc\_offset and local\_offset allow flexible timezone support for global users.
 
-## **1.6 sessions** {#1.6-sessions}
+## **1.6 sessions** 
 
 Overview  
 The sessions table is designed to manage user sessions, storing session identifiers, expiration times, and associated user IDs. This structure is optimized for session validation and user authentication in applications. An index on the user\_id column enhances query performance when filtering by user.
@@ -340,7 +340,7 @@ How It Works
   * PRIMARY KEY on id guarantees session ID uniqueness.  
   * FOREIGN KEY on user\_id enforces a valid relationship to the users table, ensuring sessions are linked to existing users.
 
-## **1.7 time\_entries** {#1.7-time_entries}
+## **1.7 time\_entries** 
 
 Overview  
 The time\_entries table logs user activities or events with timestamps, linking them to schedules and categories. It supports detailed tracking of time-based entries, including start and end times, IP addresses, and user agents. An index enhances query performance, and a trigger ensures automatic updates to the timestamp when a record is modified.
@@ -440,7 +440,7 @@ How It Works
   * UNIQUE and NOT NULL constraints maintain data integrity.
 
 
-## **1.8 users** {#1.8-users}
+## **1.8 users** 
 
 Overview  
 The users table manages user accounts with details such as active status, name, region, role, password security, and hierarchical reporting structure. It supports role-based access control, regional grouping, and user preferences. Indexes enhance query performance, and a trigger keeps the updated\_at timestamp current.
