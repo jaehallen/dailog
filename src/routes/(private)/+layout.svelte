@@ -4,7 +4,9 @@
   import { ModeWatcher } from 'mode-watcher';
   import { page } from '$app/stores';
   export let data: LayoutData;
-  const src = data?.user?.preferences?.background_src || '';
+  //Disable temporarily due to executive visit 😤
+  // const src = data?.user?.preferences?.background_src || '';
+  const src = '';
 </script>
 
 <svelte:head>
